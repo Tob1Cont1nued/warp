@@ -1,0 +1,11 @@
+# Local Dev nicht in Docker pushen
+.venv/
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.DS_Store
+
+# Preview-Artefakte (nicht in Container)
+preview.html
+report-preview.css

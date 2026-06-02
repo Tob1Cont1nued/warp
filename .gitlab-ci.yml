@@ -1,0 +1,64 @@
+# GitLab CI/CD — WARP Tool
+#
+# Was passiert:
+#   1. build  → Docker-Image bauen und in die GitLab Container Registry pushen
+#   2. deploy → Image auf GitLab Auto Deploy / Kubernetes oder eigene VM
+#               (Beispiel: einfacher SSH-Deploy auf einen Server).
+#
+# WICHTIG: GitLab Pages kann KEIN Flask hosten (statisch only).
+# Diese Pipeline baut ein Docker-Image, das überall lauffähig ist.
+
+stages:
+  - build
+  - deploy
+
+variables:
+  IMAGE_TAG: $CI_REGISTRY_IMAGE:$CI_COMMIT_SHORT_SHA
+  IMAGE_LATEST: $CI_REGISTRY_IMAGE:latest
+
+# -----------------------------------------------------------------
+# 1. Docker-Image bauen + in GitLab Container Registry pushen
+# -----------------------------------------------------------------
+build:
+  stage: build
+  image: docker:24
+  services:
+    - docker:24-dind
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
+  script:
+    - docker build -t "$IMAGE_TAG" -t "$IMAGE_LATEST" .
+    - docker push "$IMAGE_TAG"
+    - docker push "$IMAGE_LATEST"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: '$CI_COMMIT_BRANCH == "master"'
+
+# -----------------------------------------------------------------
+# 2. Deploy via SSH auf eigene VM (Beispiel)
+#    Voraussetzung: SSH_PRIVATE_KEY, SSH_HOST, SSH_USER als CI-Variablen.
+#    Wer keinen eigenen Server hat, kann den Job auf "manual" lassen
+#    und das Image lokal mit `docker run` starten.
+# -----------------------------------------------------------------
+deploy:ssh:
+  stage: deploy
+  image: alpine:3.19
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval "$(ssh-agent -s)"
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+  script:
+    - ssh "$SSH_USER@$SSH_HOST" "
+        docker login -u '$CI_REGISTRY_USER' -p '$CI_REGISTRY_PASSWORD' '$CI_REGISTRY' &&
+        docker pull '$IMAGE_LATEST' &&
+        docker stop warp-tool || true &&
+        docker rm warp-tool || true &&
+        docker run -d --name warp-tool --restart unless-stopped -p 8080:8080 '$IMAGE_LATEST'
+      "
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+      when: manual
+    - if: '$CI_COMMIT_BRANCH == "master"'
+      when: manual

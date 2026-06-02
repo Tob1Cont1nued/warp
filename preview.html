@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Fragenkatalog (Vorschau)</title>
+  <link rel="stylesheet" href="app/static/css/app.css" />
+  <style>
+    /* Vorschau-Banner */
+    .preview-banner {
+      position: fixed; top: 0; right: 0; z-index: 100;
+      background: linear-gradient(135deg, #E6007E, #451DC7);
+      color: #FFF; font-size: 12px; font-weight: 600;
+      padding: 6px 14px;
+      border-bottom-left-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      letter-spacing: 0.04em;
+    }
+    /* Report-Modal */
+    .report-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 200;
+      display: none;
+      overflow: auto;
+      padding: 30px;
+    }
+    .report-overlay.show { display: block; }
+    .report-modal {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #FFF;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+    }
+    .report-modal-head {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 20px;
+      background: #001529;
+      color: #FFF;
+    }
+    .report-modal-head h3 {
+      margin: 0; font-family: 'Roboto', sans-serif; font-size: 15px; font-weight: 600;
+    }
+    .report-close {
+      background: transparent; border: none; color: #FFF; font-size: 22px; cursor: pointer;
+    }
+    .report-body { padding: 0; }
+    .report-body iframe { width: 100%; min-height: 80vh; border: 0; display: block; }
+    /* Demo-Hinweis */
+    .demo-hint {
+      background: #FCE5F0;
+      border: 1px solid #E6007E;
+      color: #B8005F;
+      padding: 12px 18px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+    .demo-hint strong { color: #B8005F; }
+  </style>
+</head>
+<body>
+
+<div class="preview-banner">VORSCHAU &middot; Statische Demo (Python-App in /app)</div>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>Fragenkatalog</h1>
+    <p>Reifegradanalyse Test &amp; Quality Engineering</p>
+  </div>
+  <div class="progress-pill">
+    <span class="progress-label">Beantwortet</span>
+    <span class="progress-value"><span id="js-answered">0</span> / <span id="js-total">0</span></span>
+    <div class="progress-bar"><div class="progress-bar-fill" id="js-progress-bar"></div></div>
+  </div>
+</header>
+
+<div class="sidebar-backdrop" id="js-backdrop"></div>
+
+<aside class="sidebar" id="js-sidebar">
+  <div class="sidebar-logo">
+    <img src="app/static/img/warp-logo-1.svg" alt="WARP" />
+  </div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item active" href="#"><span class="dot"></span>Fragenkatalog</a>
+    <a class="sidebar-nav-item" href="#auswertung-section"><span class="dot"></span>Auswertung</a>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="sidebar-foot-brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">wavestone</span>
+    </div>
+    <span class="sidebar-foot-meta">WARP Tool &middot; v1.0</span>
+  </div>
+</aside>
+
+<main class="main">
+
+  <div class="demo-hint" style="margin: 0 0 20px;">
+    <strong>Vorschau-Modus.</strong> Dies ist eine statische Demo der Oberfläche.
+    Die echte Version wird via <code>python run.py</code> als Flask-App gestartet
+    und erzeugt ein PDF (siehe <code>README.md</code>). Hier wird stattdessen eine
+    HTML-Vorschau des Reports im Modal gezeigt.
+  </div>
+
+  <form id="warp-form">
+
+    <section class="card project-card">
+      <h2>Projektinformationen</h2>
+      <p class="card-sub">Diese Angaben erscheinen auf der ersten Seite des PDF-Reports.</p>
+      <div class="field-grid">
+        <div class="field">
+          <label for="project_name">Projektname</label>
+          <input type="text" id="project_name" name="project_name" placeholder="z.B. Analyse Test-Reifegrad &mdash; Kunde XY" value="Analyse Test-Reifegrad — Demo" />
+        </div>
+        <div class="field">
+          <label for="project_owner">Verantwortliche/r</label>
+          <input type="text" id="project_owner" name="project_owner" placeholder="z.B. Max Mustermann" value="M. Mustermann" />
+        </div>
+        <div class="field">
+          <label for="project_date">Datum</label>
+          <input type="date" id="project_date" name="project_date" />
+        </div>
+      </div>
+    </section>
+
+    <div id="categories-host"></div>
+
+    <section class="card submit-card" id="auswertung-section">
+      <div>
+        <h2>Auswertung erzeugen</h2>
+        <p>Der Report wird als PDF mit Wavestone-Branding, Gesamtscore, Kategorie-Charts und Fragen-Detail erzeugt.</p>
+      </div>
+      <div class="submit-actions">
+        <button type="button" id="btn-preview" class="btn btn-secondary">Vorschau (HTML)</button>
+        <button type="button" id="btn-pdf" class="btn btn-primary">PDF herunterladen</button>
+      </div>
+    </section>
+
+  </form>
+</main>
+
+<!-- Report Modal -->
+<div class="report-overlay" id="report-overlay">
+  <div class="report-modal">
+    <div class="report-modal-head">
+      <h3>Report-Vorschau (entspricht der erzeugten PDF)</h3>
+      <button type="button" class="report-close" id="report-close">&times;</button>
+    </div>
+    <div class="report-body">
+      <iframe id="report-iframe" title="Report"></iframe>
+    </div>
+  </div>
+</div>
+
+<script>
+// =====================================================================
+// CATEGORIES = Mirror von app/data/questions.py (für die statische Demo)
+// =====================================================================
+const ANSWER_OPTIONS = [
+  { id: "voll",  label: "Trifft voll zu",  score: 100 },
+  { id: "zu",    label: "Trifft zu",       score: 66  },
+  { id: "kaum",  label: "Trifft kaum zu",  score: 33  },
+  { id: "nicht", label: "Trifft nicht zu", score: 0   }
+];
+const CATEGORIES = [
+  {
+    id: "stakeholder", title: "Stakeholderbeziehung",
+    description: "Bewertet die Qualität der Kommunikation und Zusammenarbeit zwischen Test-Team und Projekt-Stakeholdern.",
+    questions: [
+      { id: "stk-1", text: "Stakeholder werden regelmäßig über den Teststatus informiert.", hint: "Wie häufig finden Status-Updates statt?" },
+      { id: "stk-2", text: "Es gibt einen definierten Eskalationsweg für kritische Testbefunde.", hint: "Wer wird bei Blocker-Bugs informiert?" },
+      { id: "stk-3", text: "Anforderungen werden vor Testbeginn mit dem Fachbereich abgestimmt.", hint: null },
+      { id: "stk-4", text: "Testergebnisse werden in einem für Stakeholder verständlichen Format aufbereitet.", hint: "z.B. Reports, Dashboards, Reifegradberichte" }
+    ]
+  },
+  {
+    id: "testmanagement", title: "Testmanagement",
+    description: "Bewertet Strukturen, Prozesse und Werkzeuge zur Steuerung der Testaktivitäten über den gesamten Lebenszyklus.",
+    questions: [
+      { id: "tm-1", text: "Es gibt ein dokumentiertes Testkonzept für das Projekt.", hint: "Strategie, Scope, Methodik, Werkzeuge" },
+      { id: "tm-2", text: "Testfälle werden zentral verwaltet und sind versioniert.", hint: null },
+      { id: "tm-3", text: "Die Testabdeckung wird gemessen und ausgewertet.", hint: "Anforderungs- und Code-Coverage" },
+      { id: "tm-4", text: "Es existiert ein definierter Prozess für das Fehlermanagement.", hint: "Erfassung, Triage, Tracking, Schließung" },
+      { id: "tm-5", text: "Testressourcen (Personen, Umgebungen) werden geplant.", hint: null }
+    ]
+  },
+  {
+    id: "testware", title: "Testwaremanagement",
+    description: "Es sorgt dafür, dass die einzelnen Testprodukte zueinander und zu den zugehörigen Entwurfsdokumenten passen.",
+    questions: [
+      { id: "tw-1", text: "Es gibt ein für das Testteam zugängliches Versionsmanagement für die Testobjekte/Anforderungen.", hint: "Versionsnummer und Name nachvollziehbar" },
+      { id: "tw-2", text: "Es gibt ein beschriebenes Verfahren, mit dem Testware, Testbasis und Testobjekte verwaltet werden. Dieses ist dem Team bekannt.", hint: null },
+      { id: "tw-3", text: "Die Testfälle beziehen sich jeweils auf eine Version/Dokument der Testbasis.", hint: null },
+      { id: "tw-4", text: "Testfälle und Anforderungen sind miteinander verknüpft.", hint: "Ist der Weg von Anforderung zu Testfall zu Fehler nachvollziehbar?" }
+    ]
+  },
+  {
+    id: "testkompetenz", title: "Testkompetenz",
+    description: "Bewertet das Wissen, die Erfahrung und die Weiterbildung der am Testprozess beteiligten Personen.",
+    questions: [
+      { id: "tk-1", text: "Tester verfügen über eine fachliche und/oder technische Test-Ausbildung.", hint: "z.B. ISTQB-Zertifizierung" },
+      { id: "tk-2", text: "Testverantwortliche kennen die fachlichen Anforderungen detailliert.", hint: null },
+      { id: "tk-3", text: "Es gibt regelmäßige Weiterbildungsmöglichkeiten für das Testteam.", hint: null },
+      { id: "tk-4", text: "Wissen wird im Team systematisch dokumentiert und geteilt.", hint: "Wiki, Pairing, Reviews" }
+    ]
+  },
+  {
+    id: "fehlermanagement", title: "Fehlermanagement",
+    description: "Erfassung, Bewertung und Nachverfolgung von Fehlern über den gesamten Lebenszyklus.",
+    questions: [
+      { id: "fm-1", text: "Es gibt ein Fehlermanagement inkl. Fehlerlebenszyklus, das dem Team bekannt ist.", hint: null },
+      { id: "fm-2", text: "Regelmäßige Fehlerbesprechungen unterstützen das Fehlermanagement.", hint: "z.B. Bug Triage Meetings" },
+      { id: "fm-3", text: "Verantwortliche Personen im Fehlerprozess sind definiert (Tester / Entwickler / Umgebungsmanager / Testmanager).", hint: null },
+      { id: "fm-4", text: "Genutzte Fehlermanagementwerkzeuge sind für verantwortliche Personen nutzbar.", hint: null },
+      { id: "fm-5", text: "Der Umgang mit Fehlernachtests (komplett/partiell) ist definiert.", hint: null },
+      { id: "fm-6", text: "Die Mindestattribute jedes Fehlers sind: Ersteller / Tester / ID / Datum / Schwere / Beschreibung / Titel / Status.", hint: "Erwartetes vs. tatsächliches Ergebnis" }
+    ]
+  },
+  {
+    id: "testautomatisierung", title: "Testautomatisierung",
+    description: "Reifegrad und Skalierung der automatisierten Testverfahren auf Unit-, Integrations- und End-to-End-Ebene.",
+    questions: [
+      { id: "ta-1", text: "Es gibt eine dokumentierte Strategie für die Testautomatisierung.", hint: null },
+      { id: "ta-2", text: "Automatisierte Tests laufen in der CI/CD-Pipeline.", hint: null },
+      { id: "ta-3", text: "Die Wartung der automatisierten Tests ist klar verantwortet.", hint: null },
+      { id: "ta-4", text: "Der Anteil automatisierter Tests an Regressionstests wird gemessen.", hint: null }
+    ]
+  }
+];
+
+// ----- helpers -----
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ----- Render Categories -----
+const totalQuestions = CATEGORIES.reduce((a, c) => a + c.questions.length, 0);
+document.getElementById('js-total').textContent = totalQuestions;
+document.getElementById('project_date').value = new Date().toISOString().slice(0, 10);
+
+const host = document.getElementById('categories-host');
+host.innerHTML = CATEGORIES.map(cat => `
+  <section class="card category-card" id="cat-${cat.id}">
+    <header class="category-head">
+      <div>
+        <h2>${escapeHtml(cat.title)}</h2>
+        <p>${escapeHtml(cat.description)}</p>
+      </div>
+      <span class="cat-counter" data-cat="${cat.id}" data-total="${cat.questions.length}">0 / ${cat.questions.length}</span>
+    </header>
+    <table class="qtable">
+      <thead>
+        <tr>
+          <th class="col-num">#</th>
+          <th class="col-question">Frage</th>
+          <th class="col-hint">Hilfsfrage</th>
+          <th class="col-answer">Bewertung</th>
+          <th class="col-notes">Notizen</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${cat.questions.map((q, i) => `
+          <tr data-cat="${cat.id}">
+            <td class="col-num">${i + 1}</td>
+            <td class="col-question">${escapeHtml(q.text)}</td>
+            <td class="col-hint">${q.hint ? '<em>' + escapeHtml(q.hint) + '</em>' : '<span class="muted">—</span>'}</td>
+            <td class="col-answer" data-label="Bewertung">
+              <select class="js-answer" data-cat="${cat.id}" data-qid="${q.id}">
+                <option value="">Bitte wählen ...</option>
+                ${ANSWER_OPTIONS.map(o => `<option value="${o.id}">${o.label}</option>`).join('')}
+              </select>
+            </td>
+            <td class="col-notes" data-label="Notizen (optional)">
+              <textarea class="js-note" data-qid="${q.id}" rows="2" placeholder="Optional ..."></textarea>
+            </td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </section>
+`).join('');
+
+// Drawer (mobile)
+(function() {
+  const sb = document.getElementById('js-sidebar');
+  const bd = document.getElementById('js-backdrop');
+  const bt = document.getElementById('js-burger');
+  function close(){ sb.classList.remove('open'); bd.classList.remove('open'); }
+  bt.addEventListener('click', () => {
+    const open = !sb.classList.contains('open');
+    sb.classList.toggle('open', open);
+    bd.classList.toggle('open', open);
+  });
+  bd.addEventListener('click', close);
+  sb.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
+})();
+
+// ----- Live counter -----
+const answeredEl = document.getElementById('js-answered');
+const barEl = document.getElementById('js-progress-bar');
+
+function updateCounters() {
+  const selects = document.querySelectorAll('.js-answer');
+  let filled = 0;
+  const perCat = {};
+  selects.forEach(s => {
+    const cat = s.dataset.cat;
+    perCat[cat] = perCat[cat] || 0;
+    if (s.value) { filled++; perCat[cat]++; }
+  });
+  answeredEl.textContent = filled;
+  barEl.style.width = (filled / totalQuestions * 100) + '%';
+  document.querySelectorAll('.cat-counter').forEach(el => {
+    const c = el.dataset.cat;
+    const t = el.dataset.total;
+    const n = perCat[c] || 0;
+    el.textContent = n + ' / ' + t;
+    el.classList.toggle('complete', String(n) === t);
+  });
+}
+document.addEventListener('change', e => {
+  if (e.target.classList && e.target.classList.contains('js-answer')) updateCounters();
+});
+
+// ----- Build Report (mirror der report.html in vereinfachter Form) -----
+function collectState() {
+  const answers = {}, notes = {};
+  document.querySelectorAll('.js-answer').forEach(s => { if (s.value) answers[s.dataset.qid] = s.value; });
+  document.querySelectorAll('.js-note').forEach(t => { if (t.value.trim()) notes[t.dataset.qid] = t.value.trim(); });
+  return { answers, notes };
+}
+
+function maturity(score) {
+  if (score >= 80) return { label: 'Optimiert', index: 5 };
+  if (score >= 60) return { label: 'Etabliert', index: 4 };
+  if (score >= 40) return { label: 'Definiert', index: 3 };
+  if (score >= 20) return { label: 'Wiederholbar', index: 2 };
+  return { label: 'Initial', index: 1 };
+}
+
+function buildReport() {
+  const { answers, notes } = collectState();
+  const project_name = document.getElementById('project_name').value.trim() || 'Unbenannte Analyse';
+  const project_owner = document.getElementById('project_owner').value.trim();
+  const project_date_raw = document.getElementById('project_date').value;
+  const project_date = project_date_raw
+    ? new Date(project_date_raw).toLocaleDateString('de-DE')
+    : new Date().toLocaleDateString('de-DE');
+
+  const scoreOf = id => (ANSWER_OPTIONS.find(o => o.id === id) || {}).score;
+  const labelOf = id => (ANSWER_OPTIONS.find(o => o.id === id) || {}).label;
+
+  let allScores = [], answeredCount = 0;
+  const cats = CATEGORIES.map(cat => {
+    const dist = Object.fromEntries(ANSWER_OPTIONS.map(o => [o.id, 0]));
+    let qScores = [], answered = 0;
+    const questions = cat.questions.map(q => {
+      const aid = answers[q.id];
+      if (aid) { answered++; dist[aid]++; qScores.push(scoreOf(aid)); allScores.push(scoreOf(aid)); }
+      return { ...q, answer_id: aid, answer_label: labelOf(aid), score: scoreOf(aid), note: notes[q.id] || '' };
+    });
+    answeredCount += answered;
+    const avg = qScores.length ? qScores.reduce((a, b) => a + b, 0) / qScores.length : 0;
+    return {
+      ...cat, questions, answered, total: cat.questions.length,
+      score: Math.round(avg * 10) / 10,
+      distribution: ANSWER_OPTIONS.map(o => ({ id: o.id, label: o.label, count: dist[o.id] }))
+    };
+  });
+  const overall = allScores.length ? Math.round(allScores.reduce((a, b) => a + b, 0) / allScores.length * 10) / 10 : 0;
+  const m = maturity(overall);
+  const generated_at = new Date().toLocaleString('de-DE', {dateStyle:'short', timeStyle:'short'});
+
+  return { project_name, project_owner, project_date, generated_at,
+           categories: cats, overall_score: overall, answered_count: answeredCount,
+           total_count: totalQuestions, maturity_label: m.label, maturity_index: m.index };
+}
+
+function reportHtml(ctx) {
+  const cssLink = '<link rel="stylesheet" href="report-preview.css" />';
+  const ladder = Array.from({length:5}, (_,i) =>
+    `<span class="step ${i + 1 <= ctx.maturity_index ? 'on' : ''}"></span>`).join('');
+  const bars = ctx.categories.map(c => `
+    <div class="bar-row">
+      <div class="name">${escapeHtml(c.title)}</div>
+      <div class="track"><div class="fill" style="width:${c.score}%"></div></div>
+      <div class="pct">${c.score}%</div>
+    </div>`).join('');
+  const detail = ctx.categories.map((c, i) => {
+    const offen = c.total - c.answered;
+    const dist = c.distribution.map(d => d.count > 0
+      ? `<div class="seg ${d.id}" style="width:${d.count/c.total*100}%"></div>` : '').join('') +
+      (offen > 0 ? `<div class="seg" style="width:${offen/c.total*100}%; background:#E6E6E6;"></div>` : '');
+    const rows = c.questions.map((q, j) => `
+      <tr>
+        <td class="num">${j+1}</td>
+        <td>${escapeHtml(q.text)}${q.hint ? `<br/><span style="color:#8C8C8C; font-style:italic; font-size:11px;">${escapeHtml(q.hint)}</span>` : ''}</td>
+        <td class="ans">${q.answer_id ? `<span class="pill-ans pill-${q.answer_id}">${escapeHtml(q.answer_label)}</span>` : `<span class="pill-ans pill-na">nicht beantwortet</span>`}</td>
+        <td class="scr">${q.score != null ? q.score + '%' : '—'}</td>
+      </tr>${q.note ? `<tr class="note-row"><td></td><td colspan="3"><strong>Notiz:</strong> ${escapeHtml(q.note)}</td></tr>` : ''}`).join('');
+    return `
+      <div class="cat-block">
+        <div class="cat-head">
+          <h3>${i+1}. ${escapeHtml(c.title)}</h3>
+          <div class="cat-score">${c.score}% · ${c.answered} / ${c.total}</div>
+        </div>
+        <div class="cat-desc">${escapeHtml(c.description)}</div>
+        <div class="dist">${dist}</div>
+        <table class="qt"><thead><tr><th class="num">#</th><th>Frage</th><th class="ans">Bewertung</th><th class="scr">Score</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>`;
+  }).join('');
+
+  return `<!DOCTYPE html><html lang="de"><head><meta charset="utf-8"/>${cssLink}</head><body>
+    <section class="cover">
+      <div class="cover-mark"><span class="square"></span><span>wavestone · WARP</span></div>
+      <div class="cover-eyebrow">Test &amp; Quality Engineering · Reifegradanalyse</div>
+      <div class="cover-title">${escapeHtml(ctx.project_name)}</div>
+      <div class="cover-sub">Auswertung des WARP-Fragenkatalogs — Gesamtscore, Kategorie-Reifegrade und Detailbewertungen.</div>
+      <div class="cover-meta">
+        <div><span class="label">Verantwortlich</span><span class="value">${escapeHtml(ctx.project_owner) || '—'}</span></div>
+        <div><span class="label">Datum</span><span class="value">${escapeHtml(ctx.project_date)}</span></div>
+        <div><span class="label">Beantwortet</span><span class="value">${ctx.answered_count} / ${ctx.total_count} Fragen</span></div>
+      </div>
+      <div class="cover-stripe"></div>
+    </section>
+
+    <section class="page">
+      <div class="section-banner"><div class="eyebrow">Executive Summary</div><h2>Gesamtbewertung</h2></div>
+      <div class="score-grid">
+        <div class="score-card primary">
+          <div class="label">Gesamtscore</div>
+          <div class="value">${ctx.overall_score}<span class="unit">%</span></div>
+          <div class="sub">Reifegrad: <strong>${ctx.maturity_label}</strong></div>
+          <div class="ladder">${ladder}</div>
+        </div>
+        <div class="score-card"><div class="label">Kategorien</div><div class="value">${ctx.categories.length}</div><div class="sub">untersuchte Themengebiete</div></div>
+        <div class="score-card"><div class="label">Beantwortet</div><div class="value">${ctx.answered_count}<span class="unit"> / ${ctx.total_count}</span></div><div class="sub">${ctx.answered_count === ctx.total_count ? 'vollständig' : (ctx.total_count - ctx.answered_count) + ' offen'}</div></div>
+      </div>
+      <div class="chart-wrap"><h3>Reifegrad pro Kategorie</h3>${bars}</div>
+    </section>
+
+    <section class="page">
+      <div class="section-banner"><div class="eyebrow">Detailauswertung</div><h2>Kategorien &amp; Fragen</h2></div>
+      ${detail}
+      <div class="legend">
+        <span><span class="swatch" style="background:#14B26A"></span> Trifft voll zu</span>
+        <span><span class="swatch" style="background:#5BC5DD"></span> Trifft zu</span>
+        <span><span class="swatch" style="background:#F2A73B"></span> Trifft kaum zu</span>
+        <span><span class="swatch" style="background:#E84A4A"></span> Trifft nicht zu</span>
+        <span><span class="swatch" style="background:#E6E6E6"></span> nicht beantwortet</span>
+      </div>
+    </section>
+  </body></html>`;
+}
+
+document.getElementById('btn-preview').addEventListener('click', () => {
+  const ctx = buildReport();
+  const html = reportHtml(ctx);
+  const iframe = document.getElementById('report-iframe');
+  iframe.srcdoc = html;
+  document.getElementById('report-overlay').classList.add('show');
+});
+document.getElementById('btn-pdf').addEventListener('click', () => {
+  alert('PDF-Export läuft in der lauffähigen Python-App.\n\nStarten via:\n  python run.py\n\n(siehe README.md)');
+});
+document.getElementById('report-close').addEventListener('click', () => {
+  document.getElementById('report-overlay').classList.remove('show');
+});
+document.getElementById('report-overlay').addEventListener('click', e => {
+  if (e.target.id === 'report-overlay') document.getElementById('report-overlay').classList.remove('show');
+});
+
+// Demo-Daten vorausfüllen, damit man sofort die Vorschau ausprobieren kann
+(function seed() {
+  const sample = ["voll","zu","kaum","nicht","zu","voll","zu","kaum","voll","zu","zu","kaum","voll","zu","voll","zu","zu","kaum","nicht","voll","zu","kaum","zu","voll","zu","kaum"];
+  let idx = 0;
+  document.querySelectorAll('.js-answer').forEach(s => {
+    if (idx < sample.length) { s.value = sample[idx++]; }
+  });
+  const note = document.querySelector('.js-note[data-qid="tw-1"]');
+  if (note) note.value = 'Versionsmanagement existiert, ist aber nicht durchgängig dokumentiert. To-Do bis Q3.';
+  updateCounters();
+})();
+</script>
+
+</body>
+</html>
