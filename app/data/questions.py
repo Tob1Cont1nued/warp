@@ -1,83 +1,465 @@
 """
 WARP Tool - Fragenkatalog Daten
 
-Beispieldaten basierend auf dem Wavestone Figma-Designs.
-Kategorien orientieren sich an Testmanagement-Reifegradanalyse.
+Basierend auf dem Wavestone / Q_PERIOR TPI-Next-Reifegrad Quick-Check.
+Kategorien orientieren sich an Testmanagement-Reifegradanalyse (Stufe "Kontrolliert").
+
+Struktur:
+  - 3 Hauptbereiche: Stakeholderbeziehung, Testmanagement, Testkompetenz
+  - 19 Unterkategorien, ~83 Fragen insgesamt
 
 Erweitern: einfach neue Kategorien/Fragen anhaengen.
 """
 
 CATEGORIES = [
+    # =========================================================================
+    # HAUPTBEREICH 1: STAKEHOLDERBEZIEHUNG
+    # =========================================================================
     {
-        "id": "stakeholder",
-        "title": "Stakeholderbeziehung",
+        "id": "engagement",
+        "title": "Engagement der Stakeholder",
+        "parent": "Stakeholderbeziehung",
         "description": (
-            "Bewertet die Qualitaet der Kommunikation und Zusammenarbeit "
-            "zwischen Test-Team und Projekt-Stakeholdern."
+            "Das Engagement der Stakeholder ist massgebend fuer eine effiziente "
+            "Kommunikation und gute Zusammenarbeit."
         ),
         "questions": [
             {
-                "id": "stk-1",
-                "text": "Stakeholder werden regelmaessig ueber den Teststatus informiert.",
-                "hint": "Wie haeufig finden Status-Updates statt?",
+                "id": "eng-1",
+                "text": "Der Anforderungsmanager/Fachbereich zustaendig fuer die Anforderungen ist bekannt.",
+                "hint": "Wissen Sie wer fuer welche Anforderung fachlich zustaendig ist?",
             },
             {
-                "id": "stk-2",
-                "text": "Es gibt einen definierten Eskalationsweg fuer kritische Testbefunde.",
-                "hint": "Wer wird bei Blocker-Bugs informiert?",
+                "id": "eng-2",
+                "text": "Die Tester kennen den Auftraggeber.",
+                "hint": "Wer ist ihr Auftraggeber?",
             },
             {
-                "id": "stk-3",
-                "text": "Anforderungen werden vor Testbeginn mit dem Fachbereich abgestimmt.",
+                "id": "eng-3",
+                "text": "Der Auftraggeber hat das Budget bewilligt und dieses kann mit ihm verhandelt werden.",
+                "hint": "Kann die Dauer des Tests mit dem Auftraggeber verhandelt werden?",
+            },
+            {
+                "id": "eng-4",
+                "text": "Die Testressourcen werden von den Stakeholdern zur Verfuegung gestellt.",
+                "hint": "Werden Tester aus den Fachbereichen nach Anfrage zur Verfuegung gestellt?",
+            },
+            {
+                "id": "eng-5",
+                "text": "Der Auftraggeber hat eine dokumentierte Produktrisikoanalyse erstellt.",
+                "hint": "Gibt es eine Risikoanalyse fuer die Software?",
+            },
+            {
+                "id": "eng-6",
+                "text": "Fachabteilungen, die mit dem Produkt arbeiten, sind bekannt.",
+                "hint": "Welche Abteilungen arbeiten alles mit der Software?",
+            },
+            {
+                "id": "eng-7",
+                "text": "Die Releaseprozesse und Ansprechpartner sind bekannt.",
+                "hint": "Wer ist Hauptansprechpartner im Releasemanagement? Gibt es Freigabeszenarien?",
+            },
+            {
+                "id": "eng-8",
+                "text": "Die Entwickler sind bekannt.",
                 "hint": None,
             },
             {
-                "id": "stk-4",
-                "text": "Testergebnisse werden in einem fuer Stakeholder verstaendlichen Format aufbereitet.",
-                "hint": "z.B. Reports, Dashboards, Reifegradberichte",
+                "id": "eng-9",
+                "text": "Die Softwarearchitekten sind bekannt.",
+                "hint": "Gibt es Softwarearchitekten? Wenn ja, wer ist das?",
             },
         ],
     },
     {
-        "id": "testmanagement",
-        "title": "Testmanagement",
+        "id": "beteiligung",
+        "title": "Grad der Beteiligung",
+        "parent": "Stakeholderbeziehung",
         "description": (
-            "Bewertet Strukturen, Prozesse und Werkzeuge zur Steuerung "
-            "der Testaktivitaeten ueber den gesamten Lebenszyklus."
+            "Ein hoher Grad der Beteiligung des Testteams im Projekt und Entwicklungsprozess "
+            "hilft dabei, die meisten Testaktivitaeten fern vom kritischen Pfad durchzufuehren."
         ),
         "questions": [
             {
-                "id": "tm-1",
-                "text": "Es gibt ein dokumentiertes Testkonzept fuer das Projekt.",
-                "hint": "Strategie, Scope, Methodik, Werkzeuge",
+                "id": "bet-1",
+                "text": "Der Umfang, der Testauftrag und das Vorgehen sind mit dem Auftraggeber vereinbart.",
+                "hint": "Kennt der Auftraggeber die geschaetzte Dauer des Tests und hat den Inhalten zugestimmt?",
             },
             {
-                "id": "tm-2",
-                "text": "Testfaelle werden zentral verwaltet und sind versioniert.",
+                "id": "bet-2",
+                "text": (
+                    "Eine Person des Testteams wird in die Projektplanung einbezogen, "
+                    "sodass Abhaengigkeiten zwischen dem Testprozess und anderen Prozessen "
+                    "beruecksichtigt werden koennen."
+                ),
+                "hint": (
+                    "Ist jemand aus dem Testteam von Anfang an im Projekt dabei? "
+                    "Bekommt er mit, wenn Anforderungen definiert und Entwicklungsobjekte testbereit sind?"
+                ),
+            },
+            {
+                "id": "bet-3",
+                "text": "Ein Tester wird bei der Analyse, Bewertung und dem Management von Projektrisiken einbezogen.",
                 "hint": None,
             },
             {
-                "id": "tm-3",
-                "text": "Die Testabdeckung wird gemessen und ausgewertet.",
-                "hint": "Anforderungs- und Code-Coverage",
+                "id": "bet-4",
+                "text": "Die Testplanung erfolgt gleichzeitig mit der Projektplanung.",
+                "hint": "Wer erstellt die Projektplanung? Wann erfolgt die Testplanung?",
             },
             {
-                "id": "tm-4",
-                "text": "Es existiert ein definierter Prozess fuer das Fehlermanagement.",
-                "hint": "Erfassung, Triage, Tracking, Schliessung",
+                "id": "bet-5",
+                "text": "Nur die Testdurchfuehrung befindet sich auf dem kritischen Projektpfad.",
+                "hint": "Wann wird mit der Testvorbereitung gestartet? Wann endet sie?",
+            },
+        ],
+    },
+    {
+        "id": "teststrategie",
+        "title": "Teststrategie",
+        "parent": "Stakeholderbeziehung",
+        "description": (
+            "Die Strategie sorgt fuer ein stimmiges Verhaeltnis von "
+            "Aufwand/Ressourcen zu dem vorhandenen Risiko."
+        ),
+        "questions": [
+            {
+                "id": "ts-1",
+                "text": "Produktrisiken, die den Go-live beeintraechtigen koennten, sind analysiert.",
+                "hint": "Gibt es spezielle Testfaelle fuer den Go-live zur Ueberpruefung der wichtigsten Funktionalitaeten?",
             },
             {
-                "id": "tm-5",
-                "text": "Testressourcen (Personen, Umgebungen) werden geplant.",
+                "id": "ts-2",
+                "text": "Produktrisiken sind in die Priorisierung der Testfaelle einbezogen.",
+                "hint": "Gibt es eine Priorisierung der Testfaelle? Wie wurde diese vorgenommen?",
+            },
+            {
+                "id": "ts-3",
+                "text": "Der finale Testaufwand/Ressourcen sind nach einer Risikoanalyse bestimmt worden.",
+                "hint": "Ist der Zusammenhang zwischen Risiko und Aufwand betrachtet worden?",
+            },
+            {
+                "id": "ts-4",
+                "text": "Besonders risikobehaftete Softwarekomponenten oder Prozesse werden zuerst getestet.",
+                "hint": "Werden risikoreiche Softwarekomponenten zuerst getestet? Gibt es eine Uebersicht?",
+            },
+            {
+                "id": "ts-5",
+                "text": (
+                    "Risiken werden bei verschiedenen Teststufen, Testarten sowie der "
+                    "Testabdeckung und Testintensitaet beruecksichtigt."
+                ),
+                "hint": "Erfolgt ein Test in verschiedenen Teststufen (Entwicklertests, Systemtest, Abnahmetests)?",
+            },
+            {
+                "id": "ts-6",
+                "text": "Fehlernachtests und Regressionstests werden durchgefuehrt.",
+                "hint": "Gibt es eine Empfehlung vom Entwickler, wie viel nach der Fehlerbehebung getestet wird?",
+            },
+        ],
+    },
+    {
+        "id": "testorganisation",
+        "title": "Testorganisation",
+        "parent": "Stakeholderbeziehung",
+        "description": (
+            "Die Testorganisation ist Wissensstraeger und sorgt dafuer, dass Testressourcen, "
+            "Testprodukte (Prozesse, Werkzeuge, Templates, Richtlinien) und "
+            "Testdienstleistungen (Trainings) vorhanden sind."
+        ),
+        "questions": [
+            {
+                "id": "to-1",
+                "text": (
+                    "Es gibt eine Organisations- oder Projekteinheit, die fuer "
+                    "Testprodukte und Hilfestellungen verantwortlich ist."
+                ),
+                "hint": "Existiert eine solche Einheit?",
+            },
+            {
+                "id": "to-2",
+                "text": "Es gibt eine Uebersicht der Produkte und Dienstleistungen, die den Testern bekannt ist.",
+                "hint": "Existiert eine Uebersicht der Produkte und Dienstleistungen (z.B. Templates) der Abteilung?",
+            },
+            {
+                "id": "to-3",
+                "text": (
+                    "Es gibt klar definierte Verantwortlichkeiten und eine Rollenuebersicht "
+                    "(Tester, Testdesigner, Entwickler, Releasemanager, Umgebungsmanager, "
+                    "Projektleiter, Testmanager, Defectmanager inkl. Namen)."
+                ),
+                "hint": "Gibt es klar definierte Verantwortlichkeiten? Kennen Sie Ihre Rolle und Aufgaben?",
+            },
+        ],
+    },
+    {
+        "id": "kommunikation",
+        "title": "Kommunikation",
+        "parent": "Stakeholderbeziehung",
+        "description": (
+            "Gezielte und transparente Informationsweitergabe foerdert ein gemeinsames "
+            "Verstaendnis und abgestimmte Erwartungshaltungen aller im Test beteiligten Personen."
+        ),
+        "questions": [
+            {
+                "id": "kom-1",
+                "text": "Die Teammitglieder werden ueber Entscheidungen im Projekt informiert.",
+                "hint": "Wie erhalten Sie Informationen zu Entscheidungen im Projekt?",
+            },
+            {
+                "id": "kom-2",
+                "text": "Alle Teammitglieder kennen den Status und die Phase, in der sich das Projekt befindet.",
+                "hint": "In welcher Projektphase befindet sich das Projekt aktuell?",
+            },
+            {
+                "id": "kom-3",
+                "text": "Entscheidungen, Handlungen und Ergebnisse des Testteams koennen zurueckverfolgt werden.",
+                "hint": "Wie werden Entscheidungen vom Testteam festgehalten?",
+            },
+            {
+                "id": "kom-4",
+                "text": (
+                    "Es gibt regelmaessigen Austausch zwischen Testteam und Stakeholdern ueber "
+                    "Projekt- und Testfortschritt, Qualitaet des Produktes und Risiken."
+                ),
+                "hint": "Gibt es ein Statusmeeting ueber den Testfortschritt und Fehler?",
+            },
+            {
+                "id": "kom-5",
+                "text": "Das Testteam gibt vorausschauend Hinweise auf Verzoegerungen/Probleme an die Stakeholder.",
+                "hint": "Ist im Status eine Risikoabfrage vorhanden? Wie werden Probleme im Test adressiert?",
+            },
+            {
+                "id": "kom-6",
+                "text": "Das Testteam fragt aktiv nach fuer den Test relevanten Informationen bei den Stakeholdern nach.",
+                "hint": "Fragen Sie regelmaessig nach veraenderten/aktualisierten Anforderungen oder neuen Entwicklungen?",
+            },
+        ],
+    },
+    {
+        "id": "berichterstattung",
+        "title": "Berichterstattung",
+        "parent": "Stakeholderbeziehung",
+        "description": (
+            "Gibt dem Auftraggeber/Stakeholder konkrete Informationen ueber "
+            "Produktqualitaet/Risiken, sodass Entscheidungen getroffen werden koennen."
+        ),
+        "questions": [
+            {
+                "id": "ber-1",
+                "text": (
+                    "Es gibt regelmaessige schriftliche Berichte ueber den Testfortschritt (IST/PLAN) "
+                    "in Bezug auf Zeit, Budget, Testfaellen und Fehlern."
+                ),
+                "hint": "Gibt es Testberichte zum Fortschritt gegliedert nach Zeit/Budget/Testfaellen und Fehlern?",
+            },
+            {
+                "id": "ber-2",
+                "text": "Die Berichte enthalten Ergebnisse und Risiken.",
+                "hint": "Enthalten die Berichte Ergebnisse und Risiken?",
+            },
+            {
+                "id": "ber-3",
+                "text": "Die Stakeholder sind zufrieden mit dem Inhalt, der Qualitaet und der Haeufigkeit der Berichte.",
+                "hint": "Sind Sie zufrieden mit dem Inhalt, der Qualitaet und der Haeufigkeit der Berichte?",
+            },
+            {
+                "id": "ber-4",
+                "text": "Produktrisiken und Projektrisiken sind in die Berichte einbezogen.",
+                "hint": None,
+            },
+            {
+                "id": "ber-5",
+                "text": "Es gibt Trendanalysen ueber Fehler/Testfaelle.",
+                "hint": None,
+            },
+            {
+                "id": "ber-6",
+                "text": "Die Berichte enthalten Empfehlungen fuer Entscheidungen.",
+                "hint": None,
+            },
+        ],
+    },
+
+    # =========================================================================
+    # HAUPTBEREICH 2: TESTMANAGEMENT
+    # =========================================================================
+    {
+        "id": "testprozessmanagement",
+        "title": "Testprozessmanagement",
+        "parent": "Testmanagement",
+        "description": (
+            "Sorgt dafuer, dass der Testauftrag innerhalb von vorher abgestimmten "
+            "Kosten, Zeit und Ergebnis optimiert wird."
+        ),
+        "questions": [
+            {
+                "id": "tpm-1",
+                "text": (
+                    "Es gibt einen Testplan, der zeitlich festlegt, wer was wann macht. "
+                    "Dieser umfasst alle Phasen des Testprozesses."
+                ),
+                "hint": (
+                    "Gibt es einen zeitlichen Plan, wann welche Teststufe durchlaufen wird? "
+                    "Sind Ressourcen und Abwesenheiten beruecksichtigt?"
+                ),
+            },
+            {
+                "id": "tpm-2",
+                "text": (
+                    "Der Testplan beinhaltet den Testauftrag, den Zeitraum, "
+                    "die zeitliche Ressourcenplanung sowie Rollen und Verantwortlichkeiten."
+                ),
+                "hint": "Sind Ihnen die Testzeitraeume bekannt?",
+            },
+            {
+                "id": "tpm-3",
+                "text": "Die Erwartungen des Auftraggebers zu Umfang, Kosten und Qualitaet des Testens sind klar.",
+                "hint": None,
+            },
+            {
+                "id": "tpm-4",
+                "text": "Ein Bericht gibt den Fortschritt des Testplans und geeignete Massnahmen wieder.",
+                "hint": None,
+            },
+            {
+                "id": "tpm-5",
+                "text": "Der Testplan ist mit den Stakeholdern (inkl. Auftraggeber) abgestimmt.",
                 "hint": None,
             },
         ],
     },
     {
-        "id": "testware",
+        "id": "kostenschaetzung",
+        "title": "Kostenschaetzung und Planung",
+        "parent": "Testmanagement",
+        "description": (
+            "Passende Schaetztechniken ermoeglichen eine realistische und "
+            "zuverlaessige Einschaetzung der Kosten und Planung des Testvorgehens."
+        ),
+        "questions": [
+            {
+                "id": "kp-1",
+                "text": "Es existiert eine Schaetzung der benoetigten Ressourcen pro Testaktivitaet.",
+                "hint": None,
+            },
+            {
+                "id": "kp-2",
+                "text": "Es gibt ein zugewiesenes Budget fuer jede Phase des Testprozesses.",
+                "hint": None,
+            },
+            {
+                "id": "kp-3",
+                "text": "Der Auftraggeber wird aktiv in die Schaetzungen einbezogen.",
+                "hint": None,
+            },
+            {
+                "id": "kp-4",
+                "text": (
+                    "Die Dauer der einzelnen Testaktivitaeten, die benoetigten Ressourcen "
+                    "und die zu erwartenden Ergebnisse sind bekannt."
+                ),
+                "hint": None,
+            },
+            {
+                "id": "kp-5",
+                "text": "Die Testplanung beruecksichtigt Abhaengigkeiten zwischen einzelnen Phasen oder Aktivitaeten.",
+                "hint": "Werden Abhaengigkeiten zwischen Aktivitaeten in der Testplanung beruecksichtigt?",
+            },
+        ],
+    },
+    {
+        "id": "metriken",
+        "title": "Metriken",
+        "parent": "Testmanagement",
+        "description": (
+            "Durch Metriken ist eine objektive Messung des Fortschritts, "
+            "der Fehler und des Prozesses moeglich."
+        ),
+        "questions": [
+            {
+                "id": "met-1",
+                "text": "Es werden Metriken verwendet, die das Testprojekt bewerten und monitoren.",
+                "hint": "Gibt es Metriken, die das Testobjekt bewerten?",
+            },
+            {
+                "id": "met-2",
+                "text": (
+                    "Die benoetigten Daten werden synchron ermittelt und "
+                    "alle Metriken werden zentral gespeichert."
+                ),
+                "hint": "Werden die zugrundeliegenden Daten der Metriken synchron ermittelt und zentral gespeichert?",
+            },
+            {
+                "id": "met-3",
+                "text": "Es gibt Pruefungen zur Validierung der genutzten Daten (Stichproben).",
+                "hint": "Werden die genutzten Metriken stichprobenartig geprueft, ob die Daten valide sind?",
+            },
+            {
+                "id": "met-4",
+                "text": (
+                    "Mindestens 7 der folgenden Metriken werden genutzt: Testueberdeckungsverhaeltnis, "
+                    "Anzahl Testfaelle geplant/bereits erstellt, Testfortschritt (Ist/Plan), "
+                    "Testdurchfuehrungsverhaeltnis, Fehlerschwere, Anzahl Produktionsfehler, "
+                    "verbrauchter Budgetanteil, Testphasen/verbrauchte Stunden, Leerlaufrate, Testendekriterien."
+                ),
+                "hint": "Welche Metriken werden genutzt?",
+            },
+        ],
+    },
+    {
+        "id": "fehlermanagement",
+        "title": "Fehlermanagement",
+        "parent": "Testmanagement",
+        "description": (
+            "Das Fehlermanagement verfolgt Fehler und ueberwacht deren Status einzeln und "
+            "als Gesamtheit. Zusaetzlich analysiert es die Ursachen und gibt Handlungsempfehlungen."
+        ),
+        "questions": [
+            {
+                "id": "fm-1",
+                "text": "Es gibt ein Fehlermanagement inkl. Fehlerlebenszyklus, das dem Test- und Entwicklerteam bekannt ist.",
+                "hint": "Wie sind die Phasen des Fehlerlebenszyklus? Wer entscheidet, ob ein Fehler geschlossen wird?",
+            },
+            {
+                "id": "fm-2",
+                "text": "Regelmaessige Fehlerbesprechungen unterstuetzen das Fehlermanagement.",
+                "hint": "Gibt es regelmaessige Termine, um ueber bestimmte Fehler oder Fehleranfaelligkeiten zu sprechen?",
+            },
+            {
+                "id": "fm-3",
+                "text": (
+                    "Verantwortliche Personen im Fehlerprozess sind definiert "
+                    "(Tester, Entwickler, Umgebungsmanager, Testmanager)."
+                ),
+                "hint": "Wer ist alles im Fehlerprozess involviert und was sind seine Aufgaben?",
+            },
+            {
+                "id": "fm-4",
+                "text": "Genutzte Fehlermanagementwerkzeuge sind fuer verantwortliche Personen nutzbar.",
+                "hint": "Sind die Fehler fuer alle einsehbar? Sind Schweredefinitionen transparent und bekannt?",
+            },
+            {
+                "id": "fm-5",
+                "text": "Der Umgang mit Fehlernachtests (komplett/partiell) ist definiert.",
+                "hint": "Was wird nach der Behebung eines Fehlers getestet? Gibt es Richtlinien zum Umfang des Nachtests?",
+            },
+            {
+                "id": "fm-6",
+                "text": (
+                    "Die Mindestattribute jedes Fehlers sind: Ersteller/Tester, ID, Datum, Schwere, "
+                    "Beschreibung (erwartetes vs. tatsaechliches Ergebnis), Titel, Status."
+                ),
+                "hint": "Welche Attribute werden in einem Fehler ausgefuellt?",
+            },
+        ],
+    },
+    {
+        "id": "testwaremanagement",
         "title": "Testwaremanagement",
+        "parent": "Testmanagement",
         "description": (
-            "Es sorgt dafuer, dass die einzelnen Testprodukte zueinander "
+            "Sorgt dafuer, dass die einzelnen Testprodukte zueinander "
             "und zu den zugehoerigen Entwurfsdokumenten passen."
         ),
         "questions": [
@@ -85,9 +467,9 @@ CATEGORIES = [
                 "id": "tw-1",
                 "text": (
                     "Es gibt ein fuer das Testteam zugaengliches Versionsmanagement "
-                    "fuer die Testobjekte/Anforderungen."
+                    "fuer die Testobjekte/Anforderungen (Versionsnummer und Name)."
                 ),
-                "hint": "Versionsnummer und Name nachvollziehbar",
+                "hint": "Ist sofort klar, welche Fehler zu welcher Anforderungsversion gehoeren?",
             },
             {
                 "id": "tw-2",
@@ -109,123 +491,231 @@ CATEGORIES = [
             },
         ],
     },
+
+    # =========================================================================
+    # HAUPTBEREICH 3: TESTKOMPETENZ
+    # =========================================================================
     {
-        "id": "testkompetenz",
-        "title": "Testkompetenz",
+        "id": "methodisches_vorgehen",
+        "title": "Methodisches Vorgehen",
+        "parent": "Testkompetenz",
         "description": (
-            "Bewertet das Wissen, die Erfahrung und die Weiterbildung "
-            "der am Testprozess beteiligten Personen."
+            "Eine Testmethode navigiert das Testvorgehen und hilft, mit Zielen und "
+            "Vorbedingungen ein ausgewogenes Verhaeltnis zwischen Ergebnistypen, "
+            "Risiken, Zeit und Kosten sicherzustellen."
         ),
         "questions": [
             {
-                "id": "tk-1",
-                "text": "Tester verfuegen ueber eine fachliche und/oder technische Test-Ausbildung.",
-                "hint": "z.B. ISTQB-Zertifizierung",
-            },
-            {
-                "id": "tk-2",
-                "text": "Testverantwortliche kennen die fachlichen Anforderungen detailliert.",
-                "hint": None,
-            },
-            {
-                "id": "tk-3",
-                "text": "Es gibt regelmaessige Weiterbildungsmoeglichkeiten fuer das Testteam.",
-                "hint": None,
-            },
-            {
-                "id": "tk-4",
-                "text": "Wissen wird im Team systematisch dokumentiert und geteilt.",
-                "hint": "Wiki, Pairing, Reviews",
-            },
-        ],
-    },
-    {
-        "id": "fehlermanagement",
-        "title": "Fehlermanagement",
-        "description": (
-            "Erfassung, Bewertung und Nachverfolgung von Fehlern "
-            "ueber den gesamten Lebenszyklus."
-        ),
-        "questions": [
-            {
-                "id": "fm-1",
-                "text": "Es gibt ein Fehlermanagement inkl. Fehlerlebenszyklus, das dem Team bekannt ist.",
-                "hint": None,
-            },
-            {
-                "id": "fm-2",
-                "text": "Regelmaessige Fehlerbesprechungen unterstuetzen das Fehlermanagement.",
-                "hint": "z.B. Bug Triage Meetings",
-            },
-            {
-                "id": "fm-3",
+                "id": "mv-1",
                 "text": (
-                    "Verantwortliche Personen im Fehlerprozess sind definiert "
-                    "(Tester / Entwickler / Umgebungsmanager / Testmanager)."
+                    "Es gibt verschiedene definierte Testlevel/Teststufen, die im Projekt "
+                    "verfolgt werden (Unit Tests, Komponententests, Integrationstests, Regressionstests)."
                 ),
                 "hint": None,
             },
             {
-                "id": "fm-4",
-                "text": "Genutzte Fehlermanagementwerkzeuge sind fuer verantwortliche Personen nutzbar.",
+                "id": "mv-2",
+                "text": "Die Ziele der Testlevel/Teststufen sind dokumentiert und passen zur Teststrategie.",
                 "hint": None,
             },
             {
-                "id": "fm-5",
-                "text": "Der Umgang mit Fehlernachtests (komplett/partiell) ist definiert.",
-                "hint": None,
-            },
-            {
-                "id": "fm-6",
+                "id": "mv-3",
                 "text": (
-                    "Die Mindestattribute jedes Fehlers sind: Ersteller / Tester / ID / "
-                    "Datum / Schwere / Beschreibung / Titel / Status."
+                    "Die einzelnen Testlevel/Teststufen sind abgestimmt auf das Projektvorgehen/"
+                    "die Entwicklung und sind schriftlich festgehalten."
                 ),
-                "hint": "Erwartetes vs. tatsaechliches Ergebnis",
+                "hint": "Sind die Umgebungen passend fuer den jeweiligen Test?",
+            },
+            {
+                "id": "mv-4",
+                "text": "Das Projekt- und Testteam unterstuetzt die gewaehlten Testmethoden.",
+                "hint": None,
             },
         ],
     },
     {
-        "id": "testautomatisierung",
-        "title": "Testautomatisierung",
+        "id": "professionalitaet",
+        "title": "Professionalitaet der Tester",
+        "parent": "Testkompetenz",
         "description": (
-            "Reifegrad und Skalierung der automatisierten Testverfahren "
-            "auf Unit-, Integrations- und End-to-End-Ebene."
+            "Beschreibt die richtige Mischung aus unterschiedlichen Faehigkeiten und Fachwissen, "
+            "um die Tests mit dem erforderlichen Know-how zu unterstuetzen."
         ),
         "questions": [
             {
-                "id": "ta-1",
-                "text": "Es gibt eine dokumentierte Strategie fuer die Testautomatisierung.",
+                "id": "pro-1",
+                "text": (
+                    "Die Tester planen ihre Testaktivitaeten im Austausch mit den Kollegen, "
+                    "fuehren diese eigenstaendig durch und geben proaktiv Feedback."
+                ),
+                "hint": "Wie planen Sie Ihre Testaktivitaeten? Was passiert, wenn Sie krank werden oder Urlaub planen?",
+            },
+            {
+                "id": "pro-2",
+                "text": (
+                    "Die Tester erhalten dedizierte Testschulungen oder haben bereits "
+                    "ausreichende Erfahrungen bei der strukturierten Testdurchfuehrung."
+                ),
+                "hint": "Gibt es Schulungen zu Testvorgaben? Ist eine Schulungsteilnahme bei Bedarf moeglich?",
+            },
+            {
+                "id": "pro-3",
+                "text": "Die Testmethode ist den Testern bekannt und wird eingesetzt.",
                 "hint": None,
             },
             {
-                "id": "ta-2",
-                "text": "Automatisierte Tests laufen in der CI/CD-Pipeline.",
+                "id": "pro-4",
+                "text": "Das Testteam hat Zugang zu benoetgtem Fachwissen und technischem Wissen.",
                 "hint": None,
             },
             {
-                "id": "ta-3",
-                "text": "Die Wartung der automatisierten Tests ist klar verantwortet.",
+                "id": "pro-5",
+                "text": "Die Tester sind zertifiziert nach ISTQB Foundation Level.",
                 "hint": None,
             },
             {
-                "id": "ta-4",
-                "text": "Der Anteil automatisierter Tests an Regressionstests wird gemessen.",
+                "id": "pro-6",
+                "text": (
+                    "Es gibt regelmaessige Leistungsbeurteilungen der Tester "
+                    "in Bezug auf ihre Test- und IT-Faehigkeiten."
+                ),
                 "hint": None,
+            },
+        ],
+    },
+    {
+        "id": "testfalldesign",
+        "title": "Testfalldesign",
+        "parent": "Testkompetenz",
+        "description": "Setzt die Teststrategie ein, um die Fehlersuche zu optimieren.",
+        "questions": [
+            {
+                "id": "tfd-1",
+                "text": "Testfaelle sind personenunabhaengig wiederholbar (aehnlicher Wissensstand der Tester vorausgesetzt).",
+                "hint": None,
+            },
+            {
+                "id": "tfd-2",
+                "text": "Es werden zunaechst logische Testfaelle beschrieben, die dann konkretisiert werden.",
+                "hint": None,
+            },
+            {
+                "id": "tfd-3",
+                "text": (
+                    "Jeder Testfall enthaelt: Ausgangssituation, Beschreibung der Aktionen "
+                    "und das erwartete Ergebnis."
+                ),
+                "hint": None,
+            },
+            {
+                "id": "tfd-4",
+                "text": "Das zugehoerige Testobjekt (=Teil der Testbasis, das getestet wird) ist im Testfall genannt.",
+                "hint": None,
+            },
+            {
+                "id": "tfd-5",
+                "text": "Checklisten oder formale Designtechniken werden zur Testfallerstellung eingesetzt.",
+                "hint": None,
+            },
+        ],
+    },
+    {
+        "id": "testwerkzeuge",
+        "title": "Testwerkzeuge",
+        "parent": "Testkompetenz",
+        "description": (
+            "Testwerkzeuge beschleunigen/ermoeglichen die Testaktivitaeten, "
+            "indem sie dem Testteam Arbeit abnehmen."
+        ),
+        "questions": [
+            {
+                "id": "twz-1",
+                "text": (
+                    "Testwerkzeuge, die fuer die Testaktivitaeten benoetigt werden, "
+                    "sind zugaenglich fuer das Testteam "
+                    "(z.B. Planungswerkzeuge, Stubs, Steuerungswerkzeuge, Testdurchfuehrungswerkzeuge)."
+                ),
+                "hint": "Welche Testwerkzeuge werden genutzt? Sind diese zugaenglich fuer das gesamte Team?",
+            },
+            {
+                "id": "twz-2",
+                "text": "Das Testteam kennt die eingesetzten Werkzeuge.",
+                "hint": None,
+            },
+            {
+                "id": "twz-3",
+                "text": (
+                    "Die beteiligten Stakeholder des Werkzeuges (Einkauf, Projekt, Testteam) "
+                    "sind ueberzeugt vom Nutzen des Werkzeuges."
+                ),
+                "hint": None,
+            },
+        ],
+    },
+    {
+        "id": "testumgebung",
+        "title": "Testumgebung",
+        "parent": "Testkompetenz",
+        "description": (
+            "Die Testumgebung sollte auf die Ziele der einzelnen Teststufen angepasst sein "
+            "und die jeweils benoetigten Funktionalitaeten bieten."
+        ),
+        "questions": [
+            {
+                "id": "tum-1",
+                "text": "Es gibt klar definierte Anforderungen an die Testumgebung.",
+                "hint": "Wie viele User koennen gleichzeitig die Umgebung nutzen? Welche Verfuegbarkeiten gibt es?",
+            },
+            {
+                "id": "tum-2",
+                "text": (
+                    "Aufgaben und Verantwortlichkeiten zur Umgebung sind mit den "
+                    "zustaendigen Parteien (z.B. Umgebungsmanager) definiert und abgestimmt."
+                ),
+                "hint": "Wer ist fuer die Umgebung verantwortlich? Wer informiert ueber Downtimes und Testzeiten?",
+            },
+            {
+                "id": "tum-3",
+                "text": "Die Umgebung steht in den definierten Testzeitraeumen ohne Unterbrechung zur Verfuegung.",
+                "hint": "Steht die Umgebung waehrend des Tests uneingeschraenkt zur Verfuegung?",
+            },
+            {
+                "id": "tum-4",
+                "text": "Aenderungen der Testumgebung werden rechtzeitig an den Testmanager herangetragen.",
+                "hint": "Gibt es ein Change Management fuer Aenderungen? Wie viel Vorlaufzeit gibt es bei Aenderungen?",
+            },
+            {
+                "id": "tum-5",
+                "text": "Der Testmanager kann einen Freeze der Umgebung gemeinsam mit dem Projektleiter anfordern.",
+                "hint": "Kann ein Freeze der Umgebung eingefordert werden?",
+            },
+            {
+                "id": "tum-6",
+                "text": "Testdaten werden beruecksichtigt.",
+                "hint": "Sind Testdaten auf allen Umgebungen fuer den Test vorhanden? Sind diese vollstaendig nutzbar?",
             },
         ],
     },
 ]
 
 
-# Antwort-Optionen mit linearer Wertung wie vom Nutzer definiert
+# Antwort-Optionen mit linearer Wertung
 ANSWER_OPTIONS = [
-    {"id": "voll",   "label": "Trifft voll zu",  "score": 100},
-    {"id": "zu",     "label": "Trifft zu",       "score":  66},
-    {"id": "kaum",   "label": "Trifft kaum zu",  "score":  33},
-    {"id": "nicht",  "label": "Trifft nicht zu", "score":   0},
+    {"id": "voll",   "label": "Trifft voll zu",       "score": 100},
+    {"id": "teil",   "label": "Trifft zum Teil zu",   "score":  50},
+    {"id": "kaum",   "label": "Trifft kaum zu",       "score":  25},
+    {"id": "nicht",  "label": "Trifft nicht zu",      "score":   0},
 ]
 
 
 def total_question_count() -> int:
     return sum(len(c["questions"]) for c in CATEGORIES)
+
+
+def categories_by_parent() -> dict:
+    """Gibt ein Dict zurueck: {parent_name: [category, ...]}"""
+    result: dict = {}
+    for cat in CATEGORIES:
+        parent = cat.get("parent", "Sonstige")
+        result.setdefault(parent, []).append(cat)
+    return result
