@@ -8,7 +8,7 @@ Struktur:
   - 3 Hauptbereiche: Stakeholderbeziehung, Testmanagement, Testkompetenz
   - 19 Unterkategorien, ~83 Fragen insgesamt
 
-Erweitern: einfach neue Kategorien/Fragen anhaengen.
+Erweitern: einfach neue Kategorien/Fragen anhängen.
 """
 
 CATEGORIES = [
@@ -20,14 +20,14 @@ CATEGORIES = [
         "title": "Engagement der Stakeholder",
         "parent": "Stakeholderbeziehung",
         "description": (
-            "Das Engagement der Stakeholder ist massgebend fuer eine effiziente "
+            "Das Engagement der Stakeholder ist maßgebend für eine effiziente "
             "Kommunikation und gute Zusammenarbeit."
         ),
         "questions": [
             {
                 "id": "eng-1",
-                "text": "Der Anforderungsmanager/Fachbereich zustaendig fuer die Anforderungen ist bekannt.",
-                "hint": "Wissen Sie wer fuer welche Anforderung fachlich zustaendig ist?",
+                "text": "Der Anforderungsmanager/Fachbereich zuständig für die Anforderungen ist bekannt.",
+                "hint": "Wissen Sie wer für welche Anforderung fachlich zuständig ist?",
             },
             {
                 "id": "eng-2",
@@ -41,13 +41,13 @@ CATEGORIES = [
             },
             {
                 "id": "eng-4",
-                "text": "Die Testressourcen werden von den Stakeholdern zur Verfuegung gestellt.",
-                "hint": "Werden Tester aus den Fachbereichen nach Anfrage zur Verfuegung gestellt?",
+                "text": "Die Testressourcen werden von den Stakeholdern zur Verfügung gestellt.",
+                "hint": "Werden Tester aus den Fachbereichen nach Anfrage zur Verfügung gestellt?",
             },
             {
                 "id": "eng-5",
                 "text": "Der Auftraggeber hat eine dokumentierte Produktrisikoanalyse erstellt.",
-                "hint": "Gibt es eine Risikoanalyse fuer die Software?",
+                "hint": "Gibt es eine Risikoanalyse für die Software?",
             },
             {
                 "id": "eng-6",
@@ -77,20 +77,20 @@ CATEGORIES = [
         "parent": "Stakeholderbeziehung",
         "description": (
             "Ein hoher Grad der Beteiligung des Testteams im Projekt und Entwicklungsprozess "
-            "hilft dabei, die meisten Testaktivitaeten fern vom kritischen Pfad durchzufuehren."
+            "hilft dabei, die meisten Testaktivitäten fern vom kritischen Pfad durchzuführen."
         ),
         "questions": [
             {
                 "id": "bet-1",
                 "text": "Der Umfang, der Testauftrag und das Vorgehen sind mit dem Auftraggeber vereinbart.",
-                "hint": "Kennt der Auftraggeber die geschaetzte Dauer des Tests und hat den Inhalten zugestimmt?",
+                "hint": "Kennt der Auftraggeber die geschätzte Dauer des Tests und hat den Inhalten zugestimmt?",
             },
             {
                 "id": "bet-2",
                 "text": (
                     "Eine Person des Testteams wird in die Projektplanung einbezogen, "
-                    "sodass Abhaengigkeiten zwischen dem Testprozess und anderen Prozessen "
-                    "beruecksichtigt werden koennen."
+                    "sodass Abhängigkeiten zwischen dem Testprozess und anderen Prozessen "
+                    "berücksichtigt werden können."
                 ),
                 "hint": (
                     "Ist jemand aus dem Testteam von Anfang an im Projekt dabei? "
@@ -109,7 +109,7 @@ CATEGORIES = [
             },
             {
                 "id": "bet-5",
-                "text": "Nur die Testdurchfuehrung befindet sich auf dem kritischen Projektpfad.",
+                "text": "Nur die Testdurchführung befindet sich auf dem kritischen Projektpfad.",
                 "hint": "Wann wird mit der Testvorbereitung gestartet? Wann endet sie?",
             },
         ],
@@ -119,19 +119,19 @@ CATEGORIES = [
         "title": "Teststrategie",
         "parent": "Stakeholderbeziehung",
         "description": (
-            "Die Strategie sorgt fuer ein stimmiges Verhaeltnis von "
+            "Die Strategie sorgt für ein stimmiges Verhältnis von "
             "Aufwand/Ressourcen zu dem vorhandenen Risiko."
         ),
         "questions": [
             {
                 "id": "ts-1",
-                "text": "Produktrisiken, die den Go-live beeintraechtigen koennten, sind analysiert.",
-                "hint": "Gibt es spezielle Testfaelle fuer den Go-live zur Ueberpruefung der wichtigsten Funktionalitaeten?",
+                "text": "Produktrisiken, die den Go-live beeinträchtigen könnten, sind analysiert.",
+                "hint": "Gibt es spezielle Testfälle für den Go-live zur Überpruefung der wichtigsten Funktionalitäten?",
             },
             {
                 "id": "ts-2",
-                "text": "Produktrisiken sind in die Priorisierung der Testfaelle einbezogen.",
-                "hint": "Gibt es eine Priorisierung der Testfaelle? Wie wurde diese vorgenommen?",
+                "text": "Produktrisiken sind in die Priorisierung der Testfälle einbezogen.",
+                "hint": "Gibt es eine Priorisierung der Testfälle? Wie wurde diese vorgenommen?",
             },
             {
                 "id": "ts-3",
@@ -141,19 +141,19 @@ CATEGORIES = [
             {
                 "id": "ts-4",
                 "text": "Besonders risikobehaftete Softwarekomponenten oder Prozesse werden zuerst getestet.",
-                "hint": "Werden risikoreiche Softwarekomponenten zuerst getestet? Gibt es eine Uebersicht?",
+                "hint": "Werden risikoreiche Softwarekomponenten zuerst getestet? Gibt es eine Übersicht?",
             },
             {
                 "id": "ts-5",
                 "text": (
                     "Risiken werden bei verschiedenen Teststufen, Testarten sowie der "
-                    "Testabdeckung und Testintensitaet beruecksichtigt."
+                    "Testabdeckung und Testintensität berücksichtigt."
                 ),
                 "hint": "Erfolgt ein Test in verschiedenen Teststufen (Entwicklertests, Systemtest, Abnahmetests)?",
             },
             {
                 "id": "ts-6",
-                "text": "Fehlernachtests und Regressionstests werden durchgefuehrt.",
+                "text": "Fehlernachtests und Regressionstests werden durchgeführt.",
                 "hint": "Gibt es eine Empfehlung vom Entwickler, wie viel nach der Fehlerbehebung getestet wird?",
             },
         ],
@@ -163,7 +163,7 @@ CATEGORIES = [
         "title": "Testorganisation",
         "parent": "Stakeholderbeziehung",
         "description": (
-            "Die Testorganisation ist Wissensstraeger und sorgt dafuer, dass Testressourcen, "
+            "Die Testorganisation ist Wissensträger und sorgt dafür, dass Testressourcen, "
             "Testprodukte (Prozesse, Werkzeuge, Templates, Richtlinien) und "
             "Testdienstleistungen (Trainings) vorhanden sind."
         ),
@@ -171,20 +171,20 @@ CATEGORIES = [
             {
                 "id": "to-1",
                 "text": (
-                    "Es gibt eine Organisations- oder Projekteinheit, die fuer "
+                    "Es gibt eine Organisations- oder Projekteinheit, die für "
                     "Testprodukte und Hilfestellungen verantwortlich ist."
                 ),
                 "hint": "Existiert eine solche Einheit?",
             },
             {
                 "id": "to-2",
-                "text": "Es gibt eine Uebersicht der Produkte und Dienstleistungen, die den Testern bekannt ist.",
-                "hint": "Existiert eine Uebersicht der Produkte und Dienstleistungen (z.B. Templates) der Abteilung?",
+                "text": "Es gibt eine Übersicht der Produkte und Dienstleistungen, die den Testern bekannt ist.",
+                "hint": "Existiert eine Übersicht der Produkte und Dienstleistungen (z.B. Templates) der Abteilung?",
             },
             {
                 "id": "to-3",
                 "text": (
-                    "Es gibt klar definierte Verantwortlichkeiten und eine Rollenuebersicht "
+                    "Es gibt klar definierte Verantwortlichkeiten und eine Rollenübersicht "
                     "(Tester, Testdesigner, Entwickler, Releasemanager, Umgebungsmanager, "
                     "Projektleiter, Testmanager, Defectmanager inkl. Namen)."
                 ),
@@ -197,13 +197,13 @@ CATEGORIES = [
         "title": "Kommunikation",
         "parent": "Stakeholderbeziehung",
         "description": (
-            "Gezielte und transparente Informationsweitergabe foerdert ein gemeinsames "
-            "Verstaendnis und abgestimmte Erwartungshaltungen aller im Test beteiligten Personen."
+            "Gezielte und transparente Informationsweitergabe fördert ein gemeinsames "
+            "Verständnis und abgestimmte Erwartungshaltungen aller im Test beteiligten Personen."
         ),
         "questions": [
             {
                 "id": "kom-1",
-                "text": "Die Teammitglieder werden ueber Entscheidungen im Projekt informiert.",
+                "text": "Die Teammitglieder werden über Entscheidungen im Projekt informiert.",
                 "hint": "Wie erhalten Sie Informationen zu Entscheidungen im Projekt?",
             },
             {
@@ -213,26 +213,26 @@ CATEGORIES = [
             },
             {
                 "id": "kom-3",
-                "text": "Entscheidungen, Handlungen und Ergebnisse des Testteams koennen zurueckverfolgt werden.",
+                "text": "Entscheidungen, Handlungen und Ergebnisse des Testteams können zurückverfolgt werden.",
                 "hint": "Wie werden Entscheidungen vom Testteam festgehalten?",
             },
             {
                 "id": "kom-4",
                 "text": (
-                    "Es gibt regelmaessigen Austausch zwischen Testteam und Stakeholdern ueber "
-                    "Projekt- und Testfortschritt, Qualitaet des Produktes und Risiken."
+                    "Es gibt regelmäßigen Austausch zwischen Testteam und Stakeholdern über "
+                    "Projekt- und Testfortschritt, Qualität des Produktes und Risiken."
                 ),
-                "hint": "Gibt es ein Statusmeeting ueber den Testfortschritt und Fehler?",
+                "hint": "Gibt es ein Statusmeeting über den Testfortschritt und Fehler?",
             },
             {
                 "id": "kom-5",
-                "text": "Das Testteam gibt vorausschauend Hinweise auf Verzoegerungen/Probleme an die Stakeholder.",
+                "text": "Das Testteam gibt vorausschauend Hinweise auf Verzögerungen/Probleme an die Stakeholder.",
                 "hint": "Ist im Status eine Risikoabfrage vorhanden? Wie werden Probleme im Test adressiert?",
             },
             {
                 "id": "kom-6",
-                "text": "Das Testteam fragt aktiv nach fuer den Test relevanten Informationen bei den Stakeholdern nach.",
-                "hint": "Fragen Sie regelmaessig nach veraenderten/aktualisierten Anforderungen oder neuen Entwicklungen?",
+                "text": "Das Testteam fragt aktiv nach für den Test relevanten Informationen bei den Stakeholdern nach.",
+                "hint": "Fragen Sie regelmäßig nach veränderten/aktualisierten Anforderungen oder neuen Entwicklungen?",
             },
         ],
     },
@@ -241,17 +241,17 @@ CATEGORIES = [
         "title": "Berichterstattung",
         "parent": "Stakeholderbeziehung",
         "description": (
-            "Gibt dem Auftraggeber/Stakeholder konkrete Informationen ueber "
-            "Produktqualitaet/Risiken, sodass Entscheidungen getroffen werden koennen."
+            "Gibt dem Auftraggeber/Stakeholder konkrete Informationen über "
+            "Produktqualität/Risiken, sodass Entscheidungen getroffen werden können."
         ),
         "questions": [
             {
                 "id": "ber-1",
                 "text": (
-                    "Es gibt regelmaessige schriftliche Berichte ueber den Testfortschritt (IST/PLAN) "
-                    "in Bezug auf Zeit, Budget, Testfaellen und Fehlern."
+                    "Es gibt regelmäßige schriftliche Berichte über den Testfortschritt (IST/PLAN) "
+                    "in Bezug auf Zeit, Budget, Testfällen und Fehlern."
                 ),
-                "hint": "Gibt es Testberichte zum Fortschritt gegliedert nach Zeit/Budget/Testfaellen und Fehlern?",
+                "hint": "Gibt es Testberichte zum Fortschritt gegliedert nach Zeit/Budget/Testfällen und Fehlern?",
             },
             {
                 "id": "ber-2",
@@ -260,8 +260,8 @@ CATEGORIES = [
             },
             {
                 "id": "ber-3",
-                "text": "Die Stakeholder sind zufrieden mit dem Inhalt, der Qualitaet und der Haeufigkeit der Berichte.",
-                "hint": "Sind Sie zufrieden mit dem Inhalt, der Qualitaet und der Haeufigkeit der Berichte?",
+                "text": "Die Stakeholder sind zufrieden mit dem Inhalt, der Qualität und der Häufigkeit der Berichte.",
+                "hint": "Sind Sie zufrieden mit dem Inhalt, der Qualität und der Häufigkeit der Berichte?",
             },
             {
                 "id": "ber-4",
@@ -270,12 +270,12 @@ CATEGORIES = [
             },
             {
                 "id": "ber-5",
-                "text": "Es gibt Trendanalysen ueber Fehler/Testfaelle.",
+                "text": "Es gibt Trendanalysen über Fehler/Testfälle.",
                 "hint": None,
             },
             {
                 "id": "ber-6",
-                "text": "Die Berichte enthalten Empfehlungen fuer Entscheidungen.",
+                "text": "Die Berichte enthalten Empfehlungen für Entscheidungen.",
                 "hint": None,
             },
         ],
@@ -289,7 +289,7 @@ CATEGORIES = [
         "title": "Testprozessmanagement",
         "parent": "Testmanagement",
         "description": (
-            "Sorgt dafuer, dass der Testauftrag innerhalb von vorher abgestimmten "
+            "Sorgt dafür, dass der Testauftrag innerhalb von vorher abgestimmten "
             "Kosten, Zeit und Ergebnis optimiert wird."
         ),
         "questions": [
@@ -301,7 +301,7 @@ CATEGORIES = [
                 ),
                 "hint": (
                     "Gibt es einen zeitlichen Plan, wann welche Teststufe durchlaufen wird? "
-                    "Sind Ressourcen und Abwesenheiten beruecksichtigt?"
+                    "Sind Ressourcen und Abwesenheiten berücksichtigt?"
                 ),
             },
             {
@@ -314,12 +314,12 @@ CATEGORIES = [
             },
             {
                 "id": "tpm-3",
-                "text": "Die Erwartungen des Auftraggebers zu Umfang, Kosten und Qualitaet des Testens sind klar.",
+                "text": "Die Erwartungen des Auftraggebers zu Umfang, Kosten und Qualität des Testens sind klar.",
                 "hint": None,
             },
             {
                 "id": "tpm-4",
-                "text": "Ein Bericht gibt den Fortschritt des Testplans und geeignete Massnahmen wieder.",
+                "text": "Ein Bericht gibt den Fortschritt des Testplans und geeignete Maßnahmen wieder.",
                 "hint": None,
             },
             {
@@ -330,41 +330,41 @@ CATEGORIES = [
         ],
     },
     {
-        "id": "kostenschaetzung",
-        "title": "Kostenschaetzung und Planung",
+        "id": "kostenschätzung",
+        "title": "Kostenschätzung und Planung",
         "parent": "Testmanagement",
         "description": (
-            "Passende Schaetztechniken ermoeglichen eine realistische und "
-            "zuverlaessige Einschaetzung der Kosten und Planung des Testvorgehens."
+            "Passende Schätztechniken ermöglichen eine realistische und "
+            "zuverlässige Einschätzung der Kosten und Planung des Testvorgehens."
         ),
         "questions": [
             {
                 "id": "kp-1",
-                "text": "Es existiert eine Schaetzung der benoetigten Ressourcen pro Testaktivitaet.",
+                "text": "Es existiert eine Schätzung der benötigten Ressourcen pro Testaktivitaet.",
                 "hint": None,
             },
             {
                 "id": "kp-2",
-                "text": "Es gibt ein zugewiesenes Budget fuer jede Phase des Testprozesses.",
+                "text": "Es gibt ein zugewiesenes Budget für jede Phase des Testprozesses.",
                 "hint": None,
             },
             {
                 "id": "kp-3",
-                "text": "Der Auftraggeber wird aktiv in die Schaetzungen einbezogen.",
+                "text": "Der Auftraggeber wird aktiv in die Schätzungen einbezogen.",
                 "hint": None,
             },
             {
                 "id": "kp-4",
                 "text": (
-                    "Die Dauer der einzelnen Testaktivitaeten, die benoetigten Ressourcen "
+                    "Die Dauer der einzelnen Testaktivitäten, die benötigten Ressourcen "
                     "und die zu erwartenden Ergebnisse sind bekannt."
                 ),
                 "hint": None,
             },
             {
                 "id": "kp-5",
-                "text": "Die Testplanung beruecksichtigt Abhaengigkeiten zwischen einzelnen Phasen oder Aktivitaeten.",
-                "hint": "Werden Abhaengigkeiten zwischen Aktivitaeten in der Testplanung beruecksichtigt?",
+                "text": "Die Testplanung berücksichtigt Abhängigkeiten zwischen einzelnen Phasen oder Aktivitäten.",
+                "hint": "Werden Abhängigkeiten zwischen Aktivitäten in der Testplanung berücksichtigt?",
             },
         ],
     },
@@ -374,7 +374,7 @@ CATEGORIES = [
         "parent": "Testmanagement",
         "description": (
             "Durch Metriken ist eine objektive Messung des Fortschritts, "
-            "der Fehler und des Prozesses moeglich."
+            "der Fehler und des Prozesses möglich."
         ),
         "questions": [
             {
@@ -385,7 +385,7 @@ CATEGORIES = [
             {
                 "id": "met-2",
                 "text": (
-                    "Die benoetigten Daten werden synchron ermittelt und "
+                    "Die benötigten Daten werden synchron ermittelt und "
                     "alle Metriken werden zentral gespeichert."
                 ),
                 "hint": "Werden die zugrundeliegenden Daten der Metriken synchron ermittelt und zentral gespeichert?",
@@ -398,9 +398,9 @@ CATEGORIES = [
             {
                 "id": "met-4",
                 "text": (
-                    "Mindestens 7 der folgenden Metriken werden genutzt: Testueberdeckungsverhaeltnis, "
-                    "Anzahl Testfaelle geplant/bereits erstellt, Testfortschritt (Ist/Plan), "
-                    "Testdurchfuehrungsverhaeltnis, Fehlerschwere, Anzahl Produktionsfehler, "
+                    "Mindestens 7 der folgenden Metriken werden genutzt: Testüberdeckungsverhaeltnis, "
+                    "Anzahl Testfälle geplant/bereits erstellt, Testfortschritt (Ist/Plan), "
+                    "Testdurchführungsverhaeltnis, Fehlerschwere, Anzahl Produktionsfehler, "
                     "verbrauchter Budgetanteil, Testphasen/verbrauchte Stunden, Leerlaufrate, Testendekriterien."
                 ),
                 "hint": "Welche Metriken werden genutzt?",
@@ -412,7 +412,7 @@ CATEGORIES = [
         "title": "Fehlermanagement",
         "parent": "Testmanagement",
         "description": (
-            "Das Fehlermanagement verfolgt Fehler und ueberwacht deren Status einzeln und "
+            "Das Fehlermanagement verfolgt Fehler und überwacht deren Status einzeln und "
             "als Gesamtheit. Zusaetzlich analysiert es die Ursachen und gibt Handlungsempfehlungen."
         ),
         "questions": [
@@ -423,8 +423,8 @@ CATEGORIES = [
             },
             {
                 "id": "fm-2",
-                "text": "Regelmaessige Fehlerbesprechungen unterstuetzen das Fehlermanagement.",
-                "hint": "Gibt es regelmaessige Termine, um ueber bestimmte Fehler oder Fehleranfaelligkeiten zu sprechen?",
+                "text": "Regelmäßige Fehlerbesprechungen unterstuetzen das Fehlermanagement.",
+                "hint": "Gibt es regelmäßige Termine, um über bestimmte Fehler oder Fehleranfälligkeiten zu sprechen?",
             },
             {
                 "id": "fm-3",
@@ -436,8 +436,8 @@ CATEGORIES = [
             },
             {
                 "id": "fm-4",
-                "text": "Genutzte Fehlermanagementwerkzeuge sind fuer verantwortliche Personen nutzbar.",
-                "hint": "Sind die Fehler fuer alle einsehbar? Sind Schweredefinitionen transparent und bekannt?",
+                "text": "Genutzte Fehlermanagementwerkzeuge sind für verantwortliche Personen nutzbar.",
+                "hint": "Sind die Fehler für alle einsehbar? Sind Schweredefinitionen transparent und bekannt?",
             },
             {
                 "id": "fm-5",
@@ -459,17 +459,17 @@ CATEGORIES = [
         "title": "Testwaremanagement",
         "parent": "Testmanagement",
         "description": (
-            "Sorgt dafuer, dass die einzelnen Testprodukte zueinander "
-            "und zu den zugehoerigen Entwurfsdokumenten passen."
+            "Sorgt dafür, dass die einzelnen Testprodukte zueinander "
+            "und zu den zugehörigen Entwurfsdokumenten passen."
         ),
         "questions": [
             {
                 "id": "tw-1",
                 "text": (
-                    "Es gibt ein fuer das Testteam zugaengliches Versionsmanagement "
-                    "fuer die Testobjekte/Anforderungen (Versionsnummer und Name)."
+                    "Es gibt ein für das Testteam zugaengliches Versionsmanagement "
+                    "für die Testobjekte/Anforderungen (Versionsnummer und Name)."
                 ),
-                "hint": "Ist sofort klar, welche Fehler zu welcher Anforderungsversion gehoeren?",
+                "hint": "Ist sofort klar, welche Fehler zu welcher Anforderungsversion gehören?",
             },
             {
                 "id": "tw-2",
@@ -481,12 +481,12 @@ CATEGORIES = [
             },
             {
                 "id": "tw-3",
-                "text": "Die Testfaelle beziehen sich jeweils auf eine Version/Dokument der Testbasis.",
+                "text": "Die Testfälle beziehen sich jeweils auf eine Version/Dokument der Testbasis.",
                 "hint": None,
             },
             {
                 "id": "tw-4",
-                "text": "Testfaelle und Anforderungen sind miteinander verknuepft.",
+                "text": "Testfälle und Anforderungen sind miteinander verknuepft.",
                 "hint": "Ist der Weg von Anforderung zu Testfall zu Fehler nachvollziehbar?",
             },
         ],
@@ -501,7 +501,7 @@ CATEGORIES = [
         "parent": "Testkompetenz",
         "description": (
             "Eine Testmethode navigiert das Testvorgehen und hilft, mit Zielen und "
-            "Vorbedingungen ein ausgewogenes Verhaeltnis zwischen Ergebnistypen, "
+            "Vorbedingungen ein ausgewogenes Verhältnis zwischen Ergebnistypen, "
             "Risiken, Zeit und Kosten sicherzustellen."
         ),
         "questions": [
@@ -524,39 +524,39 @@ CATEGORIES = [
                     "Die einzelnen Testlevel/Teststufen sind abgestimmt auf das Projektvorgehen/"
                     "die Entwicklung und sind schriftlich festgehalten."
                 ),
-                "hint": "Sind die Umgebungen passend fuer den jeweiligen Test?",
+                "hint": "Sind die Umgebungen passend für den jeweiligen Test?",
             },
             {
                 "id": "mv-4",
-                "text": "Das Projekt- und Testteam unterstuetzt die gewaehlten Testmethoden.",
+                "text": "Das Projekt- und Testteam unterstuetzt die gewählten Testmethoden.",
                 "hint": None,
             },
         ],
     },
     {
-        "id": "professionalitaet",
-        "title": "Professionalitaet der Tester",
+        "id": "professionalität",
+        "title": "Professionalität der Tester",
         "parent": "Testkompetenz",
         "description": (
-            "Beschreibt die richtige Mischung aus unterschiedlichen Faehigkeiten und Fachwissen, "
+            "Beschreibt die richtige Mischung aus unterschiedlichen Fähigkeiten und Fachwissen, "
             "um die Tests mit dem erforderlichen Know-how zu unterstuetzen."
         ),
         "questions": [
             {
                 "id": "pro-1",
                 "text": (
-                    "Die Tester planen ihre Testaktivitaeten im Austausch mit den Kollegen, "
-                    "fuehren diese eigenstaendig durch und geben proaktiv Feedback."
+                    "Die Tester planen ihre Testaktivitäten im Austausch mit den Kollegen, "
+                    "fuehren diese eigenständig durch und geben proaktiv Feedback."
                 ),
-                "hint": "Wie planen Sie Ihre Testaktivitaeten? Was passiert, wenn Sie krank werden oder Urlaub planen?",
+                "hint": "Wie planen Sie Ihre Testaktivitäten? Was passiert, wenn Sie krank werden oder Urlaub planen?",
             },
             {
                 "id": "pro-2",
                 "text": (
                     "Die Tester erhalten dedizierte Testschulungen oder haben bereits "
-                    "ausreichende Erfahrungen bei der strukturierten Testdurchfuehrung."
+                    "ausreichende Erfahrungen bei der strukturierten Testdurchführung."
                 ),
-                "hint": "Gibt es Schulungen zu Testvorgaben? Ist eine Schulungsteilnahme bei Bedarf moeglich?",
+                "hint": "Gibt es Schulungen zu Testvorgaben? Ist eine Schulungsteilnahme bei Bedarf möglich?",
             },
             {
                 "id": "pro-3",
@@ -576,8 +576,8 @@ CATEGORIES = [
             {
                 "id": "pro-6",
                 "text": (
-                    "Es gibt regelmaessige Leistungsbeurteilungen der Tester "
-                    "in Bezug auf ihre Test- und IT-Faehigkeiten."
+                    "Es gibt regelmäßige Leistungsbeurteilungen der Tester "
+                    "in Bezug auf ihre Test- und IT-Fähigkeiten."
                 ),
                 "hint": None,
             },
@@ -591,12 +591,12 @@ CATEGORIES = [
         "questions": [
             {
                 "id": "tfd-1",
-                "text": "Testfaelle sind personenunabhaengig wiederholbar (aehnlicher Wissensstand der Tester vorausgesetzt).",
+                "text": "Testfälle sind personenunabhängig wiederholbar (aehnlicher Wissensstand der Tester vorausgesetzt).",
                 "hint": None,
             },
             {
                 "id": "tfd-2",
-                "text": "Es werden zunaechst logische Testfaelle beschrieben, die dann konkretisiert werden.",
+                "text": "Es werden zunaechst logische Testfälle beschrieben, die dann konkretisiert werden.",
                 "hint": None,
             },
             {
@@ -624,18 +624,18 @@ CATEGORIES = [
         "title": "Testwerkzeuge",
         "parent": "Testkompetenz",
         "description": (
-            "Testwerkzeuge beschleunigen/ermoeglichen die Testaktivitaeten, "
+            "Testwerkzeuge beschleunigen/ermöglichen die Testaktivitäten, "
             "indem sie dem Testteam Arbeit abnehmen."
         ),
         "questions": [
             {
                 "id": "twz-1",
                 "text": (
-                    "Testwerkzeuge, die fuer die Testaktivitaeten benoetigt werden, "
-                    "sind zugaenglich fuer das Testteam "
-                    "(z.B. Planungswerkzeuge, Stubs, Steuerungswerkzeuge, Testdurchfuehrungswerkzeuge)."
+                    "Testwerkzeuge, die für die Testaktivitäten benötigt werden, "
+                    "sind zugaenglich für das Testteam "
+                    "(z.B. Planungswerkzeuge, Stubs, Steuerungswerkzeuge, Testdurchführungswerkzeuge)."
                 ),
-                "hint": "Welche Testwerkzeuge werden genutzt? Sind diese zugaenglich fuer das gesamte Team?",
+                "hint": "Welche Testwerkzeuge werden genutzt? Sind diese zugaenglich für das gesamte Team?",
             },
             {
                 "id": "twz-2",
@@ -646,7 +646,7 @@ CATEGORIES = [
                 "id": "twz-3",
                 "text": (
                     "Die beteiligten Stakeholder des Werkzeuges (Einkauf, Projekt, Testteam) "
-                    "sind ueberzeugt vom Nutzen des Werkzeuges."
+                    "sind überzeugt vom Nutzen des Werkzeuges."
                 ),
                 "hint": None,
             },
@@ -658,31 +658,31 @@ CATEGORIES = [
         "parent": "Testkompetenz",
         "description": (
             "Die Testumgebung sollte auf die Ziele der einzelnen Teststufen angepasst sein "
-            "und die jeweils benoetigten Funktionalitaeten bieten."
+            "und die jeweils benötigten Funktionalitäten bieten."
         ),
         "questions": [
             {
                 "id": "tum-1",
                 "text": "Es gibt klar definierte Anforderungen an die Testumgebung.",
-                "hint": "Wie viele User koennen gleichzeitig die Umgebung nutzen? Welche Verfuegbarkeiten gibt es?",
+                "hint": "Wie viele User können gleichzeitig die Umgebung nutzen? Welche Verfügbarkeiten gibt es?",
             },
             {
                 "id": "tum-2",
                 "text": (
                     "Aufgaben und Verantwortlichkeiten zur Umgebung sind mit den "
-                    "zustaendigen Parteien (z.B. Umgebungsmanager) definiert und abgestimmt."
+                    "zuständigen Parteien (z.B. Umgebungsmanager) definiert und abgestimmt."
                 ),
-                "hint": "Wer ist fuer die Umgebung verantwortlich? Wer informiert ueber Downtimes und Testzeiten?",
+                "hint": "Wer ist für die Umgebung verantwortlich? Wer informiert über Downtimes und Testzeiten?",
             },
             {
                 "id": "tum-3",
-                "text": "Die Umgebung steht in den definierten Testzeitraeumen ohne Unterbrechung zur Verfuegung.",
-                "hint": "Steht die Umgebung waehrend des Tests uneingeschraenkt zur Verfuegung?",
+                "text": "Die Umgebung steht in den definierten Testzeitraeumen ohne Unterbrechung zur Verfügung.",
+                "hint": "Steht die Umgebung waehrend des Tests uneingeschraenkt zur Verfügung?",
             },
             {
                 "id": "tum-4",
                 "text": "Aenderungen der Testumgebung werden rechtzeitig an den Testmanager herangetragen.",
-                "hint": "Gibt es ein Change Management fuer Aenderungen? Wie viel Vorlaufzeit gibt es bei Aenderungen?",
+                "hint": "Gibt es ein Change Management für Aenderungen? Wie viel Vorlaufzeit gibt es bei Aenderungen?",
             },
             {
                 "id": "tum-5",
@@ -691,8 +691,8 @@ CATEGORIES = [
             },
             {
                 "id": "tum-6",
-                "text": "Testdaten werden beruecksichtigt.",
-                "hint": "Sind Testdaten auf allen Umgebungen fuer den Test vorhanden? Sind diese vollstaendig nutzbar?",
+                "text": "Testdaten werden berücksichtigt.",
+                "hint": "Sind Testdaten auf allen Umgebungen für den Test vorhanden? Sind diese vollständig nutzbar?",
             },
         ],
     },
@@ -713,7 +713,7 @@ def total_question_count() -> int:
 
 
 def categories_by_parent() -> dict:
-    """Gibt ein Dict zurueck: {parent_name: [category, ...]}"""
+    """Gibt ein Dict zurück: {parent_name: [category, ...]}"""
     result: dict = {}
     for cat in CATEGORIES:
         parent = cat.get("parent", "Sonstige")
