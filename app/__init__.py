@@ -20,6 +20,7 @@ Routes:
 from __future__ import annotations
 
 import io
+import os
 import datetime as dt
 from pathlib import Path
 from collections import OrderedDict
@@ -42,8 +43,15 @@ ROOT = Path(__file__).parent.parent
 def create_app() -> Flask:
     app = Flask(__name__, template_folder="templates", static_folder="static")
 
-    app.config["SECRET_KEY"] = "warp-dev-secret-key-change-in-production"
-    app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{ROOT / 'warp.db'}"
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "warp-dev-secret-key-change-in-production")
+
+    # Render.com: DATABASE_URL setzen auf einen Persistent-Disk-Pfad oder PostgreSQL-URL.
+    # Lokal: SQLite im Projektverzeichnis.
+    db_url = os.environ.get("DATABASE_URL", f"sqlite:///{ROOT / 'warp.db'}")
+    # Render liefert postgres://-URLs; SQLAlchemy 2.x braucht postgresql://
+    if db_url.startswith("postgres://"):
+        db_url = db_url.replace("postgres://", "postgresql://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
@@ -58,21 +66,30 @@ def create_app() -> Flask:
         return db.session.get(User, int(user_id))
 
     with app.app_context():
-        db.create_all()
-        if not db.session.execute(db.select(User)).first():
-            default = User(username="admin", display_name="Administrator", is_admin=True)
-            default.set_password("warp2024")
-            db.session.add(default)
-            db.session.commit()
-            print("[WARP] Standard-Admin erstellt: admin / warp2024")
-        else:
-            # Sicherstellen dass der admin-User is_admin=True hat (Migration)
+        # checkfirst=True ist Standard, aber bei mehreren Gunicorn-Workern kann es
+        # trotzdem zu Race Conditions kommen → zusätzlicher try/except.
+        try:
+            db.create_all()
+        except Exception:
+            db.session.rollback()
+
+        # Admin-Anlage race-condition-sicher: spezifisch nach 'admin' suchen,
+        # UNIQUE-Fehler abfangen falls zwei Worker gleichzeitig versuchen zu schreiben.
+        try:
             admin_user = db.session.execute(
                 db.select(User).where(User.username == "admin")
             ).scalar_one_or_none()
-            if admin_user and not admin_user.is_admin:
+            if not admin_user:
+                default = User(username="admin", display_name="Administrator", is_admin=True)
+                default.set_password("warp2024")
+                db.session.add(default)
+                db.session.commit()
+                print("[WARP] Standard-Admin erstellt: admin / warp2024")
+            elif not admin_user.is_admin:
                 admin_user.is_admin = True
                 db.session.commit()
+        except Exception:
+            db.session.rollback()
 
     score_lookup = {opt["id"]: opt["score"] for opt in ANSWER_OPTIONS}
     label_lookup = {opt["id"]: opt["label"] for opt in ANSWER_OPTIONS}
