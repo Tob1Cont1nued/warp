@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Registrierung</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body class="login-page">
+
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="login-brand-name">WARP</span>
+      <span class="login-brand-tagline">Wavestone Assessment Risk Planner</span>
+    </div>
+
+    <p style="margin:0; font-size:13px; color:var(--c-text-muted);">Neues Konto erstellen</p>
+
+    {% if error %}
+    <div class="login-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('register') }}">
+      <div class="field">
+        <label for="username">Benutzername</label>
+        <input type="text" id="username" name="username" autocomplete="username" required autofocus />
+      </div>
+      <div class="field">
+        <label for="display_name">Anzeigename <span style="font-weight:400;color:var(--c-text-muted)">(optional)</span></label>
+        <input type="text" id="display_name" name="display_name" placeholder="z.B. Max Mustermann" />
+      </div>
+      <div class="field">
+        <label for="password">Passwort <span style="font-weight:400;color:var(--c-text-muted)">(min. 6 Zeichen)</span></label>
+        <input type="password" id="password" name="password" autocomplete="new-password" required />
+      </div>
+      <div class="field">
+        <label for="password2">Passwort bestätigen</label>
+        <input type="password" id="password2" name="password2" autocomplete="new-password" required />
+      </div>
+      <button type="submit" class="btn btn-primary login-btn">Registrieren</button>
+    </form>
+
+    <a href="{{ url_for('login') }}" class="login-switch-link">Bereits registriert? Anmelden</a>
+
+    <div class="login-foot">
+      <span class="brand-mark"></span>
+      <span class="login-foot-brand">wavestone</span>
+    </div>
+  </div>
+
+</body>
+</html>

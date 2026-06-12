@@ -1,10 +1,10 @@
-{# WARP Tool - Fragenkatalog Hauptansicht #}
+{# WARP Tool - Fragenkatalog #}
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>WARP &middot; Fragenkatalog</title>
+  <title>WARP &middot; {{ project.name }}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
 </head>
 <body>
@@ -30,159 +30,298 @@
 
 <aside class="sidebar" id="js-sidebar">
   <div class="sidebar-logo">
-    <img src="{{ url_for('static', filename='img/warp-logo-1.svg') }}" alt="WARP" />
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-name">WARP</span>
+      <span class="sidebar-brand-tagline">Wavestone Assessment Risk Planner</span>
+    </div>
   </div>
+
+  <div class="sidebar-projects">
+    <div class="sidebar-projects-header">
+      <span>Meine Projekte</span>
+      <a href="{{ url_for('new_project') }}" class="sidebar-new-btn" title="Neues Projekt">+</a>
+    </div>
+    <nav class="sidebar-projects-list">
+      {% for p in projects %}
+      <div class="sidebar-project-row {% if p.id == project.id %}active{% endif %}">
+        <a href="{{ url_for('questionnaire', pid=p.id) }}" class="sidebar-project-name">{{ p.name }}</a>
+        <form method="POST" action="{{ url_for('delete_project', pid=p.id) }}"
+              data-confirm="Soll das Projekt »{{ p.name }}« wirklich gelöscht werden?">
+          <button type="submit" class="sidebar-project-delete" title="Löschen">&times;</button>
+        </form>
+      </div>
+      {% endfor %}
+    </nav>
+  </div>
+
   <nav class="sidebar-nav">
     <a class="sidebar-nav-item active" href="#"><span class="dot"></span>Fragenkatalog</a>
     <a class="sidebar-nav-item" href="#auswertung-section"><span class="dot"></span>Auswertung</a>
   </nav>
+
+  <div class="sidebar-downloads">
+    <span class="sidebar-downloads-label">Vorlagen</span>
+    <a class="sidebar-download-btn"
+       href="{{ url_for('static', filename='docs/WARP_Mastertestkonzept.docx') }}"
+       download>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+        <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
+      </svg>
+      Mastertestkonzept
+    </a>
+    <a class="sidebar-download-btn"
+       href="{{ url_for('static', filename='docs/WARP_Teststrategie.docx') }}"
+       download>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+        <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
+      </svg>
+      Teststrategie
+    </a>
+    <a class="sidebar-download-btn"
+       href="{{ url_for('static', filename='docs/WARP_Stufentestkonzept.docx') }}"
+       download>
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+        <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
+      </svg>
+      Teststufenkonzept
+    </a>
+  </div>
+
   <div class="sidebar-foot">
+    <div class="sidebar-foot-user">
+      <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
+      <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
+    </div>
     <div class="sidebar-foot-brand">
       <span class="brand-mark"></span>
       <span class="brand-name">wavestone</span>
     </div>
-    <span class="sidebar-foot-meta">WARP Tool &middot; v1.0</span>
+    <span class="sidebar-foot-meta">WARP Tool &middot; v0.1</span>
   </div>
 </aside>
 
 <main class="main">
 
-  <form id="warp-form" method="POST" action="{{ url_for('report_pdf') }}">
-
-    <section class="card project-card">
-      <h2>Projektinformationen</h2>
-      <p class="card-sub">Diese Angaben erscheinen auf der ersten Seite des PDF-Reports.</p>
-      <div class="field-grid">
-        <div class="field">
-          <label for="project_name">Projektname</label>
-          <input type="text" id="project_name" name="project_name" placeholder="z.B. Analyse Test-Reifegrad &mdash; Kunde XY" required />
-        </div>
-        <div class="field">
-          <label for="project_owner">Verantwortliche/r</label>
-          <input type="text" id="project_owner" name="project_owner" placeholder="z.B. Max Mustermann" />
-        </div>
-        <div class="field">
-          <label for="project_date">Datum</label>
-          <input type="date" id="project_date" name="project_date" value="{{ today }}" />
-        </div>
+  <div class="card project-card">
+    <h2>Projektinformationen</h2>
+    <p class="card-sub">Diese Angaben erscheinen auf der ersten Seite des PDF-Reports.</p>
+    <div class="field-grid">
+      <div class="field">
+        <label for="project_name">Projektname</label>
+        <input type="text" id="project_name" name="project_name"
+               value="{{ project.name }}"
+               placeholder="z.B. Analyse Test-Reifegrad — Kunde XY" />
       </div>
-    </section>
+      <div class="field">
+        <label for="project_owner">Verantwortliche/r</label>
+        <input type="text" id="project_owner" name="project_owner"
+               value="{{ project.owner or '' }}"
+               placeholder="z.B. Max Mustermann" />
+      </div>
+      <div class="field">
+        <label for="project_date">Datum</label>
+        <input type="date" id="project_date" name="project_date"
+               value="{{ project.date or today }}" />
+      </div>
+    </div>
+  </div>
 
-    {% for cat in categories %}
-    <section class="card category-card" id="cat-{{ cat.id }}">
-      <header class="category-head">
-        <div>
-          <h2>{{ cat.title }}</h2>
-          <p>{{ cat.description }}</p>
-        </div>
-        <span class="cat-counter" data-cat="{{ cat.id }}" data-total="{{ cat.questions | length }}">
-          0&nbsp;/&nbsp;{{ cat.questions | length }}
-        </span>
-      </header>
-
-      <table class="qtable">
-        <thead>
-          <tr>
-            <th class="col-num">#</th>
-            <th class="col-question">Frage</th>
-            <th class="col-hint">Hilfsfrage</th>
-            <th class="col-answer">Bewertung</th>
-            <th class="col-notes">Notizen</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for q in cat.questions %}
-          <tr data-cat="{{ cat.id }}">
-            <td class="col-num">{{ loop.index }}</td>
-            <td class="col-question">{{ q.text }}</td>
-            <td class="col-hint">
-              {% if q.hint %}<em>{{ q.hint }}</em>{% else %}<span class="muted">&mdash;</span>{% endif %}
-            </td>
-            <td class="col-answer" data-label="Bewertung">
-              <select name="answer-{{ q.id }}" class="js-answer" data-cat="{{ cat.id }}">
-                <option value="">Bitte wählen …</option>
-                {% for opt in answer_options %}
-                  <option value="{{ opt.id }}">{{ opt.label }}</option>
-                {% endfor %}
-              </select>
-            </td>
-            <td class="col-notes" data-label="Notizen (optional)">
-              <textarea name="note-{{ q.id }}" rows="2" placeholder="Optional ..."></textarea>
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </section>
-    {% endfor %}
-
-    <section class="card submit-card" id="auswertung-section">
+  {% for cat in categories %}
+  <section class="card category-card" id="cat-{{ cat.id }}">
+    <header class="category-head">
       <div>
-        <h2>Auswertung erzeugen</h2>
-        <p>Der Report wird als PDF mit Wavestone-Branding, Gesamtscore, Kategorie-Charts und Fragen-Detail erzeugt.</p>
+        <h2>{{ cat.title }}</h2>
+        <p>{{ cat.description }}</p>
       </div>
-      <div class="submit-actions">
-        <button type="submit" formaction="{{ url_for('report_html') }}" formtarget="_blank" class="btn btn-secondary">
-          Vorschau (HTML)
-        </button>
-        <button type="submit" class="btn btn-primary">
-          PDF herunterladen
-        </button>
-      </div>
-    </section>
+      <span class="cat-counter" data-cat="{{ cat.id }}" data-total="{{ cat.questions | length }}">
+        0&nbsp;/&nbsp;{{ cat.questions | length }}
+      </span>
+    </header>
 
-  </form>
+    <table class="qtable">
+      <thead>
+        <tr>
+          <th class="col-num">#</th>
+          <th class="col-question">Frage</th>
+          <th class="col-hint">Hilfsfrage</th>
+          <th class="col-answer">Bewertung</th>
+          <th class="col-notes">Notizen</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in cat.questions %}
+        <tr data-cat="{{ cat.id }}">
+          <td class="col-num">{{ loop.index }}</td>
+          <td class="col-question">{{ q.text }}</td>
+          <td class="col-hint">
+            {% if q.hint %}<em>{{ q.hint }}</em>{% else %}<span class="muted">&mdash;</span>{% endif %}
+          </td>
+          <td class="col-answer" data-label="Bewertung">
+            <select class="js-answer" data-cat="{{ cat.id }}" data-qid="{{ q.id }}">
+              <option value="">Bitte wählen …</option>
+              {% for opt in answer_options %}
+                <option value="{{ opt.id }}"
+                  {% if saved_answers.get(q.id) == opt.id %}selected{% endif %}>
+                  {{ opt.label }}
+                </option>
+              {% endfor %}
+            </select>
+          </td>
+          <td class="col-notes" data-label="Notizen (optional)">
+            <textarea class="js-note" data-qid="{{ q.id }}" rows="2"
+                      placeholder="Optional ...">{{ saved_notes.get(q.id, '') }}</textarea>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endfor %}
+
+  <section class="card submit-card" id="auswertung-section">
+    <div>
+      <h2>Auswertung erzeugen</h2>
+      <p>Der Report wird als PDF mit Wavestone-Branding, Gesamtscore, Kategorie-Charts und Fragen-Detail erzeugt.</p>
+    </div>
+    <div class="submit-actions">
+      <form method="POST" action="{{ url_for('project_report_html', pid=project.id) }}" target="_blank">
+        <button type="submit" class="btn btn-secondary">Vorschau (HTML)</button>
+      </form>
+      <form method="POST" action="{{ url_for('project_report_pdf', pid=project.id) }}">
+        <button type="submit" class="btn btn-primary">PDF herunterladen</button>
+      </form>
+    </div>
+  </section>
+
 </main>
 
+{# ── Bestätigungs-Modal ────────────────────────────────────────────── #}
+<div class="modal-backdrop" id="js-modal-backdrop">
+  <div class="modal">
+    <p class="modal-title">Aktion bestätigen</p>
+    <p class="modal-message" id="js-modal-message"></p>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="js-modal-cancel">Abbrechen</button>
+      <button type="button" class="modal-confirm" id="js-modal-confirm">Löschen</button>
+    </div>
+  </div>
+</div>
+
 <script>
-  // Drawer-Toggle (mobile)
-  (function() {
-    const sb = document.getElementById('js-sidebar');
-    const bd = document.getElementById('js-backdrop');
-    const bt = document.getElementById('js-burger');
-    function close(){ sb.classList.remove('open'); bd.classList.remove('open'); }
-    bt.addEventListener('click', () => {
-      const open = !sb.classList.contains('open');
-      sb.classList.toggle('open', open);
-      bd.classList.toggle('open', open);
+(function () {
+  const PROJECT_ID = {{ project.id }};
+  const SAVE_URL   = "/project/" + PROJECT_ID + "/answer";
+  const INFO_URL   = "/project/" + PROJECT_ID + "/info";
+
+  // ── Drawer-Toggle (mobile) ──────────────────────────────────────────
+  const sb = document.getElementById("js-sidebar");
+  const bd = document.getElementById("js-backdrop");
+  const bt = document.getElementById("js-burger");
+  function closeSidebar() { sb.classList.remove("open"); bd.classList.remove("open"); }
+  bt.addEventListener("click", () => {
+    const open = !sb.classList.contains("open");
+    sb.classList.toggle("open", open);
+    bd.classList.toggle("open", open);
+  });
+  bd.addEventListener("click", closeSidebar);
+  sb.querySelectorAll("a").forEach(a => a.addEventListener("click", closeSidebar));
+
+  // ── AJAX Helper ─────────────────────────────────────────────────────
+  function post(url, body) {
+    return fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
     });
-    bd.addEventListener('click', close);
-    sb.querySelectorAll('a').forEach(a => a.addEventListener('click', close));
-  })();
+  }
 
-  // Live-Counter fuer beantwortete Fragen
-  (function() {
-    const total = {{ total_questions }};
-    const answeredEl = document.getElementById('js-answered');
-    const barEl = document.getElementById('js-progress-bar');
-    const selects = document.querySelectorAll('.js-answer');
-
-    function update() {
-      let filled = 0;
-      const perCat = {};
-      selects.forEach(s => {
-        const cat = s.dataset.cat;
-        perCat[cat] = perCat[cat] || 0;
-        if (s.value) {
-          filled++;
-          perCat[cat]++;
-        }
+  // ── Projektinfos auto-speichern ─────────────────────────────────────
+  let infoTimer = null;
+  function scheduleInfoSave() {
+    clearTimeout(infoTimer);
+    infoTimer = setTimeout(() => {
+      post(INFO_URL, {
+        name:  document.getElementById("project_name").value,
+        owner: document.getElementById("project_owner").value,
+        date:  document.getElementById("project_date").value,
       });
-      answeredEl.textContent = filled;
-      barEl.style.width = (filled / total * 100) + '%';
+    }, 600);
+  }
+  ["project_name", "project_owner", "project_date"].forEach(id => {
+    document.getElementById(id).addEventListener("input", scheduleInfoSave);
+    document.getElementById(id).addEventListener("change", scheduleInfoSave);
+  });
 
-      document.querySelectorAll('.cat-counter').forEach(el => {
-        const c = el.dataset.cat;
-        const t = el.dataset.total;
-        const n = perCat[c] || 0;
-        el.textContent = n + ' / ' + t;
-        el.classList.toggle('complete', String(n) === t);
-      });
-    }
+  // ── Antworten auto-speichern + Fortschrittsbalken ──────────────────
+  const total      = {{ total_questions }};
+  const answeredEl = document.getElementById("js-answered");
+  const barEl      = document.getElementById("js-progress-bar");
+  const selects    = document.querySelectorAll(".js-answer");
 
-    selects.forEach(s => s.addEventListener('change', update));
-    update();
-  })();
+  function updateCounter() {
+    let filled = 0;
+    const perCat = {};
+    selects.forEach(s => {
+      const cat = s.dataset.cat;
+      perCat[cat] = perCat[cat] || 0;
+      if (s.value) { filled++; perCat[cat]++; }
+    });
+    answeredEl.textContent = filled;
+    barEl.style.width = (filled / total * 100) + "%";
+    document.querySelectorAll(".cat-counter").forEach(el => {
+      const c = el.dataset.cat, t = el.dataset.total, n = perCat[c] || 0;
+      el.textContent = n + " / " + t;
+      el.classList.toggle("complete", String(n) === t);
+    });
+  }
+
+  selects.forEach(s => {
+    s.addEventListener("change", () => {
+      updateCounter();
+      post(SAVE_URL, { question_id: s.dataset.qid, answer_id: s.value });
+    });
+  });
+
+  // ── Notizen auto-speichern (debounced) ──────────────────────────────
+  const noteTimers = {};
+  document.querySelectorAll(".js-note").forEach(ta => {
+    ta.addEventListener("input", () => {
+      clearTimeout(noteTimers[ta.dataset.qid]);
+      noteTimers[ta.dataset.qid] = setTimeout(() => {
+        post(SAVE_URL, { question_id: ta.dataset.qid, note: ta.value });
+      }, 800);
+    });
+  });
+
+  updateCounter();
+})();
+
+// ── Bestätigungs-Modal ───────────────────────────────────────────────
+(function () {
+  const backdrop = document.getElementById("js-modal-backdrop");
+  const msgEl    = document.getElementById("js-modal-message");
+  const okBtn    = document.getElementById("js-modal-confirm");
+  const cancelBtn= document.getElementById("js-modal-cancel");
+  let pending = null;
+
+  document.querySelectorAll("form[data-confirm]").forEach(form => {
+    form.addEventListener("submit", function (e) {
+      if (form.dataset.confirmed) { delete form.dataset.confirmed; return; }
+      e.preventDefault();
+      msgEl.textContent = form.dataset.confirm;
+      pending = form;
+      backdrop.classList.add("open");
+    });
+  });
+
+  okBtn.addEventListener("click", () => {
+    backdrop.classList.remove("open");
+    if (pending) { pending.dataset.confirmed = "1"; pending.submit(); pending = null; }
+  });
+  const close = () => { backdrop.classList.remove("open"); pending = null; };
+  cancelBtn.addEventListener("click", close);
+  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+})();
 </script>
 
 </body>

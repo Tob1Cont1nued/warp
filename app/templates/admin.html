@@ -1,0 +1,191 @@
+{# WARP Admin – Benutzer- & Projektübersicht #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Admin</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>Admin-Übersicht</h1>
+    <p>Benutzer &amp; Projekte verwalten</p>
+  </div>
+</header>
+
+<div class="sidebar-backdrop" id="js-backdrop"></div>
+
+<aside class="sidebar" id="js-sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-name">WARP</span>
+      <span class="sidebar-brand-tagline">Wavestone Assessment Risk Planner</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item active" href="{{ url_for('admin_overview') }}">
+      <span class="dot"></span>Übersicht
+    </a>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="sidebar-foot-user">
+      <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
+      <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
+    </div>
+    <div class="sidebar-foot-brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">wavestone</span>
+    </div>
+    <span class="sidebar-foot-meta">WARP Tool &middot; v0.1 &middot; Admin</span>
+  </div>
+</aside>
+
+<main class="main">
+
+  {# ── Neuen Benutzer anlegen ─────────────────────────────────────── #}
+  <section class="card admin-new-user-card">
+    <h2>Neuen Benutzer anlegen</h2>
+    {% if error %}
+    <div class="login-error" style="margin-bottom:12px">{{ error }}</div>
+    {% endif %}
+    <form method="POST" action="{{ url_for('admin_user_new') }}" class="admin-new-user-form">
+      <div class="field">
+        <label for="username">Benutzername</label>
+        <input type="text" id="username" name="username" required placeholder="z.B. max.muster" />
+      </div>
+      <div class="field">
+        <label for="display_name">Anzeigename <span class="label-optional">(optional)</span></label>
+        <input type="text" id="display_name" name="display_name" placeholder="z.B. Max Mustermann" />
+      </div>
+      <div class="field">
+        <label for="password">Passwort <span class="label-optional">(min. 6 Zeichen)</span></label>
+        <input type="password" id="password" name="password" required />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 24px">Benutzer anlegen</button>
+    </form>
+  </section>
+
+  {# ── Benutzerliste ──────────────────────────────────────────────── #}
+  {% if not users %}
+  <div class="card" style="text-align:center;color:var(--c-text-muted);padding:40px 24px">
+    Noch keine Benutzer vorhanden.
+  </div>
+  {% endif %}
+
+  {% for user in users %}
+  <section class="card admin-user-card">
+    <header class="admin-user-head">
+      <div class="admin-user-info">
+        <span class="admin-user-name">
+          {{ user.display_name or user.username }}
+          {% if user.is_locked %}<span class="admin-locked-badge">gesperrt</span>{% endif %}
+        </span>
+        <span class="admin-user-meta">@{{ user.username }} &nbsp;&middot;&nbsp; {{ user.projects | length }} Projekt(e)</span>
+      </div>
+      <div class="admin-user-actions">
+        <form method="POST" action="{{ url_for('admin_user_toggle_lock', uid=user.id) }}">
+          <button type="submit" class="btn-admin-action {% if user.is_locked %}btn-admin-unlock{% else %}btn-admin-lock{% endif %}">
+            {% if user.is_locked %}Entsperren{% else %}Sperren{% endif %}
+          </button>
+        </form>
+        <form method="POST" action="{{ url_for('admin_user_delete', uid=user.id) }}"
+              data-confirm="Benutzer »{{ user.display_name or user.username }}« und alle seine Projekte wirklich löschen?">
+          <button type="submit" class="btn-admin-action btn-admin-delete-user">Löschen</button>
+        </form>
+      </div>
+    </header>
+
+    {% if user.projects %}
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Projektname</th>
+          <th>Erstellt am</th>
+          <th>Verantwortliche/r</th>
+          <th>Antworten</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for project in user.projects %}
+        <tr>
+          <td class="admin-col-name">{{ project.name }}</td>
+          <td class="admin-col-date">{{ project.created_at.strftime('%d.%m.%Y') if project.created_at else '—' }}</td>
+          <td class="admin-col-owner">{{ project.owner or '—' }}</td>
+          <td class="admin-col-answers">{{ project.answers | length }} / {{ total_questions }}</td>
+          <td class="admin-col-action">
+            <form method="POST" action="{{ url_for('delete_project', pid=project.id) }}"
+                  data-confirm="Soll das Projekt »{{ project.name }}« wirklich gelöscht werden?">
+              <button type="submit" class="btn-admin-delete">Löschen</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p class="admin-no-projects">Keine Projekte vorhanden.</p>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+</main>
+
+<div class="modal-backdrop" id="js-modal-backdrop">
+  <div class="modal">
+    <p class="modal-title">Aktion bestätigen</p>
+    <p class="modal-message" id="js-modal-message"></p>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="js-modal-cancel">Abbrechen</button>
+      <button type="button" class="modal-confirm" id="js-modal-confirm">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const sb = document.getElementById("js-sidebar");
+    const bd = document.getElementById("js-backdrop");
+    const bt = document.getElementById("js-burger");
+    function closeSidebar() { sb.classList.remove("open"); bd.classList.remove("open"); }
+    bt.addEventListener("click", () => { sb.classList.toggle("open"); bd.classList.toggle("open"); });
+    bd.addEventListener("click", closeSidebar);
+  })();
+
+  (function () {
+    const backdrop  = document.getElementById("js-modal-backdrop");
+    const msgEl     = document.getElementById("js-modal-message");
+    const okBtn     = document.getElementById("js-modal-confirm");
+    const cancelBtn = document.getElementById("js-modal-cancel");
+    let pending = null;
+
+    document.querySelectorAll("form[data-confirm]").forEach(form => {
+      form.addEventListener("submit", function (e) {
+        if (form.dataset.confirmed) { delete form.dataset.confirmed; return; }
+        e.preventDefault();
+        msgEl.textContent = form.dataset.confirm;
+        pending = form;
+        backdrop.classList.add("open");
+      });
+    });
+
+    okBtn.addEventListener("click", () => {
+      backdrop.classList.remove("open");
+      if (pending) { pending.dataset.confirmed = "1"; pending.submit(); pending = null; }
+    });
+    const close = () => { backdrop.classList.remove("open"); pending = null; };
+    cancelBtn.addEventListener("click", close);
+    backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  })();
+</script>
+
+</body>
+</html>

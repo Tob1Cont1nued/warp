@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Neues Projekt</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body class="login-page">
+
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="login-brand-name">WARP</span>
+      <span class="login-brand-tagline">Wavestone Assessment Risk Planner</span>
+    </div>
+
+    <p style="margin:0; font-size:13px; color:var(--c-text-muted);">
+      {% if projects %}Neues Projekt anlegen{% else %}Willkommen! Legen Sie Ihr erstes Projekt an.{% endif %}
+    </p>
+
+    <form method="POST" action="{{ url_for('new_project') }}">
+      <div class="field">
+        <label for="name">Projektname</label>
+        <input type="text" id="name" name="name" placeholder="z.B. Analyse Test-Reifegrad — Kunde XY" required autofocus />
+      </div>
+      <button type="submit" class="btn btn-primary login-btn">Projekt erstellen</button>
+    </form>
+
+    {% if projects %}
+    <a href="{{ url_for('questionnaire', pid=projects[0].id) }}" class="login-switch-link">Zurück zu meinen Projekten</a>
+    {% endif %}
+
+    <div class="login-foot">
+      <span class="brand-mark"></span>
+      <span class="login-foot-brand">wavestone</span>
+    </div>
+  </div>
+
+</body>
+</html>

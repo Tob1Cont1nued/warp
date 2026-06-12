@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body class="login-page">
+
+  <div class="login-card">
+    <div class="login-brand">
+      <span class="login-brand-name">WARP</span>
+      <span class="login-brand-tagline">Wavestone Assessment Risk Planner</span>
+    </div>
+
+    {% if error %}
+    <div class="login-error">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('login') }}">
+      <div class="field">
+        <label for="username">Benutzername</label>
+        <input type="text" id="username" name="username" autocomplete="username" required autofocus />
+      </div>
+      <div class="field">
+        <label for="password">Passwort</label>
+        <input type="password" id="password" name="password" autocomplete="current-password" required />
+      </div>
+      <button type="submit" class="btn btn-primary login-btn">Anmelden</button>
+    </form>
+
+    <a href="{{ url_for('register') }}" class="login-switch-link">Noch kein Konto? Registrieren</a>
+
+    <div class="login-foot">
+      <span class="brand-mark"></span>
+      <span class="login-foot-brand">wavestone</span>
+    </div>
+  </div>
+
+</body>
+</html>

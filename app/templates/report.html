@@ -10,40 +10,39 @@
       margin: 18mm 16mm 22mm 16mm;
       @bottom-left {
         content: "WARP Tool  ·  Wavestone";
-        font-family: 'Inter', sans-serif;
+        font-family: 'Aptos', 'Inter', sans-serif;
         font-size: 9pt;
-        color: #8C8C8C;
+        color: #250F6B;
       }
       @bottom-right {
         content: "Seite " counter(page) " / " counter(pages);
-        font-family: 'Inter', sans-serif;
+        font-family: 'Aptos', 'Inter', sans-serif;
         font-size: 9pt;
-        color: #8C8C8C;
+        color: #250F6B;
       }
     }
     @page cover { margin: 0; }
 
     :root {
-      --ws-magenta: #E6007E;
-      --ws-magenta-deep: #B8005F;
-      --ws-purple: #451DC7;
-      --c-nav: #001529;
-      --c-text: #000;
-      --c-muted: #595959;
-      --c-faint: #8C8C8C;
-      --c-border: #D9D9D9;
-      --c-soft: #F0F2F5;
+      --ws-blue:      #451DC7;   /* Vibrant Blue */
+      --ws-blue-deep: #250F6B;   /* Deep Blue */
+      --ws-green:     #04F06A;   /* Energy Green */
+      --c-text:       #000;
+      --c-muted:      #595959;
+      --c-faint:      #8C8C8C;
+      --c-border:     #D9D9D9;
+      --c-soft:       #F5F4FF;
     }
 
     body {
-      font-family: 'Inter', 'Helvetica', sans-serif;
+      font-family: 'Aptos', 'Inter', 'Helvetica', sans-serif;
       font-size: 10.5pt;
       color: #000;
       line-height: 1.45;
       margin: 0;
     }
 
-    h1, h2, h3 { font-family: 'Roboto', 'Inter', sans-serif; }
+    h1, h2, h3 { font-family: 'Aptos', 'Inter', sans-serif; }
     h1 { font-size: 26pt; font-weight: 700; margin: 0 0 6pt; }
     h2 { font-size: 16pt; font-weight: 700; margin: 0 0 6pt; }
     h3 { font-size: 12pt; font-weight: 600; margin: 0 0 4pt; }
@@ -55,7 +54,7 @@
       page-break-after: always;
       height: 297mm;
       width: 210mm;
-      background: linear-gradient(160deg, #001529 0%, #021F3C 55%, #3916AB 100%);
+      background: linear-gradient(160deg, #250F6B 0%, #451DC7 100%);
       color: #FFF;
       position: relative;
       padding: 28mm 22mm;
@@ -67,14 +66,14 @@
       display: flex;
       align-items: center;
       gap: 10pt;
-      font-family: 'Roboto', sans-serif;
+      font-family: 'Aptos', 'Inter', sans-serif;
       font-weight: 600;
       font-size: 14pt;
       letter-spacing: 0.03em;
     }
     .cover-mark .square {
       width: 12pt; height: 12pt;
-      background: var(--ws-magenta);
+      background: var(--ws-green);
       border-radius: 2pt;
     }
     .cover-eyebrow {
@@ -85,7 +84,7 @@
       font-size: 10pt;
       letter-spacing: 0.18em;
       text-transform: uppercase;
-      color: var(--ws-magenta);
+      color: var(--ws-green);
       font-weight: 600;
     }
     .cover-title {
@@ -96,7 +95,7 @@
       font-size: 32pt;
       font-weight: 700;
       line-height: 1.1;
-      font-family: 'Roboto', sans-serif;
+      font-family: 'Aptos', 'Inter', sans-serif;
     }
     .cover-sub {
       position: absolute;
@@ -129,12 +128,12 @@
       position: absolute;
       bottom: 0; left: 0; right: 0;
       height: 8pt;
-      background: var(--ws-magenta);
+      background: var(--ws-green);
     }
 
     /* ---------- Section banner ---------- */
     .section-banner {
-      border-left: 4pt solid var(--ws-magenta);
+      border-left: 4pt solid var(--ws-blue);
       padding: 0 0 0 12pt;
       margin: 0 0 14pt;
     }
@@ -142,7 +141,7 @@
       font-size: 8.5pt;
       letter-spacing: 0.16em;
       text-transform: uppercase;
-      color: var(--ws-magenta);
+      color: var(--ws-blue);
       font-weight: 600;
     }
     .section-banner h2 { margin-top: 2pt; }
@@ -161,7 +160,7 @@
       background: #FFF;
     }
     .score-card.primary {
-      background: linear-gradient(135deg, var(--ws-magenta) 0%, var(--ws-purple) 100%);
+      background: linear-gradient(135deg, var(--ws-blue) 0%, var(--ws-blue-deep) 100%);
       color: #FFF;
       border: none;
     }
@@ -176,7 +175,7 @@
     .score-card .value {
       font-size: 28pt;
       font-weight: 700;
-      font-family: 'Roboto', sans-serif;
+      font-family: 'Aptos', 'Inter', sans-serif;
       line-height: 1;
     }
     .score-card .unit { font-size: 14pt; font-weight: 500; opacity: 0.8; }
@@ -200,6 +199,91 @@
       border-radius: 2pt;
     }
     .ladder .step.on { background: #FFF; }
+
+    /* ---------- TMMi Staircase ---------- */
+    .tmmi-wrap {
+      border: 1pt solid var(--c-border);
+      border-radius: 6pt;
+      padding: 14pt 18pt 12pt;
+      margin-bottom: 14pt;
+      background: #FFF;
+    }
+    .tmmi-row {
+      display: flex;
+      gap: 6pt;
+    }
+    .tmmi-step {
+      flex: 1;
+      border-radius: 6pt;
+      padding: 10pt 6pt 8pt;
+      text-align: center;
+      border: 1pt solid var(--c-border);
+      background: var(--c-soft);
+    }
+    .tmmi-achieved {
+      background: #F0FDF4;
+      border-color: #86EFAC;
+    }
+    .tmmi-current {
+      background: linear-gradient(135deg, var(--ws-blue) 0%, var(--ws-blue-deep) 100%);
+      color: #FFF;
+      border: none;
+    }
+    .ts-eyebrow {
+      font-size: 7.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--c-faint);
+      margin-bottom: 3pt;
+    }
+    .tmmi-current .ts-eyebrow { color: rgba(255,255,255,0.7); }
+    .ts-name {
+      font-size: 9pt;
+      font-weight: 700;
+      margin-bottom: 4pt;
+    }
+    .ts-score {
+      font-size: 17pt;
+      font-weight: 700;
+      font-family: 'Aptos', 'Inter', sans-serif;
+      line-height: 1;
+      margin-bottom: 5pt;
+    }
+    .ts-badge {
+      display: inline-block;
+      padding: 1.5pt 5pt;
+      border-radius: 6pt;
+      font-size: 7pt;
+      font-weight: 600;
+    }
+    .ts-ok { background: #04F06A; color: #000; }   /* Energy Green, schwarz = Kontrast 13.68 */
+    .ts-no { background: #F2F2F2; color: #8C8C8C; }
+    .tmmi-current .ts-badge { background: rgba(255,255,255,0.25); color: #FFF; }
+
+    /* ---------- Level subheadings in chart + detail ---------- */
+    .level-subhead {
+      font-size: 9.5pt;
+      font-weight: 600;
+      color: var(--c-muted);
+      margin: 12pt 0 6pt;
+      padding-bottom: 4pt;
+      border-bottom: 0.5pt solid var(--c-border);
+      display: flex;
+      align-items: center;
+      gap: 6pt;
+    }
+    .level-subhead:first-child { margin-top: 0; }
+    .level-tag {
+      display: inline-block;
+      padding: 1.5pt 6pt;
+      border-radius: 4pt;
+      font-size: 7.5pt;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .level-tag-ok { background: #04F06A; color: #000; }  /* Energy Green */
+    .level-tag-no { background: #F2F2F2; color: #8C8C8C; }
+    .level-check { color: #000; }
 
     /* ---------- Bar chart ---------- */
     .chart-wrap {
@@ -232,7 +316,7 @@
     }
     .bar-row .fill {
       height: 100%;
-      background: linear-gradient(90deg, var(--ws-magenta) 0%, var(--ws-purple) 100%);
+      background: linear-gradient(90deg, var(--ws-blue) 0%, var(--ws-blue-deep) 100%);
       border-radius: 3pt;
     }
     .bar-row .pct {
@@ -283,16 +367,16 @@
       display: flex;
       justify-content: space-between;
       align-items: flex-end;
-      border-bottom: 2pt solid var(--ws-magenta);
+      border-bottom: 2pt solid var(--ws-blue);
       padding-bottom: 4pt;
       margin-bottom: 8pt;
     }
     .cat-head h3 { margin: 0; font-size: 13pt; }
     .cat-head .cat-score {
-      font-family: 'Roboto', sans-serif;
+      font-family: 'Aptos', 'Inter', sans-serif;
       font-weight: 700;
       font-size: 13pt;
-      color: var(--ws-magenta-deep);
+      color: var(--ws-blue-deep);
       font-variant-numeric: tabular-nums;
     }
     .cat-desc {
@@ -365,6 +449,46 @@
     }
 
     .scorecard-row { page-break-after: always; }
+
+    /* ==============================================================
+       SCREEN PREVIEW — Zentrierung & Padding
+       WeasyPrint rendert als "print"-Medium und ignoriert @media
+       screen vollständig. Die @page-Regeln und mm-Maße für das PDF
+       bleiben unverändert.
+       ============================================================== */
+    @media screen {
+      body {
+        background: #ECEEF2;
+        padding: 32px 24px 64px;
+      }
+
+      /* Cover: auf A4-Breite (210 mm ≈ 794 px) begrenzen und
+         zentrieren; abgerundete Ecken + Schatten für den "Karten"-Look */
+      .cover {
+        max-width: 860px;
+        margin: 0 auto 28px;
+        border-radius: 12px;
+        box-shadow: 0 8px 40px rgba(37, 15, 107, 0.28);
+        overflow: hidden;
+      }
+
+      /* Alle Inhalts-Sektionen (Summary + Detail): zentrierte weiße Karte */
+      section:not(.cover) {
+        max-width: 860px;
+        margin: 0 auto 24px;
+        padding: 40px 52px;
+        background: #FFF;
+        border-radius: 10px;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+        box-sizing: border-box;
+      }
+
+      /* Score-Grid im Summary: etwas mehr Luft nach oben */
+      .score-grid { margin-top: 12px; }
+
+      /* Balken-Gruppe: vollständige Breite innerhalb der Karte nutzen */
+      .bar-group { margin-bottom: 20px; }
+    }
   </style>
 </head>
 <body>
@@ -428,10 +552,10 @@
     <div class="score-card primary">
       <div class="label">Gesamtscore</div>
       <div class="value">{{ overall_score }}<span class="unit">%</span></div>
-      <div class="sub">Reifegrad: <strong>{{ maturity_label }}</strong></div>
+      <div class="sub">TMMi-Stufe: <strong>{{ maturity_label }}</strong></div>
       <div class="ladder">
-        {% for n in range(1, 6) %}
-          <span class="step {% if n <= maturity_index %}on{% endif %}"></span>
+        {% for ld in tmmi_levels %}
+          <span class="step {% if ld.achieved %}on{% endif %}"></span>
         {% endfor %}
       </div>
     </div>
@@ -450,19 +574,53 @@
     </div>
   </div>
 
-  <div class="chart-wrap">
-    <h3>Reifegrad pro Kategorie</h3>
-    {% for cat in categories %}
-      <div class="bar-row">
-        <div class="name">{{ cat.title }}</div>
-        <div class="track">
-          <div class="fill" style="width: {{ cat.score }}%;"></div>
+  <!-- TMMi Stufenauswertung -->
+  <div class="tmmi-wrap">
+    <h3 style="margin-bottom: 10pt;">TMMi-Stufenergebnis</h3>
+    <div class="tmmi-row">
+      {% for ld in tmmi_levels %}
+        <div class="tmmi-step {% if ld.number == tmmi_level_reached %}tmmi-current{% elif ld.achieved %}tmmi-achieved{% endif %}">
+          <div class="ts-eyebrow">Stufe {{ ld.number }}</div>
+          <div class="ts-name">{{ ld.name }}</div>
+          {% if ld.score is not none %}
+            <div class="ts-score">{{ ld.score }}<span style="font-size:9pt;">%</span></div>
+          {% else %}
+            <div class="ts-score" style="font-size:11pt; margin-bottom:5pt;">Basis</div>
+          {% endif %}
+          <div class="ts-badge {% if ld.achieved %}ts-ok{% else %}ts-no{% endif %}">
+            {% if ld.achieved %}Erreicht{% else %}Nicht erreicht{% endif %}
+          </div>
         </div>
-        <div class="pct">{{ cat.score }}%</div>
-      </div>
+      {% endfor %}
+    </div>
+    <p style="font-size: 8pt; color: var(--c-faint); margin-top: 8pt; margin-bottom: 0;">
+      Erreichungsschwelle: {{ level_threshold }}&thinsp;% je Stufe &middot; Jede Stufe setzt die Erfüllung aller darunterliegenden Stufen voraus.
+    </p>
+  </div>
+
+  <div class="chart-wrap">
+    <h3>Reifegrad pro Kategorie (gruppiert nach TMMi-Stufe)</h3>
+    {% for ld in tmmi_levels %}
+      {% if ld.number > 1 and ld.categories %}
+        <div class="level-subhead">
+          <span class="level-tag {% if ld.achieved %}level-tag-ok{% else %}level-tag-no{% endif %}">Stufe {{ ld.number }}</span>
+          {{ ld.name }} &middot; <strong>{{ ld.score }}%</strong>
+          {% if ld.achieved %}<span class="level-check">&nbsp;&#10003;</span>{% endif %}
+        </div>
+        {% for cat in ld.categories %}
+          <div class="bar-row">
+            <div class="name">{{ cat.title }}</div>
+            <div class="track">
+              <div class="fill" style="width: {{ cat.score }}%;"></div>
+            </div>
+            <div class="pct">{{ cat.score }}%</div>
+          </div>
+        {% endfor %}
+      {% endif %}
     {% endfor %}
-    <div class="legend">
-      <span><span class="swatch" style="background: linear-gradient(90deg, #E6007E, #451DC7);"></span> Reifegrad-Score (0&ndash;100&nbsp;%)</span>
+    <div class="legend" style="margin-top: 10pt;">
+      <span><span class="swatch" style="background: linear-gradient(90deg, #451DC7, #250F6B);"></span> Reifegrad-Score (0&ndash;100&nbsp;%)</span>
+      <span><span class="swatch" style="background: #04F06A;"></span> Stufe erreicht (&ge;{{ level_threshold }}&nbsp;%)</span>
     </div>
   </div>
 
@@ -473,70 +631,87 @@
 
   <div class="section-banner">
     <div class="eyebrow">Detailauswertung</div>
-    <h2>Kategorien &amp; Fragen</h2>
+    <h2>Kategorien &amp; Fragen nach TMMi-Stufe</h2>
   </div>
 
-  {% for cat in categories %}
-    <div class="cat-block">
-      <div class="cat-head">
-        <h3>{{ loop.index }}. {{ cat.title }}</h3>
-        <div class="cat-score">{{ cat.score }}% &middot; {{ cat.answered }} / {{ cat.total }}</div>
-      </div>
-      <div class="cat-desc">{{ cat.description }}</div>
-
-      {% set total = cat.total %}
-      {% if total > 0 %}
-        <div class="dist">
-          {% for d in cat.distribution %}
-            {% if d.count > 0 %}
-              <div class="seg {{ d.id }}" style="width: {{ (d.count / total * 100) }}%;"></div>
-            {% endif %}
-          {% endfor %}
-          {% set offen = total - cat.answered %}
-          {% if offen > 0 %}
-            <div class="seg" style="width: {{ (offen / total * 100) }}%; background: #E6E6E6;"></div>
+  {% for ld in tmmi_levels %}
+    {% if ld.number > 1 and ld.categories %}
+      <!-- Stufen-Trennkopf -->
+      <div style="margin: 18pt 0 10pt; page-break-before: {% if not loop.first %}auto{% else %}avoid{% endif %};">
+        <div style="display:flex; align-items:center; gap:8pt; border-bottom: 2pt solid var(--ws-magenta); padding-bottom: 5pt;">
+          <span class="level-tag {% if ld.achieved %}level-tag-ok{% else %}level-tag-no{% endif %}" style="font-size:8pt;">Stufe {{ ld.number }}</span>
+          <span style="font-size:12pt; font-weight:700; font-family:'Roboto',sans-serif;">{{ ld.full_name }}</span>
+          {% if ld.achieved %}
+            <span style="margin-left:auto; font-size:8.5pt; color:#000; font-weight:600; background:#04F06A; padding:1pt 6pt; border-radius:4pt;">&#10003; Erreicht &middot; {{ ld.score }}%</span>
+          {% else %}
+            <span style="margin-left:auto; font-size:8.5pt; color:var(--c-faint); font-weight:600;">{{ ld.score }}% &middot; Nicht erreicht</span>
           {% endif %}
         </div>
-      {% endif %}
+      </div>
 
-      <table class="qt" style="margin-top: 10pt;">
-        <thead>
-          <tr>
-            <th class="num">#</th>
-            <th>Frage</th>
-            <th class="ans">Bewertung</th>
-            <th class="scr">Score</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for q in cat.questions %}
-            <tr>
-              <td class="num">{{ loop.index }}</td>
-              <td>
-                {{ q.text }}
-                {% if q.hint %}<br/><span style="color:#8C8C8C; font-style: italic; font-size: 8.5pt;">{{ q.hint }}</span>{% endif %}
-              </td>
-              <td class="ans">
-                {% if q.answer_id %}
-                  <span class="pill-ans pill-{{ q.answer_id }}">{{ q.answer_label }}</span>
-                {% else %}
-                  <span class="pill-ans pill-na">nicht beantwortet</span>
+      {% for cat in ld.categories %}
+        <div class="cat-block">
+          <div class="cat-head">
+            <h3>{{ cat.title }}</h3>
+            <div class="cat-score">{{ cat.score }}% &middot; {{ cat.answered }} / {{ cat.total }}</div>
+          </div>
+          <div class="cat-desc">{{ cat.description }}</div>
+
+          {% set total = cat.total %}
+          {% if total > 0 %}
+            <div class="dist">
+              {% for d in cat.distribution %}
+                {% if d.count > 0 %}
+                  <div class="seg {{ d.id }}" style="width: {{ (d.count / total * 100) }}%;"></div>
                 {% endif %}
-              </td>
-              <td class="scr">
-                {% if q.score is not none %}{{ q.score }}%{% else %}&mdash;{% endif %}
-              </td>
-            </tr>
-            {% if q.note %}
-              <tr class="note-row">
-                <td></td>
-                <td colspan="3"><strong>Notiz:</strong> {{ q.note }}</td>
+              {% endfor %}
+              {% set offen = total - cat.answered %}
+              {% if offen > 0 %}
+                <div class="seg" style="width: {{ (offen / total * 100) }}%; background: #E6E6E6;"></div>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          <table class="qt" style="margin-top: 10pt;">
+            <thead>
+              <tr>
+                <th class="num">#</th>
+                <th>Frage</th>
+                <th class="ans">Bewertung</th>
+                <th class="scr">Score</th>
               </tr>
-            {% endif %}
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
+            </thead>
+            <tbody>
+              {% for q in cat.questions %}
+                <tr>
+                  <td class="num">{{ loop.index }}</td>
+                  <td>
+                    {{ q.text }}
+                    {% if q.hint %}<br/><span style="color:#8C8C8C; font-style: italic; font-size: 8.5pt;">{{ q.hint }}</span>{% endif %}
+                  </td>
+                  <td class="ans">
+                    {% if q.answer_id %}
+                      <span class="pill-ans pill-{{ q.answer_id }}">{{ q.answer_label }}</span>
+                    {% else %}
+                      <span class="pill-ans pill-na">nicht beantwortet</span>
+                    {% endif %}
+                  </td>
+                  <td class="scr">
+                    {% if q.score is not none %}{{ q.score }}%{% else %}&mdash;{% endif %}
+                  </td>
+                </tr>
+                {% if q.note %}
+                  <tr class="note-row">
+                    <td></td>
+                    <td colspan="3"><strong>Notiz:</strong> {{ q.note }}</td>
+                  </tr>
+                {% endif %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% endfor %}
+    {% endif %}
   {% endfor %}
 
   <div class="legend" style="margin-top: 18pt; padding-top: 10pt; border-top: 1pt solid var(--c-border);">
