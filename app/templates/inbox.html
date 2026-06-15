@@ -240,7 +240,7 @@
                 onclick="toggleDetail(this)">Details</button>
         <form method="POST" action="{{ url_for('inbox_delete', mid=msg.id) }}"
               data-confirm="Nachricht von »{{ msg.user_name }}« wirklich löschen?">
-          <button type="submit" class="btn-admin-delete" style="padding:7px 12px;font-size:.85rem">Löschen</button>
+          <button type="submit" class="btn-admin-delete" style="padding:7px 16px;font-size:.85rem">Löschen</button>
         </form>
       </div>
     </div>
@@ -257,7 +257,7 @@
       <div class="score-row">
         <span class="score-label" title="{{ key }}">{{ key }}</span>
         <div class="score-track">
-          <div class="score-fill{% if key == msg.recommendation %} score-fill--top{% endif %}"
+          <div class="score-fill"
                style="width:{{ [((val / 12) * 100) | round | int, 100] | min }}%"></div>
         </div>
         <span class="score-val">{{ val }}/12</span>
