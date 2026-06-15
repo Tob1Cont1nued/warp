@@ -82,6 +82,15 @@
       border-radius: 999px; padding: 3px 10px; color: #0369a1;
     }
 
+    .maturity-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .72rem; font-weight: 700; border-radius: 999px;
+      padding: 2px 10px; letter-spacing: .03em;
+    }
+    .maturity-gut         { background: #dcfce7; color: #15803d; }
+    .maturity-ausbaufaehig{ background: #fef3c7; color: #b45309; }
+    .maturity-minimal     { background: #fee2e2; color: #b91c1c; }
+
     .inbox-empty {
       text-align: center; color: var(--c-text-muted); padding: 56px 24px;
     }
@@ -185,6 +194,14 @@
         <p class="inbox-sender-name">{{ msg.user_name }}</p>
         <p class="inbox-sender-email">{{ msg.user_email }}</p>
         <span class="inbox-rec">{{ msg.recommendation }}</span>
+        {% if msg.maturity %}
+        <span class="maturity-badge maturity-{{ msg.maturity }}" style="margin-left:6px">
+          {%- if msg.maturity == 'gut' -%}😊 Gut aufgestellt
+          {%- elif msg.maturity == 'ausbaufaehig' -%}😐 Ausbaufähig
+          {%- else -%}😕 Handlungsbedarf
+          {%- endif -%}
+        </span>
+        {% endif %}
         <div class="inbox-meta">
           <span class="status-badge status-{{ msg.status }}">
             {%- if msg.status == 'neu' -%}Neu

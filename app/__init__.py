@@ -756,6 +756,7 @@ def create_app() -> Flask:
             scores_json=_json.dumps(data.get("scores", {})),
             rationale=data.get("rationale", ""),
             top_factors_json=_json.dumps(data.get("topFactors", [])),
+            maturity=data.get("maturity"),
         )
         db.session.add(msg)
         db.session.commit()
