@@ -84,6 +84,9 @@
       border-radius: 999px; padding: 3px 10px; color: #0369a1;
     }
 
+    .inbox-contact {
+      font-size: .82rem; color: var(--c-text-muted); margin: 4px 0 6px;
+    }
     .maturity-badge {
       display: inline-flex; align-items: center; gap: 4px;
       font-size: .72rem; font-weight: 700; border-radius: 999px;
@@ -203,6 +206,17 @@
           {%- else -%}😕 Handlungsbedarf
           {%- endif -%}
         </span>
+        {% endif %}
+        {% if msg.contact_pref %}
+        <div class="inbox-contact">
+          {%- if msg.contact_pref == 'email' -%}
+            ✉️ Kontakt per <strong>E-Mail</strong>
+          {%- elif msg.contact_pref == 'telefon' -%}
+            📞 Kontakt per <strong>Telefon</strong>{% if msg.contact_phone %}: <strong>{{ msg.contact_phone }}</strong>{% endif %}
+          {%- else -%}
+            ✉️📞 Kontakt per <strong>E-Mail &amp; Telefon</strong>{% if msg.contact_phone %} &mdash; {{ msg.contact_phone }}{% endif %}
+          {%- endif -%}
+        </div>
         {% endif %}
         <div class="inbox-meta">
           <span class="status-badge status-{{ msg.status }}">

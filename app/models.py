@@ -113,7 +113,9 @@ class InboxMessage(db.Model):
     scores_json = db.Column(db.Text, nullable=True)
     rationale = db.Column(db.Text, nullable=True)
     top_factors_json = db.Column(db.Text, nullable=True)
-    maturity = db.Column(db.String(20), nullable=True)  # 'gut' | 'ausbaufaehig' | 'minimal'
+    maturity = db.Column(db.String(20), nullable=True)   # 'gut' | 'ausbaufaehig' | 'minimal'
+    contact_pref = db.Column(db.String(20), nullable=True)  # 'email' | 'telefon' | 'beide'
+    contact_phone = db.Column(db.String(60), nullable=True)
     received_at = db.Column(db.DateTime, default=dt.datetime.utcnow, nullable=False)
     status = db.Column(db.String(20), default="neu", nullable=False)
     claimed_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)

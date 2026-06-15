@@ -757,6 +757,8 @@ def create_app() -> Flask:
             rationale=data.get("rationale", ""),
             top_factors_json=_json.dumps(data.get("topFactors", [])),
             maturity=data.get("maturity"),
+            contact_pref=data.get("contactPref"),
+            contact_phone=data.get("contactPhone"),
         )
         db.session.add(msg)
         db.session.commit()
