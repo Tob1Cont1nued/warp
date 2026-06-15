@@ -43,15 +43,12 @@ class Project(db.Model):
     )
 
     def answers_dict(self) -> dict:
-        """Returns {question_id: answer_id} for all saved answers."""
         return {a.question_id: a.answer_id for a in self.answers if a.answer_id}
 
     def notes_dict(self) -> dict:
-        """Returns {question_id: note} for all saved notes."""
         return {a.question_id: a.note for a in self.answers if a.note}
 
     def to_form_dict(self) -> dict:
-        """Converts project + answers into a form-compatible dict for report generation."""
         form = {
             "project_name": self.name,
             "project_owner": self.owner or "",
@@ -77,3 +74,30 @@ class Answer(db.Model):
     __table_args__ = (
         db.UniqueConstraint("project_id", "question_id", name="uq_project_question"),
     )
+
+
+class Category(db.Model):
+    __tablename__ = "category"
+    id = db.Column(db.String(60), primary_key=True)
+    title = db.Column(db.String(200), nullable=False)
+    parent = db.Column(db.String(80), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    questions = db.relationship(
+        "Question", back_populates="category",
+        order_by="Question.sort_order",
+        cascade="all, delete-orphan",
+    )
+
+
+class Question(db.Model):
+    __tablename__ = "question"
+    id = db.Column(db.String(60), primary_key=True)
+    category_id = db.Column(db.String(60), db.ForeignKey("category.id"), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    hint = db.Column(db.Text, nullable=True)
+    is_new = db.Column(db.Boolean, default=False, nullable=False)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    category = db.relationship("Category", back_populates="questions")

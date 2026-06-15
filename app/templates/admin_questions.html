@@ -1,0 +1,404 @@
+{# WARP Admin – Fragenkatalog verwalten #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Fragenkatalog</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+  <style>
+    .aq-stats { display:flex; gap:24px; flex-wrap:wrap; margin-bottom:8px; }
+    .aq-stat { background:var(--ws-blue-soft); border-radius:8px; padding:12px 20px; }
+    .aq-stat strong { display:block; font-size:1.5rem; color:var(--ws-blue); }
+    .aq-stat span { font-size:.85rem; color:var(--c-text-muted); }
+
+    .level-header {
+      font-size:.75rem; font-weight:700; letter-spacing:.08em; text-transform:uppercase;
+      color:var(--c-text-muted); margin:28px 0 10px;
+      display:flex; align-items:center; gap:10px;
+    }
+    .level-header::after { content:""; flex:1; height:1px; background:var(--c-border); }
+
+    .cat-card { margin-bottom:16px; }
+    .cat-head {
+      display:flex; align-items:flex-start; gap:12px; flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+    .cat-head-info { flex:1; min-width:0; }
+    .cat-head-info h3 { margin:0 0 2px; font-size:1rem; }
+    .cat-head-info p { margin:0; font-size:.85rem; color:var(--c-text-muted); }
+    .cat-id-badge {
+      font-size:.72rem; background:var(--c-bg); border:1px solid var(--c-border);
+      border-radius:4px; padding:1px 6px; color:var(--c-text-faint); font-family:monospace;
+      white-space:nowrap;
+    }
+    .cat-actions { display:flex; gap:6px; flex-shrink:0; }
+
+    .q-list { list-style:none; margin:0; padding:0; border-top:1px solid var(--c-border-soft); }
+    .q-item { border-bottom:1px solid var(--c-border-soft); }
+    .q-item-header {
+      display:flex; align-items:flex-start; gap:10px; padding:10px 0;
+    }
+    .q-item-num {
+      font-size:.72rem; color:var(--c-text-faint); font-family:monospace;
+      flex-shrink:0; padding-top:2px; min-width:28px;
+    }
+    .q-item-body { flex:1; min-width:0; }
+    .q-item-text { margin:0 0 2px; font-size:.9rem; line-height:1.45; }
+    .q-item-hint {
+      font-size:.8rem; color:var(--c-text-muted); font-style:italic;
+      margin:0; padding:2px 0 0 0;
+    }
+    .q-item-hint::before { content:"💡 "; font-style:normal; }
+    .q-item-actions { display:flex; gap:6px; flex-shrink:0; align-items:flex-start; padding-top:2px; }
+
+    details.q-edit { margin:0 0 8px 38px; }
+    details.q-edit summary {
+      display:none; /* button triggers it */
+    }
+    details.cat-edit { margin-bottom:12px; }
+    details.cat-edit summary { display:none; }
+
+    .edit-panel {
+      background:var(--c-bg); border:1px solid var(--c-border);
+      border-radius:8px; padding:14px; margin-top:6px;
+    }
+    .edit-panel .field { margin-bottom:10px; }
+    .edit-panel .field:last-of-type { margin-bottom:12px; }
+    .edit-panel label { display:block; font-size:.82rem; font-weight:600; margin-bottom:4px; }
+    .edit-panel textarea, .edit-panel input[type=text], .edit-panel select {
+      width:100%; border:1px solid var(--c-border); border-radius:6px;
+      padding:7px 10px; font-size:.88rem; resize:vertical;
+    }
+    .edit-panel textarea { min-height:72px; }
+    .edit-panel .row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+
+    .add-q-section {
+      margin-top:12px; padding-top:10px; border-top:1px dashed var(--c-border);
+    }
+    .add-q-toggle {
+      background:none; border:1px dashed var(--c-border); border-radius:6px;
+      color:var(--c-text-muted); font-size:.85rem; padding:6px 14px; width:100%;
+      text-align:left; cursor:pointer; transition:background .15s;
+    }
+    .add-q-toggle:hover { background:var(--c-bg); }
+
+    .add-cat-section { margin-top:32px; }
+
+    .btn-xs {
+      font-size:.78rem; padding:4px 10px; border-radius:5px; border:none;
+      cursor:pointer; white-space:nowrap;
+    }
+    .btn-xs-edit { background:var(--ws-blue-soft); color:var(--ws-blue); }
+    .btn-xs-edit:hover { background:#d8d0f9; }
+    .btn-xs-delete { background:#fff0f0; color:#cc0000; }
+    .btn-xs-delete:hover { background:#ffe0e0; }
+    .btn-xs-save { background:var(--ws-blue); color:#fff; }
+    .btn-xs-save:hover { background:#3516a8; }
+    .btn-xs-cancel { background:var(--c-bg); color:var(--c-text-muted); border:1px solid var(--c-border); }
+
+    .flash-list { list-style:none; margin:0 0 16px; padding:0; }
+    .flash-success { background:#e6fff2; border:1px solid #b3f5d6; color:#1a7a45; border-radius:6px; padding:8px 14px; margin-bottom:6px; font-size:.88rem; }
+    .flash-error   { background:#fff0f0; border:1px solid #ffb3b3; color:#cc0000; border-radius:6px; padding:8px 14px; margin-bottom:6px; font-size:.88rem; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>Fragenkatalog</h1>
+    <p>Fragen und Kategorien bearbeiten</p>
+  </div>
+</header>
+
+<div class="sidebar-backdrop" id="js-backdrop"></div>
+
+<aside class="sidebar" id="js-sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-name">WARP</span>
+      <span class="sidebar-brand-tagline">Wavestone Assessment Risk Planner</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item" href="{{ url_for('admin_overview') }}">
+      <span class="dot"></span>Übersicht
+    </a>
+    <a class="sidebar-nav-item active" href="{{ url_for('admin_questions') }}">
+      <span class="dot"></span>Fragenkatalog
+    </a>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="sidebar-foot-user">
+      <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
+      <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
+    </div>
+    <div class="sidebar-foot-brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">wavestone</span>
+    </div>
+    <span class="sidebar-foot-meta">WARP Tool &middot; v0.1 &middot; Admin</span>
+  </div>
+</aside>
+
+<main class="main">
+
+  {# ── Flash-Meldungen ───────────────────────────────────────────────── #}
+  {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+  <ul class="flash-list">
+    {% for cat, msg in messages %}
+    <li class="flash-{{ cat }}">{{ msg }}</li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  {% endwith %}
+
+  {# ── Statistik ─────────────────────────────────────────────────────── #}
+  <section class="card">
+    <div class="aq-stats">
+      <div class="aq-stat">
+        <strong>{{ categories | length }}</strong>
+        <span>Kategorien</span>
+      </div>
+      <div class="aq-stat">
+        <strong>{{ total_questions }}</strong>
+        <span>Fragen gesamt</span>
+      </div>
+      <div class="aq-stat">
+        <strong>{{ levels | length }}</strong>
+        <span>TMMi-Stufen</span>
+      </div>
+    </div>
+  </section>
+
+  {# ── Kategorien je Stufe ───────────────────────────────────────────── #}
+  {% for level in levels %}
+  <p class="level-header">{{ level }}</p>
+
+  {% set level_cats = categories | selectattr("parent", "equalto", level) | list %}
+  {% if not level_cats %}
+  <p style="color:var(--c-text-muted);font-size:.88rem;margin-bottom:16px">
+    Keine Kategorien für diese Stufe.
+  </p>
+  {% endif %}
+
+  {% for cat in level_cats %}
+  <section class="card cat-card" id="{{ cat.id }}">
+
+    {# Kategorie-Header #}
+    <div class="cat-head">
+      <div class="cat-head-info">
+        <h3>
+          {{ cat.title }}
+          <span class="cat-id-badge">{{ cat.id }}</span>
+        </h3>
+        {% if cat.description %}
+        <p>{{ cat.description }}</p>
+        {% endif %}
+      </div>
+      <div class="cat-actions">
+        <button type="button" class="btn-xs btn-xs-edit"
+                onclick="togglePanel('cat-edit-{{ cat.id }}')">Bearbeiten</button>
+        <form method="POST" action="{{ url_for('admin_category_delete', cid=cat.id) }}"
+              data-confirm="Kategorie »{{ cat.title }}« und alle {{ cat.questions | length }} Fragen wirklich löschen?">
+          <button type="submit" class="btn-xs btn-xs-delete">Löschen</button>
+        </form>
+      </div>
+    </div>
+
+    {# Kategorie-Editformular #}
+    <div id="cat-edit-{{ cat.id }}" class="edit-panel" style="display:none;margin-bottom:14px">
+      <form method="POST" action="{{ url_for('admin_category_edit', cid=cat.id) }}">
+        <div class="field">
+          <label>Titel</label>
+          <input type="text" name="title" value="{{ cat.title }}" required />
+        </div>
+        <div class="field">
+          <label>Beschreibung <span style="font-weight:400;color:var(--c-text-muted)">(optional)</span></label>
+          <textarea name="description">{{ cat.description or '' }}</textarea>
+        </div>
+        <div class="row">
+          <button type="submit" class="btn-xs btn-xs-save">Speichern</button>
+          <button type="button" class="btn-xs btn-xs-cancel"
+                  onclick="togglePanel('cat-edit-{{ cat.id }}')">Abbrechen</button>
+        </div>
+      </form>
+    </div>
+
+    {# Fragenliste #}
+    {% if cat.questions %}
+    <ul class="q-list">
+      {% for q in cat.questions %}
+      <li class="q-item">
+        <div class="q-item-header">
+          <span class="q-item-num">{{ loop.index }}</span>
+          <div class="q-item-body">
+            <p class="q-item-text">{{ q.text }}</p>
+            {% if q.hint %}
+            <p class="q-item-hint">{{ q.hint }}</p>
+            {% endif %}
+          </div>
+          <div class="q-item-actions">
+            <button type="button" class="btn-xs btn-xs-edit"
+                    onclick="togglePanel('q-edit-{{ q.id }}')">Bearbeiten</button>
+            <form method="POST" action="{{ url_for('admin_question_delete', qid=q.id) }}"
+                  data-confirm="Frage »{{ q.text[:60] }}…« wirklich löschen?">
+              <button type="submit" class="btn-xs btn-xs-delete">Löschen</button>
+            </form>
+          </div>
+        </div>
+        {# Frage-Editformular #}
+        <div id="q-edit-{{ q.id }}" class="edit-panel" style="display:none;margin:0 0 10px 38px">
+          <form method="POST" action="{{ url_for('admin_question_edit', qid=q.id) }}">
+            <div class="field">
+              <label>Fragetext</label>
+              <textarea name="text" required>{{ q.text }}</textarea>
+            </div>
+            <div class="field">
+              <label>Hinweis / Hilfsfrage <span style="font-weight:400;color:var(--c-text-muted)">(optional)</span></label>
+              <textarea name="hint">{{ q.hint or '' }}</textarea>
+            </div>
+            <div class="row">
+              <button type="submit" class="btn-xs btn-xs-save">Speichern</button>
+              <button type="button" class="btn-xs btn-xs-cancel"
+                      onclick="togglePanel('q-edit-{{ q.id }}')">Abbrechen</button>
+            </div>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color:var(--c-text-muted);font-size:.85rem;margin:8px 0">Noch keine Fragen in dieser Kategorie.</p>
+    {% endif %}
+
+    {# Neue Frage hinzufügen #}
+    <div class="add-q-section">
+      <button type="button" class="add-q-toggle"
+              onclick="togglePanel('add-q-{{ cat.id }}')">+ Neue Frage hinzufügen</button>
+      <div id="add-q-{{ cat.id }}" class="edit-panel" style="display:none;margin-top:8px">
+        <form method="POST" action="{{ url_for('admin_question_new') }}">
+          <input type="hidden" name="category_id" value="{{ cat.id }}" />
+          <div class="field">
+            <label>Fragetext</label>
+            <textarea name="text" required placeholder="Fragetext eingeben …"></textarea>
+          </div>
+          <div class="field">
+            <label>Hinweis / Hilfsfrage <span style="font-weight:400;color:var(--c-text-muted)">(optional)</span></label>
+            <textarea name="hint" placeholder="z.B. Gibt es eine Risikoanalyse?"></textarea>
+          </div>
+          <div class="row">
+            <button type="submit" class="btn-xs btn-xs-save">Frage anlegen</button>
+            <button type="button" class="btn-xs btn-xs-cancel"
+                    onclick="togglePanel('add-q-{{ cat.id }}')">Abbrechen</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </section>
+  {% endfor %}
+  {% endfor %}
+
+  {# ── Neue Kategorie ────────────────────────────────────────────────── #}
+  <section class="card add-cat-section">
+    <h2 style="margin-top:0">Neue Kategorie anlegen</h2>
+    <form method="POST" action="{{ url_for('admin_category_new') }}">
+      <div class="field">
+        <label>Kategorie-ID <span style="font-weight:400;color:var(--c-text-muted)">(eindeutig, z.B. "neue-kategorie")</span></label>
+        <input type="text" name="id" required placeholder="z.B. test-automatisierung" pattern="[a-z0-9_\-]+" title="Nur Kleinbuchstaben, Zahlen, - und _" />
+      </div>
+      <div class="field">
+        <label>Titel</label>
+        <input type="text" name="title" required placeholder="z.B. Testautomatisierung" />
+      </div>
+      <div class="field">
+        <label>TMMi-Stufe</label>
+        <select name="parent" required>
+          {% for level in levels %}
+          <option value="{{ level }}">{{ level }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="field">
+        <label>Beschreibung <span style="font-weight:400;color:var(--c-text-muted)">(optional)</span></label>
+        <textarea name="description" placeholder="Kurze Beschreibung der Kategorie …"></textarea>
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 24px">Kategorie anlegen</button>
+    </form>
+  </section>
+
+</main>
+
+{# ── Bestätigungs-Modal ────────────────────────────────────────────────── #}
+<div class="modal-backdrop" id="js-modal-backdrop">
+  <div class="modal">
+    <p class="modal-title">Aktion bestätigen</p>
+    <p class="modal-message" id="js-modal-message"></p>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="js-modal-cancel">Abbrechen</button>
+      <button type="button" class="modal-confirm" id="js-modal-confirm">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Sidebar toggle
+  (function () {
+    const sb = document.getElementById("js-sidebar");
+    const bd = document.getElementById("js-backdrop");
+    const bt = document.getElementById("js-burger");
+    function closeSidebar() { sb.classList.remove("open"); bd.classList.remove("open"); }
+    bt.addEventListener("click", () => { sb.classList.toggle("open"); bd.classList.toggle("open"); });
+    bd.addEventListener("click", closeSidebar);
+  })();
+
+  // Panel toggle (edit forms)
+  function togglePanel(id) {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = el.style.display === "none" ? "block" : "none";
+  }
+
+  // Delete confirmation modal
+  (function () {
+    const backdrop  = document.getElementById("js-modal-backdrop");
+    const msgEl     = document.getElementById("js-modal-message");
+    const okBtn     = document.getElementById("js-modal-confirm");
+    const cancelBtn = document.getElementById("js-modal-cancel");
+    let pending = null;
+
+    document.querySelectorAll("form[data-confirm]").forEach(form => {
+      form.addEventListener("submit", function (e) {
+        if (form.dataset.confirmed) { delete form.dataset.confirmed; return; }
+        e.preventDefault();
+        msgEl.textContent = form.dataset.confirm;
+        pending = form;
+        backdrop.classList.add("open");
+      });
+    });
+
+    okBtn.addEventListener("click", () => {
+      backdrop.classList.remove("open");
+      if (pending) { pending.dataset.confirmed = "1"; pending.submit(); pending = null; }
+    });
+    const close = () => { backdrop.classList.remove("open"); pending = null; };
+    cancelBtn.addEventListener("click", close);
+    backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  })();
+
+  // Scroll to anchor after redirect (flash message + anchor)
+  if (window.location.hash) {
+    const el = document.getElementById(window.location.hash.slice(1));
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+</script>
+
+</body>
+</html>

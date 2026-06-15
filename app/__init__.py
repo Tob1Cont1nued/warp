@@ -2,25 +2,34 @@
 WARP Tool - Flask Application
 
 Routes:
-  GET  /                          - Redirect zum letzten Projekt oder Neuanlage
-  POST /project/new               - Neues Projekt anlegen
-  GET  /project/<id>              - Fragenkatalog für ein Projekt
-  POST /project/<id>/answer       - AJAX: Antwort/Notiz speichern
-  POST /project/<id>/info         - AJAX: Projektinfos speichern
-  POST /project/<id>/delete       - Projekt löschen
-  POST /project/<id>/report/html  - HTML-Vorschau
-  POST /project/<id>/report       - PDF-Download
-  GET  /login                     - Login
-  POST /login                     - Login verarbeiten
-  GET  /register                  - Registrierung
-  POST /register                  - Registrierung verarbeiten
-  GET  /logout                    - Logout
+  GET  /                               - Redirect zum letzten Projekt oder Neuanlage
+  POST /project/new                    - Neues Projekt anlegen
+  GET  /project/<id>                   - Fragenkatalog für ein Projekt
+  POST /project/<id>/answer            - AJAX: Antwort/Notiz speichern
+  POST /project/<id>/info              - AJAX: Projektinfos speichern
+  POST /project/<id>/delete            - Projekt löschen
+  POST /project/<id>/report/html       - HTML-Vorschau
+  POST /project/<id>/report            - PDF-Download
+  GET  /login                          - Login
+  POST /login                          - Login verarbeiten
+  GET  /register                       - Registrierung
+  POST /register                       - Registrierung verarbeiten
+  GET  /logout                         - Logout
+  GET  /admin                          - Admin-Übersicht
+  GET  /admin/questions                - Fragenkatalog verwalten
+  POST /admin/question/new             - Neue Frage anlegen
+  POST /admin/question/<qid>/edit      - Frage bearbeiten
+  POST /admin/question/<qid>/delete    - Frage löschen
+  POST /admin/category/new             - Neue Kategorie anlegen
+  POST /admin/category/<cid>/edit      - Kategorie bearbeiten
+  POST /admin/category/<cid>/delete    - Kategorie löschen
 """
 
 from __future__ import annotations
 
 import io
 import os
+import uuid
 import datetime as dt
 from pathlib import Path
 from collections import OrderedDict
@@ -28,16 +37,51 @@ from typing import Any, Dict, List
 
 from flask import (
     Flask, render_template, request, send_file, abort,
-    redirect, url_for, jsonify,
+    redirect, url_for, jsonify, flash,
 )
 from flask_login import (
     LoginManager, login_required, login_user, logout_user, current_user,
 )
 
-from .models import db, User, Project, Answer
-from .data.questions import CATEGORIES, ANSWER_OPTIONS, TMMI_LEVEL_ORDER, total_question_count
+from .models import db, User, Project, Answer, Category, Question
+from .data.questions import ANSWER_OPTIONS, TMMI_LEVEL_ORDER
 
 ROOT = Path(__file__).parent.parent
+
+
+# ---------------------------------------------------------------------------
+# DB-Seed: Fragen aus Python-Code beim ersten Start laden
+# ---------------------------------------------------------------------------
+
+def _seed_questions_if_needed() -> None:
+    from .data.questions import CATEGORIES as PY_CATS
+    count = db.session.execute(
+        db.select(db.func.count()).select_from(Category)
+    ).scalar()
+    if count and count > 0:
+        return
+    for sort_idx, cat_data in enumerate(PY_CATS):
+        cat = Category(
+            id=cat_data["id"],
+            title=cat_data["title"],
+            parent=cat_data["parent"],
+            description=cat_data.get("description", ""),
+            sort_order=sort_idx,
+        )
+        db.session.add(cat)
+        for q_idx, q_data in enumerate(cat_data["questions"]):
+            q = Question(
+                id=q_data["id"],
+                category_id=cat_data["id"],
+                text=q_data["text"],
+                hint=q_data.get("hint"),
+                is_new=q_data.get("new", False),
+                sort_order=q_idx,
+            )
+            db.session.add(q)
+    db.session.commit()
+    q_total = sum(len(c["questions"]) for c in PY_CATS)
+    print(f"[WARP] Fragenkatalog ({q_total} Fragen, {len(PY_CATS)} Kategorien) in DB geladen.")
 
 
 def create_app() -> Flask:
@@ -45,12 +89,9 @@ def create_app() -> Flask:
 
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "warp-dev-secret-key-change-in-production")
 
-    # Lokal: SQLite. Produktion (Render + Supabase): DATABASE_URL als Env-Var setzen.
     db_url = os.environ.get("DATABASE_URL", f"sqlite:///{ROOT / 'warp.db'}")
-    # Render/Supabase liefern postgres://-URLs; SQLAlchemy 2.x braucht postgresql://
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
-    # SSL direkt in die URL einbauen (robuster als connect_args)
     if db_url.startswith("postgresql://") and "sslmode" not in db_url:
         db_url += "?sslmode=require"
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
@@ -70,7 +111,6 @@ def create_app() -> Flask:
     with app.app_context():
         db.create_all()
 
-        # Admin-Anlage: UNIQUE-Fehler abfangen falls zwei Worker gleichzeitig schreiben.
         try:
             admin_user = db.session.execute(
                 db.select(User).where(User.username == "admin")
@@ -88,6 +128,12 @@ def create_app() -> Flask:
             db.session.rollback()
             print(f"[WARP] Admin-Init übersprungen: {e}")
 
+        try:
+            _seed_questions_if_needed()
+        except Exception as e:
+            db.session.rollback()
+            print(f"[WARP] Fragen-Seed übersprungen: {e}")
+
     score_lookup = {opt["id"]: opt["score"] for opt in ANSWER_OPTIONS}
     label_lookup = {opt["id"]: opt["label"] for opt in ANSWER_OPTIONS}
 
@@ -102,6 +148,29 @@ def create_app() -> Flask:
         if not current_user.is_admin and project.user_id != current_user.id:
             abort(403)
         return project
+
+    def _db_question_count() -> int:
+        return db.session.execute(
+            db.select(db.func.count()).select_from(Question)
+        ).scalar() or 0
+
+    def _load_categories_from_db() -> List[Dict]:
+        cats = db.session.execute(
+            db.select(Category).order_by(Category.sort_order)
+        ).scalars().all()
+        return [
+            {
+                "id": c.id,
+                "title": c.title,
+                "parent": c.parent,
+                "description": c.description,
+                "questions": [
+                    {"id": q.id, "text": q.text, "hint": q.hint, "new": q.is_new}
+                    for q in c.questions
+                ],
+            }
+            for c in cats
+        ]
 
     def _upsert_answer(project_id: int, question_id: str,
                        answer_id: str | None, note: str | None) -> None:
@@ -160,18 +229,19 @@ def create_app() -> Flask:
         project_owner = form.get("project_owner", "").strip()
         project_date = form.get("project_date", "").strip() or dt.date.today().strftime("%d.%m.%Y")
 
-        # Gesamtanzahl Fragen je Stufe (Nenner für korrekte Durchschnittsberechnung)
+        db_categories = _load_categories_from_db()
+
         level_total_map: Dict[str, int] = {
-            lv: sum(len(cat["questions"]) for cat in CATEGORIES if cat["parent"] == lv)
+            lv: sum(len(cat["questions"]) for cat in db_categories if cat["parent"] == lv)
             for lv in TMMI_LEVEL_ORDER
         }
-        total_questions = total_question_count()
+        total_questions = _db_question_count()
 
         categories: List[Dict[str, Any]] = []
         all_scores_sum: float = 0.0
         level_scores_sum: Dict[str, float] = {lv: 0.0 for lv in TMMI_LEVEL_ORDER}
 
-        for cat in CATEGORIES:
+        for cat in db_categories:
             cat_scores_sum: float = 0.0
             cat_questions: List[Dict[str, Any]] = []
             answered = 0
@@ -199,8 +269,8 @@ def create_app() -> Flask:
                     "note": notes.get(q["id"], ""),
                 })
 
-            # Dividiere durch Gesamtfragen der Kategorie (nicht nur beantwortete)
-            cat_avg = cat_scores_sum / len(cat["questions"])
+            cat_total = len(cat["questions"])
+            cat_avg = cat_scores_sum / cat_total if cat_total > 0 else 0.0
             categories.append({
                 "id": cat["id"],
                 "title": cat["title"],
@@ -208,7 +278,7 @@ def create_app() -> Flask:
                 "parent": cat["parent"],
                 "questions": cat_questions,
                 "answered": answered,
-                "total": len(cat["questions"]),
+                "total": cat_total,
                 "score": round(cat_avg, 1),
                 "distribution": [
                     {"id": opt["id"], "label": opt["label"], "count": distribution[opt["id"]]}
@@ -216,8 +286,7 @@ def create_app() -> Flask:
                 ],
             })
 
-        # Dividiere durch alle Fragen (nicht nur beantwortete)
-        overall = round(all_scores_sum / total_questions, 1)
+        overall = round(all_scores_sum / total_questions, 1) if total_questions > 0 else 0.0
         answered_count = sum(c["answered"] for c in categories)
 
         tmmi_levels: List[Dict[str, Any]] = [{
@@ -226,7 +295,8 @@ def create_app() -> Flask:
         }]
         all_lower_achieved = True
         for level_name in TMMI_LEVEL_ORDER:
-            lv_score = round(level_scores_sum[level_name] / level_total_map[level_name], 1)
+            lv_total = level_total_map.get(level_name, 0)
+            lv_score = round(level_scores_sum[level_name] / lv_total, 1) if lv_total > 0 else 0.0
             lv_cats = [c for c in categories if c["parent"] == level_name]
             num = LEVEL_NUMBERS[level_name]
             short_name = level_name.split(" - ")[1]
@@ -250,7 +320,7 @@ def create_app() -> Flask:
             "categories": categories,
             "overall_score": overall,
             "answered_count": answered_count,
-            "total_count": total_question_count(),
+            "total_count": total_questions,
             "maturity_label": tmmi_level_label,
             "maturity_index": tmmi_level_reached,
             "tmmi_levels": tmmi_levels,
@@ -346,7 +416,7 @@ def create_app() -> Flask:
         users = db.session.execute(
             db.select(User).where(User.is_admin == False).order_by(User.id)  # noqa: E712
         ).scalars().all()
-        return render_template("admin.html", users=users, total_questions=total_question_count())
+        return render_template("admin.html", users=users, total_questions=_db_question_count())
 
     @app.route("/admin/user/new", methods=["POST"])
     @login_required
@@ -372,7 +442,7 @@ def create_app() -> Flask:
                 db.select(User).where(User.is_admin == False)  # noqa: E712
             ).scalars().all()
             return render_template("admin.html", users=users,
-                                   total_questions=total_question_count(), error=error)
+                                   total_questions=_db_question_count(), error=error)
         u = User(username=username, display_name=display_name or None)
         u.set_password(password)
         db.session.add(u)
@@ -403,6 +473,153 @@ def create_app() -> Flask:
         db.session.commit()
         return redirect(url_for("admin_overview"))
 
+    # ------------------------------------------------------------------
+    # Admin – Fragenkatalog
+    # ------------------------------------------------------------------
+
+    @app.route("/admin/questions")
+    @login_required
+    def admin_questions():
+        if not current_user.is_admin:
+            abort(403)
+        cats = db.session.execute(
+            db.select(Category).order_by(Category.sort_order)
+        ).scalars().all()
+        return render_template(
+            "admin_questions.html",
+            categories=cats,
+            levels=TMMI_LEVEL_ORDER,
+            total_questions=_db_question_count(),
+        )
+
+    @app.route("/admin/question/new", methods=["POST"])
+    @login_required
+    def admin_question_new():
+        if not current_user.is_admin:
+            abort(403)
+        category_id = request.form.get("category_id", "").strip()
+        text = request.form.get("text", "").strip()
+        hint = request.form.get("hint", "").strip() or None
+        if not category_id or not text:
+            flash("Fragetext darf nicht leer sein.", "error")
+            return redirect(url_for("admin_questions"))
+        cat = db.session.get(Category, category_id)
+        if not cat:
+            abort(404)
+        max_sort = db.session.execute(
+            db.select(db.func.max(Question.sort_order)).where(
+                Question.category_id == category_id
+            )
+        ).scalar()
+        new_sort = (max_sort or 0) + 1
+        new_id = f"{category_id}-{uuid.uuid4().hex[:6]}"
+        q = Question(
+            id=new_id,
+            category_id=category_id,
+            text=text,
+            hint=hint,
+            sort_order=new_sort,
+        )
+        db.session.add(q)
+        db.session.commit()
+        flash("Frage erfolgreich hinzugefügt.", "success")
+        return redirect(url_for("admin_questions") + f"#{category_id}")
+
+    @app.route("/admin/question/<qid>/edit", methods=["POST"])
+    @login_required
+    def admin_question_edit(qid: str):
+        if not current_user.is_admin:
+            abort(403)
+        q = db.session.get(Question, qid)
+        if not q:
+            abort(404)
+        new_text = request.form.get("text", "").strip()
+        if new_text:
+            q.text = new_text
+        q.hint = request.form.get("hint", "").strip() or None
+        db.session.commit()
+        flash("Frage gespeichert.", "success")
+        return redirect(url_for("admin_questions") + f"#{q.category_id}")
+
+    @app.route("/admin/question/<qid>/delete", methods=["POST"])
+    @login_required
+    def admin_question_delete(qid: str):
+        if not current_user.is_admin:
+            abort(403)
+        q = db.session.get(Question, qid)
+        if q:
+            cat_id = q.category_id
+            db.session.delete(q)
+            db.session.commit()
+            flash("Frage gelöscht.", "success")
+            return redirect(url_for("admin_questions") + f"#{cat_id}")
+        return redirect(url_for("admin_questions"))
+
+    @app.route("/admin/category/new", methods=["POST"])
+    @login_required
+    def admin_category_new():
+        if not current_user.is_admin:
+            abort(403)
+        cat_id = request.form.get("id", "").strip()
+        title = request.form.get("title", "").strip()
+        parent = request.form.get("parent", "").strip()
+        description = request.form.get("description", "").strip() or None
+        if not cat_id or not title or not parent:
+            flash("ID, Titel und Stufe sind Pflichtfelder.", "error")
+            return redirect(url_for("admin_questions"))
+        if db.session.get(Category, cat_id):
+            flash(f"Kategorie-ID '{cat_id}' ist bereits vergeben.", "error")
+            return redirect(url_for("admin_questions"))
+        if parent not in TMMI_LEVEL_ORDER:
+            flash("Ungültige TMMi-Stufe.", "error")
+            return redirect(url_for("admin_questions"))
+        max_sort = db.session.execute(
+            db.select(db.func.max(Category.sort_order))
+        ).scalar()
+        cat = Category(
+            id=cat_id,
+            title=title,
+            parent=parent,
+            description=description,
+            sort_order=(max_sort or 0) + 1,
+        )
+        db.session.add(cat)
+        db.session.commit()
+        flash(f"Kategorie '{title}' erfolgreich angelegt.", "success")
+        return redirect(url_for("admin_questions") + f"#{cat_id}")
+
+    @app.route("/admin/category/<cid>/edit", methods=["POST"])
+    @login_required
+    def admin_category_edit(cid: str):
+        if not current_user.is_admin:
+            abort(403)
+        cat = db.session.get(Category, cid)
+        if not cat:
+            abort(404)
+        new_title = request.form.get("title", "").strip()
+        if new_title:
+            cat.title = new_title
+        cat.description = request.form.get("description", "").strip() or None
+        db.session.commit()
+        flash("Kategorie gespeichert.", "success")
+        return redirect(url_for("admin_questions") + f"#{cid}")
+
+    @app.route("/admin/category/<cid>/delete", methods=["POST"])
+    @login_required
+    def admin_category_delete(cid: str):
+        if not current_user.is_admin:
+            abort(403)
+        cat = db.session.get(Category, cid)
+        if cat:
+            db.session.delete(cat)
+            db.session.commit()
+            flash("Kategorie und alle zugehörigen Fragen gelöscht.", "success")
+        return redirect(url_for("admin_questions"))
+
+    # ------------------------------------------------------------------
+    # Project Routes
+    # ------------------------------------------------------------------
+
     @app.route("/project/new", methods=["GET", "POST"])
     @login_required
     def new_project():
@@ -431,9 +648,9 @@ def create_app() -> Flask:
             projects=projects,
             saved_answers=project.answers_dict(),
             saved_notes=project.notes_dict(),
-            categories=CATEGORIES,
+            categories=_load_categories_from_db(),
             answer_options=ANSWER_OPTIONS,
-            total_questions=total_question_count(),
+            total_questions=_db_question_count(),
             today=dt.date.today().strftime("%Y-%m-%d"),
         )
 
