@@ -200,7 +200,7 @@
     }
     .ladder .step.on { background: #FFF; }
 
-    /* ---------- WARP Reifestufen ---------- */
+    /* ---------- WARP WARP-Stufen ---------- */
     .warp-maturity-wrap {
       border: 1pt solid var(--c-border);
       border-radius: 6pt;
@@ -552,7 +552,7 @@
     <div class="score-card primary">
       <div class="label">Gesamtscore</div>
       <div class="value">{{ overall_score }}<span class="unit">%</span></div>
-      <div class="sub">Reifestufe: <strong>{{ maturity_label }}</strong></div>
+      <div class="sub">WARP-Stufe: <strong>{{ maturity_label }}</strong></div>
       <div class="ladder">
         {% for ld in warp_levels %}
           <span class="step {% if ld.achieved %}on{% endif %}"></span>
@@ -574,7 +574,7 @@
     </div>
   </div>
 
-  <!-- Reifestufen-Auswertung -->
+  <!-- WARP-Stufen-Auswertung -->
   <div class="warp-maturity-wrap">
     <h3 style="margin-bottom: 10pt;">Reifegradauswertung</h3>
     <div class="warp-maturity-row">
@@ -600,7 +600,7 @@
 
 
   <div class="chart-wrap">
-    <h3>Reifegrad pro Kategorie (gruppiert nach Reifestufe)</h3>
+    <h3>Reifegrad pro Kategorie (gruppiert nach WARP-Stufe)</h3>
     {% for ld in warp_levels %}
       {% if ld.number > 1 and ld.categories %}
         <div class="level-subhead">
@@ -632,7 +632,7 @@
 
   <div class="section-banner">
     <div class="eyebrow">Detailauswertung</div>
-    <h2>Kategorien &amp; Fragen nach Reifestufe</h2>
+    <h2>Kategorien &amp; Fragen nach WARP-Stufe</h2>
   </div>
 
   {% for ld in warp_levels %}

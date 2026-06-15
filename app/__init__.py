@@ -571,7 +571,7 @@ def create_app() -> Flask:
             flash(f"Kategorie-ID '{cat_id}' ist bereits vergeben.", "error")
             return redirect(url_for("admin_questions"))
         if parent not in WARP_LEVEL_ORDER:
-            flash("Ungültige Reifestufe.", "error")
+            flash("Ungültige WARP-Stufe.", "error")
             return redirect(url_for("admin_questions"))
         max_sort = db.session.execute(
             db.select(db.func.max(Category.sort_order))

@@ -2,7 +2,7 @@
 WARP Tool - Fragenkatalog Daten
 
 Struktur:
-  - 4 Reifestufen: Stufe 2 - Managed, Stufe 3 - Defined,
+  - 4 WARP-Stufen: Stufe 2 - Managed, Stufe 3 - Defined,
     Stufe 4 - Measured, Stufe 5 - Optimization
   - Unterkategorien (Process Areas)
 
@@ -955,7 +955,7 @@ ANSWER_OPTIONS = [
     {"id": "nicht",  "label": "Trifft nicht zu",      "score":   0},
 ]
 
-# Reihenfolge der Reifestufen (für Auswertung/Stufenlogik)
+# Reihenfolge der WARP-Stufen (für Auswertung/Stufenlogik)
 WARP_LEVEL_ORDER = [
     "Stufe 2 - Managed",
     "Stufe 3 - Defined",
