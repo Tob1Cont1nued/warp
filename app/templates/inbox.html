@@ -70,12 +70,14 @@
 
     .inbox-detail { padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--c-border-soft); }
     .inbox-rationale { font-size: .875rem; color: var(--c-text-muted); line-height: 1.6; margin-bottom: 12px; }
-    .inbox-scores { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
-    .inbox-score-pill {
-      background: var(--c-bg); border: 1px solid var(--c-border);
-      border-radius: 8px; padding: 6px 12px; font-size: .82rem; text-align: center;
-    }
-    .inbox-score-pill strong { display: block; font-size: 1rem; color: var(--ws-blue); }
+    .scores-legend { font-size:.75rem; color:var(--c-text-muted); margin:0 0 8px; }
+    .score-row { display:flex; align-items:center; gap:10px; margin:5px 0; }
+    .score-label { width:160px; font-size:.8rem; text-align:right; white-space:nowrap;
+                   overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
+    .score-track { flex:1; height:8px; background:var(--c-border); border-radius:4px; overflow:hidden; min-width:60px; }
+    .score-fill  { height:100%; background:var(--ws-blue); border-radius:4px; transition:width .3s; }
+    .score-fill--top { background:#15803d; }
+    .score-val   { width:36px; font-size:.78rem; font-weight:700; color:var(--c-text-muted); flex-shrink:0; }
     .inbox-factors { display: flex; gap: 6px; flex-wrap: wrap; }
     .inbox-factor {
       font-size: .78rem; background: #f0f9ff; border: 1px solid #bae6fd;
@@ -248,20 +250,29 @@
       <p class="inbox-rationale"><strong>Begründung:</strong> {{ msg.rationale }}</p>
       {% endif %}
       {% if msg.scores %}
-      <div class="inbox-scores">
-        {% for key, val in msg.scores.items() | sort(attribute=1, reverse=True) %}
-        <div class="inbox-score-pill">
-          <strong>{{ val }}</strong>{{ key }}
+      <p class="scores-legend"><strong>Methoden-Fit</strong> — je Methode max. 12 Punkte (3 Dimensionen × 4). Höchster Balken = Empfehlung.</p>
+      {% set sorted_scores = msg.scores.items() | sort(attribute=1, reverse=True) %}
+      {% set top_val = sorted_scores | first %}
+      {% for key, val in sorted_scores %}
+      <div class="score-row">
+        <span class="score-label" title="{{ key }}">{{ key }}</span>
+        <div class="score-track">
+          <div class="score-fill{% if key == msg.recommendation %} score-fill--top{% endif %}"
+               style="width:{{ [((val / 12) * 100) | round | int, 100] | min }}%"></div>
         </div>
-        {% endfor %}
+        <span class="score-val">{{ val }}/12</span>
       </div>
+      {% endfor %}
       {% endif %}
       {% if msg.top_factors %}
+      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--c-text-muted);margin:12px 0 6px">Identifizierte Schwachstellen</p>
       <div class="inbox-factors">
         {% for factor in msg.top_factors %}
         <span class="inbox-factor">{{ factor }}</span>
         {% endfor %}
       </div>
+      {% elif msg.scores %}
+      <p style="font-size:.8rem;color:#15803d;margin-top:10px">✓ Keine auffälligen Schwachstellen identifiziert</p>
       {% endif %}
     </div>
   </div>
