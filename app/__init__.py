@@ -45,14 +45,18 @@ def create_app() -> Flask:
 
     app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "warp-dev-secret-key-change-in-production")
 
-    # Render.com: DATABASE_URL setzen auf einen Persistent-Disk-Pfad oder PostgreSQL-URL.
-    # Lokal: SQLite im Projektverzeichnis.
+    # Lokal: SQLite. Produktion (Render + Supabase): DATABASE_URL als Env-Var setzen.
     db_url = os.environ.get("DATABASE_URL", f"sqlite:///{ROOT / 'warp.db'}")
-    # Render liefert postgres://-URLs; SQLAlchemy 2.x braucht postgresql://
+    # Render/Supabase liefern postgres://-URLs; SQLAlchemy 2.x braucht postgresql://
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+    # Supabase erfordert SSL; für SQLite ist diese Option irrelevant
+    if not db_url.startswith("sqlite"):
+        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+            "connect_args": {"sslmode": "require"},
+        }
 
     db.init_app(app)
 
