@@ -50,13 +50,11 @@ def create_app() -> Flask:
     # Render/Supabase liefern postgres://-URLs; SQLAlchemy 2.x braucht postgresql://
     if db_url.startswith("postgres://"):
         db_url = db_url.replace("postgres://", "postgresql://", 1)
+    # SSL direkt in die URL einbauen (robuster als connect_args)
+    if db_url.startswith("postgresql://") and "sslmode" not in db_url:
+        db_url += "?sslmode=require"
     app.config["SQLALCHEMY_DATABASE_URI"] = db_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-    # Supabase erfordert SSL; für SQLite ist diese Option irrelevant
-    if not db_url.startswith("sqlite"):
-        app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-            "connect_args": {"sslmode": "require"},
-        }
 
     db.init_app(app)
 
@@ -70,15 +68,9 @@ def create_app() -> Flask:
         return db.session.get(User, int(user_id))
 
     with app.app_context():
-        # checkfirst=True ist Standard, aber bei mehreren Gunicorn-Workern kann es
-        # trotzdem zu Race Conditions kommen → zusätzlicher try/except.
-        try:
-            db.create_all()
-        except Exception:
-            db.session.rollback()
+        db.create_all()
 
-        # Admin-Anlage race-condition-sicher: spezifisch nach 'admin' suchen,
-        # UNIQUE-Fehler abfangen falls zwei Worker gleichzeitig versuchen zu schreiben.
+        # Admin-Anlage: UNIQUE-Fehler abfangen falls zwei Worker gleichzeitig schreiben.
         try:
             admin_user = db.session.execute(
                 db.select(User).where(User.username == "admin")
@@ -92,8 +84,9 @@ def create_app() -> Flask:
             elif not admin_user.is_admin:
                 admin_user.is_admin = True
                 db.session.commit()
-        except Exception:
+        except Exception as e:
             db.session.rollback()
+            print(f"[WARP] Admin-Init übersprungen: {e}")
 
     score_lookup = {opt["id"]: opt["score"] for opt in ANSWER_OPTIONS}
     label_lookup = {opt["id"]: opt["label"] for opt in ANSWER_OPTIONS}
