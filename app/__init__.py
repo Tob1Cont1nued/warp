@@ -23,11 +23,19 @@ Routes:
   POST /admin/category/new             - Neue Kategorie anlegen
   POST /admin/category/<cid>/edit      - Kategorie bearbeiten
   POST /admin/category/<cid>/delete    - Kategorie löschen
+  POST /api/inbox                      - Webhook: IMPULSE-Nachricht empfangen (API-Key)
+  GET  /api/inbox/count                - AJAX: Anzahl neuer Nachrichten
+  GET  /inbox                          - Admin-Postkorb
+  POST /inbox/<mid>/claim              - Nachricht übernehmen
+  POST /inbox/<mid>/done               - Nachricht als erledigt markieren
+  POST /inbox/<mid>/release            - Nachricht freigeben
+  POST /inbox/<mid>/delete             - Nachricht löschen
 """
 
 from __future__ import annotations
 
 import io
+import json as _json
 import os
 import uuid
 import datetime as dt
@@ -43,7 +51,7 @@ from flask_login import (
     LoginManager, login_required, login_user, logout_user, current_user,
 )
 
-from .models import db, User, Project, Answer, Category, Question
+from .models import db, User, Project, Answer, Category, Question, InboxMessage
 from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER
 
 ROOT = Path(__file__).parent.parent
@@ -720,6 +728,117 @@ def create_app() -> Flask:
             as_attachment=True,
             download_name=filename,
         )
+
+    # ------------------------------------------------------------------
+    # Inbox – Webhook + Admin-Postkorb
+    # ------------------------------------------------------------------
+
+    @app.route("/api/inbox", methods=["POST"])
+    def api_inbox_receive():
+        api_key = os.environ.get("WARP_INBOX_API_KEY", "")
+        if api_key:
+            provided = request.headers.get("X-API-Key", "")
+            if not provided or provided != api_key:
+                return jsonify({"error": "Unauthorized"}), 401
+        data = request.get_json(silent=True)
+        if not data:
+            return jsonify({"error": "Invalid JSON"}), 400
+        user_name = data.get("userName", "").strip()
+        user_email = data.get("userEmail", "").strip()
+        recommendation = data.get("recommendation", "").strip()
+        if not user_name or not user_email or not recommendation:
+            return jsonify({"error": "Missing required fields: userName, userEmail, recommendation"}), 400
+        msg = InboxMessage(
+            source=data.get("source", "IMPULSE"),
+            user_name=user_name,
+            user_email=user_email,
+            recommendation=recommendation,
+            scores_json=_json.dumps(data.get("scores", {})),
+            rationale=data.get("rationale", ""),
+            top_factors_json=_json.dumps(data.get("topFactors", [])),
+        )
+        db.session.add(msg)
+        db.session.commit()
+        print(f"[WARP Postkorb] Neue Anfrage von {user_name} ({user_email}): {recommendation}")
+        return jsonify({"ok": True, "id": msg.id}), 201
+
+    @app.route("/api/inbox/count")
+    @login_required
+    def api_inbox_count():
+        if not current_user.is_admin:
+            return jsonify({"count": 0})
+        count = db.session.execute(
+            db.select(db.func.count()).select_from(InboxMessage).where(
+                InboxMessage.status == "neu"
+            )
+        ).scalar() or 0
+        return jsonify({"count": count})
+
+    @app.route("/inbox")
+    @login_required
+    def inbox():
+        if not current_user.is_admin:
+            abort(403)
+        messages = db.session.execute(
+            db.select(InboxMessage).order_by(InboxMessage.received_at.desc())
+        ).scalars().all()
+        for m in messages:
+            m.scores = _json.loads(m.scores_json or "{}")
+            m.top_factors = _json.loads(m.top_factors_json or "[]")
+        neu_count = sum(1 for m in messages if m.status == "neu")
+        return render_template("inbox.html", messages=messages, neu_count=neu_count)
+
+    @app.route("/inbox/<int:mid>/claim", methods=["POST"])
+    @login_required
+    def inbox_claim(mid: int):
+        if not current_user.is_admin:
+            abort(403)
+        msg = db.session.get(InboxMessage, mid)
+        if not msg:
+            abort(404)
+        if msg.status == "neu":
+            msg.status = "in_bearbeitung"
+            msg.claimed_by_id = current_user.id
+            msg.claimed_at = dt.datetime.utcnow()
+            db.session.commit()
+        return redirect(url_for("inbox"))
+
+    @app.route("/inbox/<int:mid>/done", methods=["POST"])
+    @login_required
+    def inbox_done(mid: int):
+        if not current_user.is_admin:
+            abort(403)
+        msg = db.session.get(InboxMessage, mid)
+        if not msg:
+            abort(404)
+        msg.status = "erledigt"
+        db.session.commit()
+        return redirect(url_for("inbox"))
+
+    @app.route("/inbox/<int:mid>/release", methods=["POST"])
+    @login_required
+    def inbox_release(mid: int):
+        if not current_user.is_admin:
+            abort(403)
+        msg = db.session.get(InboxMessage, mid)
+        if not msg:
+            abort(404)
+        msg.status = "neu"
+        msg.claimed_by_id = None
+        msg.claimed_at = None
+        db.session.commit()
+        return redirect(url_for("inbox"))
+
+    @app.route("/inbox/<int:mid>/delete", methods=["POST"])
+    @login_required
+    def inbox_delete(mid: int):
+        if not current_user.is_admin:
+            abort(403)
+        msg = db.session.get(InboxMessage, mid)
+        if msg:
+            db.session.delete(msg)
+            db.session.commit()
+        return redirect(url_for("inbox"))
 
     return app
 

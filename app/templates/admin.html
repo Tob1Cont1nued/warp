@@ -6,6 +6,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>WARP &middot; Admin</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+  <style>
+    .topbar-bell {
+      position: relative; display: flex; align-items: center;
+      color: var(--c-text); margin-left: auto; padding: 8px 10px;
+      text-decoration: none; border-radius: 8px; transition: background .15s;
+    }
+    .topbar-bell:hover { background: var(--c-bg); }
+    .bell-badge {
+      position: absolute; top: 4px; right: 4px; background: #e11d48; color: #fff;
+      font-size: 10px; font-weight: 700; border-radius: 9999px;
+      min-width: 16px; height: 16px; display: flex; align-items: center;
+      justify-content: center; padding: 0 3px; line-height: 1;
+    }
+    .sidebar-inbox-count {
+      margin-left: auto; background: #e11d48; color: #fff;
+      font-size: .68rem; font-weight: 700; border-radius: 9999px;
+      padding: 1px 7px; min-width: 20px; text-align: center;
+    }
+  </style>
 </head>
 <body>
 
@@ -19,6 +38,13 @@
     <h1>Admin-Übersicht</h1>
     <p>Benutzer &amp; Projekte verwalten</p>
   </div>
+  <a class="topbar-bell" href="{{ url_for('inbox') }}" id="js-bell-link" title="Postkorb">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+    <span class="bell-badge" id="js-bell-badge" style="display:none">0</span>
+  </a>
 </header>
 
 <div class="sidebar-backdrop" id="js-backdrop"></div>
@@ -36,6 +62,10 @@
     </a>
     <a class="sidebar-nav-item" href="{{ url_for('admin_questions') }}">
       <span class="dot"></span>Fragenkatalog
+    </a>
+    <a class="sidebar-nav-item" href="{{ url_for('inbox') }}" style="display:flex;align-items:center;gap:6px">
+      <span class="dot"></span>Postkorb
+      <span class="sidebar-inbox-count" id="js-sidebar-badge" style="display:none">0</span>
     </a>
   </nav>
   <div class="sidebar-foot">
@@ -187,6 +217,22 @@
     const close = () => { backdrop.classList.remove("open"); pending = null; };
     cancelBtn.addEventListener("click", close);
     backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  })();
+</script>
+
+<script>
+  (function () {
+    function updateBell(count) {
+      const badge = document.getElementById("js-bell-badge");
+      const sidebarBadge = document.getElementById("js-sidebar-badge");
+      if (badge) { badge.textContent = count; badge.style.display = count > 0 ? "flex" : "none"; }
+      if (sidebarBadge) { sidebarBadge.textContent = count; sidebarBadge.style.display = count > 0 ? "inline-flex" : "none"; }
+    }
+    function poll() {
+      fetch("/api/inbox/count").then(r => r.json()).then(d => updateBell(d.count || 0)).catch(() => {});
+    }
+    poll();
+    setInterval(poll, 60000);
   })();
 </script>
 

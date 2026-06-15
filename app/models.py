@@ -101,3 +101,21 @@ class Question(db.Model):
     sort_order = db.Column(db.Integer, nullable=False, default=0)
 
     category = db.relationship("Category", back_populates="questions")
+
+
+class InboxMessage(db.Model):
+    __tablename__ = "inbox_message"
+    id = db.Column(db.Integer, primary_key=True)
+    source = db.Column(db.String(40), default="IMPULSE", nullable=False)
+    user_name = db.Column(db.String(200), nullable=False)
+    user_email = db.Column(db.String(200), nullable=False)
+    recommendation = db.Column(db.String(200), nullable=False)
+    scores_json = db.Column(db.Text, nullable=True)
+    rationale = db.Column(db.Text, nullable=True)
+    top_factors_json = db.Column(db.Text, nullable=True)
+    received_at = db.Column(db.DateTime, default=dt.datetime.utcnow, nullable=False)
+    status = db.Column(db.String(20), default="neu", nullable=False)
+    claimed_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
+    claimed_at = db.Column(db.DateTime, nullable=True)
+
+    claimed_by = db.relationship("User", foreign_keys=[claimed_by_id])

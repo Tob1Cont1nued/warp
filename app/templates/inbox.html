@@ -1,0 +1,344 @@
+{# WARP Admin – Postkorb (IMPULSE-Anfragen) #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Postkorb</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+  <style>
+    .topbar-bell {
+      position: relative; display: flex; align-items: center;
+      color: var(--c-text); margin-left: auto; padding: 8px 10px;
+      text-decoration: none; border-radius: 8px; transition: background .15s;
+    }
+    .topbar-bell:hover { background: var(--c-bg); }
+    .bell-badge {
+      position: absolute; top: 4px; right: 4px; background: #e11d48; color: #fff;
+      font-size: 10px; font-weight: 700; border-radius: 9999px;
+      min-width: 16px; height: 16px; display: flex; align-items: center;
+      justify-content: center; padding: 0 3px; line-height: 1;
+    }
+    .sidebar-inbox-count {
+      margin-left: auto; background: #e11d48; color: #fff;
+      font-size: .68rem; font-weight: 700; border-radius: 9999px;
+      padding: 1px 7px; min-width: 20px; text-align: center;
+    }
+
+    .inbox-stats { display: flex; gap: 24px; flex-wrap: wrap; }
+    .inbox-stat strong { display: block; font-size: 1.5rem; }
+    .inbox-stat span { font-size: .85rem; color: var(--c-text-muted); }
+    .inbox-stat--neu strong { color: #b91c1c; }
+    .inbox-stat--wip strong { color: #b45309; }
+    .inbox-stat--done strong { color: #15803d; }
+
+    .inbox-section-header {
+      font-size: .75rem; font-weight: 700; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--c-text-muted);
+      margin: 28px 0 10px; display: flex; align-items: center; gap: 10px;
+    }
+    .inbox-section-header::after { content: ""; flex: 1; height: 1px; background: var(--c-border); }
+
+    .inbox-card {
+      margin-bottom: 10px; border-left: 3px solid transparent;
+    }
+    .inbox-card--neu { border-left-color: #e11d48; }
+    .inbox-card--in_bearbeitung { border-left-color: #f59e0b; }
+    .inbox-card--erledigt { border-left-color: #22c55e; opacity: .8; }
+
+    .inbox-head { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    .inbox-head-info { flex: 1; min-width: 0; }
+    .inbox-sender-name { font-weight: 600; font-size: .95rem; margin: 0 0 2px; }
+    .inbox-sender-email { font-size: .82rem; color: var(--c-text-muted); margin: 0 0 8px; }
+    .inbox-rec {
+      display: inline-block; font-size: .82rem; font-weight: 600;
+      background: var(--ws-blue-soft); color: var(--ws-blue);
+      border-radius: 6px; padding: 3px 10px; margin-bottom: 6px;
+    }
+    .inbox-meta { font-size: .78rem; color: var(--c-text-faint); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+
+    .status-badge {
+      display: inline-flex; align-items: center;
+      font-size: .68rem; font-weight: 700; border-radius: 999px;
+      padding: 2px 8px; text-transform: uppercase; letter-spacing: .05em;
+    }
+    .status-neu { background: #fee2e2; color: #b91c1c; }
+    .status-in_bearbeitung { background: #fef3c7; color: #b45309; }
+    .status-erledigt { background: #dcfce7; color: #15803d; }
+
+    .inbox-actions { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; padding-top: 2px; }
+
+    .inbox-detail { padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--c-border-soft); }
+    .inbox-rationale { font-size: .875rem; color: var(--c-text-muted); line-height: 1.6; margin-bottom: 12px; }
+    .inbox-scores { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+    .inbox-score-pill {
+      background: var(--c-bg); border: 1px solid var(--c-border);
+      border-radius: 8px; padding: 6px 12px; font-size: .82rem; text-align: center;
+    }
+    .inbox-score-pill strong { display: block; font-size: 1rem; color: var(--ws-blue); }
+    .inbox-factors { display: flex; gap: 6px; flex-wrap: wrap; }
+    .inbox-factor {
+      font-size: .78rem; background: #f0f9ff; border: 1px solid #bae6fd;
+      border-radius: 999px; padding: 3px 10px; color: #0369a1;
+    }
+
+    .inbox-empty {
+      text-align: center; color: var(--c-text-muted); padding: 56px 24px;
+    }
+    .inbox-empty svg { opacity: .25; margin-bottom: 14px; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>Postkorb</h1>
+    <p>IMPULSE-Anfragen &mdash; Erstgespräch-Leads</p>
+  </div>
+  <a class="topbar-bell" href="{{ url_for('inbox') }}" id="js-bell-link" title="Postkorb">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+    <span class="bell-badge" id="js-bell-badge"{% if neu_count == 0 %} style="display:none"{% endif %}>{{ neu_count }}</span>
+  </a>
+</header>
+
+<div class="sidebar-backdrop" id="js-backdrop"></div>
+
+<aside class="sidebar" id="js-sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-brand">
+      <span class="sidebar-brand-name">WARP</span>
+      <span class="sidebar-brand-tagline">Wavestone Assessment Risk Planner</span>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <a class="sidebar-nav-item" href="{{ url_for('admin_overview') }}">
+      <span class="dot"></span>Übersicht
+    </a>
+    <a class="sidebar-nav-item" href="{{ url_for('admin_questions') }}">
+      <span class="dot"></span>Fragenkatalog
+    </a>
+    <a class="sidebar-nav-item active" href="{{ url_for('inbox') }}" style="display:flex;align-items:center;gap:6px">
+      <span class="dot"></span>Postkorb
+      <span class="sidebar-inbox-count" id="js-sidebar-badge"{% if neu_count == 0 %} style="display:none"{% endif %}>{{ neu_count }}</span>
+    </a>
+  </nav>
+  <div class="sidebar-foot">
+    <div class="sidebar-foot-user">
+      <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
+      <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
+    </div>
+    <div class="sidebar-foot-brand">
+      <span class="brand-mark"></span>
+      <span class="brand-name">wavestone</span>
+    </div>
+    <span class="sidebar-foot-meta">WARP Tool &middot; v0.1 &middot; Admin</span>
+  </div>
+</aside>
+
+<main class="main">
+
+  {# ── Stats ──────────────────────────────────────────────────────────── #}
+  <section class="card" style="padding:16px 24px;margin-bottom:8px">
+    <div class="inbox-stats">
+      <div class="inbox-stat">
+        <strong>{{ messages | length }}</strong>
+        <span>Nachrichten gesamt</span>
+      </div>
+      <div class="inbox-stat inbox-stat--neu">
+        <strong>{{ messages | selectattr('status','eq','neu') | list | length }}</strong>
+        <span>Neu</span>
+      </div>
+      <div class="inbox-stat inbox-stat--wip">
+        <strong>{{ messages | selectattr('status','eq','in_bearbeitung') | list | length }}</strong>
+        <span>In Bearbeitung</span>
+      </div>
+      <div class="inbox-stat inbox-stat--done">
+        <strong>{{ messages | selectattr('status','eq','erledigt') | list | length }}</strong>
+        <span>Erledigt</span>
+      </div>
+    </div>
+  </section>
+
+  {% if not messages %}
+  <div class="card inbox-empty">
+    <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5" style="display:block;margin:0 auto 14px">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+    <p>Der Postkorb ist leer. Sobald jemand IMPULSE abschließt, erscheint hier eine Anfrage.</p>
+  </div>
+  {% endif %}
+
+  {# ── Macro: eine Nachrichtenkarte ───────────────────────────────────── #}
+  {% macro msg_card(msg) %}
+  <div class="card inbox-card inbox-card--{{ msg.status }}">
+    <div class="inbox-head">
+      <div class="inbox-head-info">
+        <p class="inbox-sender-name">{{ msg.user_name }}</p>
+        <p class="inbox-sender-email">{{ msg.user_email }}</p>
+        <span class="inbox-rec">{{ msg.recommendation }}</span>
+        <div class="inbox-meta">
+          <span class="status-badge status-{{ msg.status }}">
+            {%- if msg.status == 'neu' -%}Neu
+            {%- elif msg.status == 'in_bearbeitung' -%}In Bearbeitung
+            {%- else -%}Erledigt
+            {%- endif -%}
+          </span>
+          {% if msg.status == 'in_bearbeitung' and msg.claimed_by %}
+          <span>&rarr; {{ msg.claimed_by.display_name or msg.claimed_by.username }}</span>
+          {% endif %}
+          <span>{{ msg.received_at.strftime('%d.%m.%Y, %H:%M') }} Uhr</span>
+        </div>
+      </div>
+      <div class="inbox-actions">
+        {% if msg.status == 'neu' %}
+        <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
+          <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Übernehmen</button>
+        </form>
+        {% endif %}
+        {% if msg.status == 'in_bearbeitung' %}
+        <form method="POST" action="{{ url_for('inbox_done', mid=msg.id) }}">
+          <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem;background:#15803d;border-color:#15803d">Erledigt</button>
+        </form>
+        <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
+          <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Freigeben</button>
+        </form>
+        {% endif %}
+        {% if msg.status == 'erledigt' %}
+        <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
+          <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Wieder öffnen</button>
+        </form>
+        {% endif %}
+        <button type="button" class="btn" style="padding:7px 16px;font-size:.85rem"
+                onclick="toggleDetail(this)">Details</button>
+        <form method="POST" action="{{ url_for('inbox_delete', mid=msg.id) }}"
+              data-confirm="Nachricht von »{{ msg.user_name }}« wirklich löschen?">
+          <button type="submit" class="btn-admin-delete" style="padding:7px 12px;font-size:.85rem">Löschen</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="inbox-detail" style="display:none">
+      {% if msg.rationale %}
+      <p class="inbox-rationale"><strong>Begründung:</strong> {{ msg.rationale }}</p>
+      {% endif %}
+      {% if msg.scores %}
+      <div class="inbox-scores">
+        {% for key, val in msg.scores.items() | sort(attribute=1, reverse=True) %}
+        <div class="inbox-score-pill">
+          <strong>{{ val }}</strong>{{ key }}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% if msg.top_factors %}
+      <div class="inbox-factors">
+        {% for factor in msg.top_factors %}
+        <span class="inbox-factor">{{ factor }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endmacro %}
+
+  {# ── Neue Anfragen ───────────────────────────────────────────────────── #}
+  {% set neu_msgs = messages | selectattr('status','eq','neu') | list %}
+  {% if neu_msgs %}
+  <p class="inbox-section-header">Neu ({{ neu_msgs | length }})</p>
+  {% for msg in neu_msgs %}{{ msg_card(msg) }}{% endfor %}
+  {% endif %}
+
+  {# ── In Bearbeitung ──────────────────────────────────────────────────── #}
+  {% set wip_msgs = messages | selectattr('status','eq','in_bearbeitung') | list %}
+  {% if wip_msgs %}
+  <p class="inbox-section-header">In Bearbeitung ({{ wip_msgs | length }})</p>
+  {% for msg in wip_msgs %}{{ msg_card(msg) }}{% endfor %}
+  {% endif %}
+
+  {# ── Erledigt ────────────────────────────────────────────────────────── #}
+  {% set done_msgs = messages | selectattr('status','eq','erledigt') | list %}
+  {% if done_msgs %}
+  <p class="inbox-section-header">Erledigt ({{ done_msgs | length }})</p>
+  {% for msg in done_msgs %}{{ msg_card(msg) }}{% endfor %}
+  {% endif %}
+
+</main>
+
+{# ── Lösch-Modal ─────────────────────────────────────────────────────── #}
+<div class="modal-backdrop" id="js-modal-backdrop">
+  <div class="modal">
+    <p class="modal-title">Aktion bestätigen</p>
+    <p class="modal-message" id="js-modal-message"></p>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" id="js-modal-cancel">Abbrechen</button>
+      <button type="button" class="modal-confirm" id="js-modal-confirm">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleDetail(btn) {
+    const card = btn.closest('.inbox-card');
+    const detail = card.querySelector('.inbox-detail');
+    const open = detail.style.display === 'block';
+    detail.style.display = open ? 'none' : 'block';
+    btn.textContent = open ? 'Details' : 'Schließen';
+  }
+
+  (function () {
+    const sb = document.getElementById("js-sidebar");
+    const bd = document.getElementById("js-backdrop");
+    const bt = document.getElementById("js-burger");
+    function closeSidebar() { sb.classList.remove("open"); bd.classList.remove("open"); }
+    bt.addEventListener("click", () => { sb.classList.toggle("open"); bd.classList.toggle("open"); });
+    bd.addEventListener("click", closeSidebar);
+  })();
+
+  (function () {
+    const backdrop  = document.getElementById("js-modal-backdrop");
+    const msgEl     = document.getElementById("js-modal-message");
+    const okBtn     = document.getElementById("js-modal-confirm");
+    const cancelBtn = document.getElementById("js-modal-cancel");
+    let pending = null;
+    document.querySelectorAll("form[data-confirm]").forEach(form => {
+      form.addEventListener("submit", function (e) {
+        if (form.dataset.confirmed) { delete form.dataset.confirmed; return; }
+        e.preventDefault();
+        msgEl.textContent = form.dataset.confirm;
+        pending = form;
+        backdrop.classList.add("open");
+      });
+    });
+    okBtn.addEventListener("click", () => {
+      backdrop.classList.remove("open");
+      if (pending) { pending.dataset.confirmed = "1"; pending.submit(); pending = null; }
+    });
+    const close = () => { backdrop.classList.remove("open"); pending = null; };
+    cancelBtn.addEventListener("click", close);
+    backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  })();
+
+  (function () {
+    function updateBell(count) {
+      const badge = document.getElementById("js-bell-badge");
+      const sidebarBadge = document.getElementById("js-sidebar-badge");
+      if (badge) { badge.textContent = count; badge.style.display = count > 0 ? "flex" : "none"; }
+      if (sidebarBadge) { sidebarBadge.textContent = count; sidebarBadge.style.display = count > 0 ? "inline-flex" : "none"; }
+    }
+    setInterval(function () {
+      fetch("/api/inbox/count").then(r => r.json()).then(d => updateBell(d.count || 0)).catch(() => {});
+    }, 60000);
+  })();
+</script>
+
+</body>
+</html>
