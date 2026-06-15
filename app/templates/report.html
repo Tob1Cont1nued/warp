@@ -200,19 +200,19 @@
     }
     .ladder .step.on { background: #FFF; }
 
-    /* ---------- TMMi Staircase ---------- */
-    .tmmi-wrap {
+    /* ---------- WARP Reifestufen ---------- */
+    .warp-maturity-wrap {
       border: 1pt solid var(--c-border);
       border-radius: 6pt;
       padding: 14pt 18pt 12pt;
       margin-bottom: 14pt;
       background: #FFF;
     }
-    .tmmi-row {
+    .warp-maturity-row {
       display: flex;
       gap: 6pt;
     }
-    .tmmi-step {
+    .warp-maturity-step {
       flex: 1;
       border-radius: 6pt;
       padding: 10pt 6pt 8pt;
@@ -220,11 +220,11 @@
       border: 1pt solid var(--c-border);
       background: var(--c-soft);
     }
-    .tmmi-achieved {
+    .warp-maturity-achieved {
       background: #F0FDF4;
       border-color: #86EFAC;
     }
-    .tmmi-current {
+    .warp-maturity-current {
       background: linear-gradient(135deg, var(--ws-blue) 0%, var(--ws-blue-deep) 100%);
       color: #FFF;
       border: none;
@@ -236,7 +236,7 @@
       color: var(--c-faint);
       margin-bottom: 3pt;
     }
-    .tmmi-current .ts-eyebrow { color: rgba(255,255,255,0.7); }
+    .warp-maturity-current .ts-eyebrow { color: rgba(255,255,255,0.7); }
     .ts-name {
       font-size: 9pt;
       font-weight: 700;
@@ -258,7 +258,7 @@
     }
     .ts-ok { background: #04F06A; color: #000; }   /* Energy Green, schwarz = Kontrast 13.68 */
     .ts-no { background: #F2F2F2; color: #8C8C8C; }
-    .tmmi-current .ts-badge { background: rgba(255,255,255,0.25); color: #FFF; }
+    .warp-maturity-current .ts-badge { background: rgba(255,255,255,0.25); color: #FFF; }
 
     /* ---------- Level subheadings in chart + detail ---------- */
     .level-subhead {
@@ -552,9 +552,9 @@
     <div class="score-card primary">
       <div class="label">Gesamtscore</div>
       <div class="value">{{ overall_score }}<span class="unit">%</span></div>
-      <div class="sub">TMMi-Stufe: <strong>{{ maturity_label }}</strong></div>
+      <div class="sub">Reifestufe: <strong>{{ maturity_label }}</strong></div>
       <div class="ladder">
-        {% for ld in tmmi_levels %}
+        {% for ld in warp_levels %}
           <span class="step {% if ld.achieved %}on{% endif %}"></span>
         {% endfor %}
       </div>
@@ -574,12 +574,12 @@
     </div>
   </div>
 
-  <!-- TMMi Stufenauswertung -->
-  <div class="tmmi-wrap">
-    <h3 style="margin-bottom: 10pt;">TMMi-Stufenergebnis</h3>
-    <div class="tmmi-row">
-      {% for ld in tmmi_levels %}
-        <div class="tmmi-step {% if ld.number == tmmi_level_reached %}tmmi-current{% elif ld.achieved %}tmmi-achieved{% endif %}">
+  <!-- Reifestufen-Auswertung -->
+  <div class="warp-maturity-wrap">
+    <h3 style="margin-bottom: 10pt;">Reifegradauswertung</h3>
+    <div class="warp-maturity-row">
+      {% for ld in warp_levels %}
+        <div class="warp-maturity-step {% if ld.number == warp_level_reached %}warp-maturity-current{% elif ld.achieved %}warp-maturity-achieved{% endif %}">
           <div class="ts-eyebrow">Stufe {{ ld.number }}</div>
           <div class="ts-name">{{ ld.name }}</div>
           {% if ld.score is not none %}
@@ -598,9 +598,10 @@
     </p>
   </div>
 
+
   <div class="chart-wrap">
-    <h3>Reifegrad pro Kategorie (gruppiert nach TMMi-Stufe)</h3>
-    {% for ld in tmmi_levels %}
+    <h3>Reifegrad pro Kategorie (gruppiert nach Reifestufe)</h3>
+    {% for ld in warp_levels %}
       {% if ld.number > 1 and ld.categories %}
         <div class="level-subhead">
           <span class="level-tag {% if ld.achieved %}level-tag-ok{% else %}level-tag-no{% endif %}">Stufe {{ ld.number }}</span>
@@ -631,10 +632,10 @@
 
   <div class="section-banner">
     <div class="eyebrow">Detailauswertung</div>
-    <h2>Kategorien &amp; Fragen nach TMMi-Stufe</h2>
+    <h2>Kategorien &amp; Fragen nach Reifestufe</h2>
   </div>
 
-  {% for ld in tmmi_levels %}
+  {% for ld in warp_levels %}
     {% if ld.number > 1 and ld.categories %}
       <!-- Stufen-Trennkopf -->
       <div style="margin: 18pt 0 10pt; page-break-before: {% if not loop.first %}auto{% else %}avoid{% endif %};">

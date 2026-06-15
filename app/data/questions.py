@@ -1,14 +1,10 @@
 """
-WARP Tool - Fragenkatalog Daten (TMMI-Variante)
-
-Basierend auf dem Test Maturity Model integration (TMMI).
-Struktur orientiert sich an den TMMI-Reifegradstufen 2-5 und den
-zugehörigen Process Areas (PA).
+WARP Tool - Fragenkatalog Daten
 
 Struktur:
-  - 4 Hauptbereiche (TMMI-Stufen): Stufe 2 - Managed, Stufe 3 - Defined,
+  - 4 Reifestufen: Stufe 2 - Managed, Stufe 3 - Defined,
     Stufe 4 - Measured, Stufe 5 - Optimization
-  - 13 Unterkategorien (Process Areas)
+  - Unterkategorien (Process Areas)
 
 Hinweis Auswertungslogik:
   Eine Stufe gilt als erreicht, wenn alle Process Areas dieser Stufe
@@ -959,8 +955,8 @@ ANSWER_OPTIONS = [
     {"id": "nicht",  "label": "Trifft nicht zu",      "score":   0},
 ]
 
-# Reihenfolge der TMMI-Stufen (für Auswertung/Stufenlogik)
-TMMI_LEVEL_ORDER = [
+# Reihenfolge der Reifestufen (für Auswertung/Stufenlogik)
+WARP_LEVEL_ORDER = [
     "Stufe 2 - Managed",
     "Stufe 3 - Defined",
     "Stufe 4 - Measured",

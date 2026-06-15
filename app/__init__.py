@@ -44,7 +44,7 @@ from flask_login import (
 )
 
 from .models import db, User, Project, Answer, Category, Question
-from .data.questions import ANSWER_OPTIONS, TMMI_LEVEL_ORDER
+from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER
 
 ROOT = Path(__file__).parent.parent
 
@@ -233,13 +233,13 @@ def create_app() -> Flask:
 
         level_total_map: Dict[str, int] = {
             lv: sum(len(cat["questions"]) for cat in db_categories if cat["parent"] == lv)
-            for lv in TMMI_LEVEL_ORDER
+            for lv in WARP_LEVEL_ORDER
         }
         total_questions = _db_question_count()
 
         categories: List[Dict[str, Any]] = []
         all_scores_sum: float = 0.0
-        level_scores_sum: Dict[str, float] = {lv: 0.0 for lv in TMMI_LEVEL_ORDER}
+        level_scores_sum: Dict[str, float] = {lv: 0.0 for lv in WARP_LEVEL_ORDER}
 
         for cat in db_categories:
             cat_scores_sum: float = 0.0
@@ -289,12 +289,12 @@ def create_app() -> Flask:
         overall = round(all_scores_sum / total_questions, 1) if total_questions > 0 else 0.0
         answered_count = sum(c["answered"] for c in categories)
 
-        tmmi_levels: List[Dict[str, Any]] = [{
+        warp_levels: List[Dict[str, Any]] = [{
             "number": 1, "name": "Initial", "full_name": "Stufe 1 – Initial",
             "score": None, "categories": [], "achieved": True,
         }]
         all_lower_achieved = True
-        for level_name in TMMI_LEVEL_ORDER:
+        for level_name in WARP_LEVEL_ORDER:
             lv_total = level_total_map.get(level_name, 0)
             lv_score = round(level_scores_sum[level_name] / lv_total, 1) if lv_total > 0 else 0.0
             lv_cats = [c for c in categories if c["parent"] == level_name]
@@ -303,14 +303,14 @@ def create_app() -> Flask:
             achieved = all_lower_achieved and (lv_score >= LEVEL_THRESHOLD)
             if not achieved:
                 all_lower_achieved = False
-            tmmi_levels.append({
+            warp_levels.append({
                 "number": num, "name": short_name,
                 "full_name": level_name.replace(" - ", " – "),
                 "score": lv_score, "categories": lv_cats, "achieved": achieved,
             })
 
-        tmmi_level_reached = max(ld["number"] for ld in tmmi_levels if ld["achieved"])
-        tmmi_level_label = next(ld["full_name"] for ld in tmmi_levels if ld["number"] == tmmi_level_reached)
+        warp_level_reached = max(ld["number"] for ld in warp_levels if ld["achieved"])
+        warp_level_label = next(ld["full_name"] for ld in warp_levels if ld["number"] == warp_level_reached)
 
         return {
             "project_name": project_name,
@@ -321,10 +321,10 @@ def create_app() -> Flask:
             "overall_score": overall,
             "answered_count": answered_count,
             "total_count": total_questions,
-            "maturity_label": tmmi_level_label,
-            "maturity_index": tmmi_level_reached,
-            "tmmi_levels": tmmi_levels,
-            "tmmi_level_reached": tmmi_level_reached,
+            "maturity_label": warp_level_label,
+            "maturity_index": warp_level_reached,
+            "warp_levels": warp_levels,
+            "warp_level_reached": warp_level_reached,
             "level_threshold": LEVEL_THRESHOLD,
             "answer_options": ANSWER_OPTIONS,
         }
@@ -488,7 +488,7 @@ def create_app() -> Flask:
         return render_template(
             "admin_questions.html",
             categories=cats,
-            levels=TMMI_LEVEL_ORDER,
+            levels=WARP_LEVEL_ORDER,
             total_questions=_db_question_count(),
         )
 
@@ -570,8 +570,8 @@ def create_app() -> Flask:
         if db.session.get(Category, cat_id):
             flash(f"Kategorie-ID '{cat_id}' ist bereits vergeben.", "error")
             return redirect(url_for("admin_questions"))
-        if parent not in TMMI_LEVEL_ORDER:
-            flash("Ungültige TMMi-Stufe.", "error")
+        if parent not in WARP_LEVEL_ORDER:
+            flash("Ungültige Reifestufe.", "error")
             return redirect(url_for("admin_questions"))
         max_sort = db.session.execute(
             db.select(db.func.max(Category.sort_order))
