@@ -484,9 +484,11 @@ def create_app() -> Flask:
     def admin_user_delete(uid: int):
         if not current_user.is_superuser:
             abort(403)
+        if uid == current_user.id:
+            abort(400)
         user = db.session.get(User, uid)
-        if not user or user.is_superuser:
-            abort(403)
+        if not user:
+            abort(404)
         db.session.delete(user)
         db.session.commit()
         return redirect(url_for("admin_overview"))
@@ -496,9 +498,11 @@ def create_app() -> Flask:
     def admin_user_toggle_lock(uid: int):
         if not current_user.is_superuser:
             abort(403)
+        if uid == current_user.id:
+            abort(400)
         user = db.session.get(User, uid)
-        if not user or user.is_superuser:
-            abort(403)
+        if not user:
+            abort(404)
         user.is_locked = not user.is_locked
         db.session.commit()
         return redirect(url_for("admin_overview"))
