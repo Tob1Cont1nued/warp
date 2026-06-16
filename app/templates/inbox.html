@@ -133,6 +133,12 @@
       cursor: pointer; border-radius: 0 6px 6px 0;
     }
     @media (min-width: 641px) { .swipe-del-btn { display: none !important; } }
+
+    /* ── Toggle footer row ─────────────────────────────────────────────── */
+    .card-footer-toggle {
+      display: flex; justify-content: flex-end;
+      margin-top: 6px; padding-top: 4px;
+    }
   </style>
 </head>
 <body>
@@ -287,15 +293,6 @@
             </form>
             {% endif %}
 
-            {# Arrow toggle – replaces the old "Details" button #}
-            <button type="button" class="btn-toggle" title="Details aufklappen"
-                    onclick="toggleDetail(this)">
-              <svg class="toggle-icon" viewBox="0 0 24 24" width="18" height="18"
-                   fill="none" stroke="currentColor" stroke-width="2.5">
-                <path d="M6 9l6 6 6-6"/>
-              </svg>
-            </button>
-
             {# Desktop trash icon – hidden on mobile #}
             <button type="submit" form="del-{{ msg.id }}"
                     class="btn-icon-delete" title="Löschen">
@@ -338,6 +335,17 @@
           {% elif msg.scores %}
           <p style="font-size:.8rem;color:#15803d;margin-top:10px">✓ Keine auffälligen Schwachstellen identifiziert</p>
           {% endif %}
+        </div>
+
+        {# Arrow toggle – bottom-right corner #}
+        <div class="card-footer-toggle">
+          <button type="button" class="btn-toggle" title="Details aufklappen"
+                  onclick="toggleDetail(this)">
+            <svg class="toggle-icon" viewBox="0 0 24 24" width="18" height="18"
+                 fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </button>
         </div>
       </div>{# /swipe-main #}
 
