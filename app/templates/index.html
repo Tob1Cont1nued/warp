@@ -90,6 +90,10 @@
   <div class="sidebar-foot">
     <div class="sidebar-foot-user">
       <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
+      <span style="font-size:.68rem;font-weight:700;border-radius:999px;padding:1px 8px;margin-top:2px;display:inline-block;
+        {% if current_user.is_superuser %}background:#ede9fe;color:#6d28d9{% elif current_user.is_admin %}background:#fef3c7;color:#b45309{% else %}background:#f0f9ff;color:#0369a1{% endif %}">
+        {% if current_user.is_superuser %}Superuser{% elif current_user.is_admin %}Admin{% else %}Benutzer{% endif %}
+      </span>
       <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
     </div>
     <div class="sidebar-foot-brand">

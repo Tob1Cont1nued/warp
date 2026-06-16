@@ -71,6 +71,10 @@
   <div class="sidebar-foot">
     <div class="sidebar-foot-user">
       <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
+      <span style="font-size:.68rem;font-weight:700;border-radius:999px;padding:1px 8px;margin-top:2px;display:inline-block;
+        {% if current_user.is_superuser %}background:#ede9fe;color:#6d28d9{% elif current_user.is_admin %}background:#fef3c7;color:#b45309{% else %}background:#f0f9ff;color:#0369a1{% endif %}">
+        {% if current_user.is_superuser %}Superuser{% elif current_user.is_admin %}Admin{% else %}Benutzer{% endif %}
+      </span>
       <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
     </div>
     <div class="sidebar-foot-brand">
@@ -107,6 +111,7 @@
         <select id="role" name="role" style="padding:8px 10px;border:1px solid var(--c-border);border-radius:8px;font-size:.9rem;width:100%">
           <option value="user">Benutzer — kann Assessments durchführen</option>
           <option value="admin">Admin — kann Postkorb sehen &amp; bearbeiten</option>
+          <option value="superuser">Superuser — voller Zugriff</option>
         </select>
       </div>
       <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 24px">Benutzer anlegen</button>
@@ -140,6 +145,7 @@
           <select name="role" style="padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.8rem">
             <option value="user" {% if user.role == 'user' %}selected{% endif %}>Benutzer</option>
             <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+            <option value="superuser" {% if user.role == 'superuser' %}selected{% endif %}>Superuser</option>
           </select>
           <button type="submit" class="btn-admin-action" style="white-space:nowrap">Rolle setzen</button>
         </form>

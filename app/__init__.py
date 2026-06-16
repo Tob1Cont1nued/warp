@@ -424,7 +424,7 @@ def create_app() -> Flask:
         if not current_user.is_superuser:
             abort(403)
         users = db.session.execute(
-            db.select(User).where(User.role != 'superuser').order_by(User.id)
+            db.select(User).where(User.id != current_user.id).order_by(User.id)
         ).scalars().all()
         return render_template("admin.html", users=users, total_questions=_db_question_count())
 
@@ -437,7 +437,7 @@ def create_app() -> Flask:
         display_name = request.form.get("display_name", "").strip()
         password = request.form.get("password", "").strip()
         role = request.form.get("role", "user")
-        if role not in ('user', 'admin'):
+        if role not in ('user', 'admin', 'superuser'):
             role = 'user'
         error = None
         if not username or not password:
@@ -452,7 +452,7 @@ def create_app() -> Flask:
                 error = f"Benutzername '{username}' ist bereits vergeben."
         if error:
             users = db.session.execute(
-                db.select(User).where(User.role != 'superuser').order_by(User.id)
+                db.select(User).where(User.id != current_user.id).order_by(User.id)
             ).scalars().all()
             return render_template("admin.html", users=users,
                                    total_questions=_db_question_count(), error=error)
@@ -470,10 +470,10 @@ def create_app() -> Flask:
         if uid == current_user.id:
             abort(400)
         user = db.session.get(User, uid)
-        if not user or user.is_superuser:
-            abort(403)
+        if not user:
+            abort(404)
         new_role = request.form.get("role", "user")
-        if new_role not in ('user', 'admin'):
+        if new_role not in ('user', 'admin', 'superuser'):
             abort(400)
         user.role = new_role
         db.session.commit()
