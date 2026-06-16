@@ -124,13 +124,13 @@ def create_app() -> Flask:
                 db.select(User).where(User.username == "admin")
             ).scalar_one_or_none()
             if not admin_user:
-                default = User(username="admin", display_name="Administrator", is_admin=True)
+                default = User(username="admin", display_name="Administrator", role='superuser')
                 default.set_password("warp2024")
                 db.session.add(default)
                 db.session.commit()
                 print("[WARP] Standard-Admin erstellt: admin / warp2024")
-            elif not admin_user.is_admin:
-                admin_user.is_admin = True
+            elif not admin_user.is_superuser:
+                admin_user.role = 'superuser'
                 db.session.commit()
         except Exception as e:
             db.session.rollback()
@@ -153,7 +153,7 @@ def create_app() -> Flask:
         project = db.session.get(Project, pid)
         if not project:
             abort(403)
-        if not current_user.is_admin and project.user_id != current_user.id:
+        if not current_user.is_superuser and project.user_id != current_user.id:
             abort(403)
         return project
 
@@ -409,8 +409,10 @@ def create_app() -> Flask:
     @app.route("/")
     @login_required
     def index():
-        if current_user.is_admin:
+        if current_user.is_superuser:
             return redirect(url_for("admin_overview"))
+        if current_user.is_admin:
+            return redirect(url_for("inbox"))
         projects = current_user.projects
         if projects:
             return redirect(url_for("questionnaire", pid=projects[0].id))
@@ -419,21 +421,24 @@ def create_app() -> Flask:
     @app.route("/admin")
     @login_required
     def admin_overview():
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         users = db.session.execute(
-            db.select(User).where(User.is_admin == False).order_by(User.id)  # noqa: E712
+            db.select(User).where(User.role != 'superuser').order_by(User.id)
         ).scalars().all()
         return render_template("admin.html", users=users, total_questions=_db_question_count())
 
     @app.route("/admin/user/new", methods=["POST"])
     @login_required
     def admin_user_new():
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         username = request.form.get("username", "").strip()
         display_name = request.form.get("display_name", "").strip()
         password = request.form.get("password", "").strip()
+        role = request.form.get("role", "user")
+        if role not in ('user', 'admin'):
+            role = 'user'
         error = None
         if not username or not password:
             error = "Benutzername und Passwort sind erforderlich."
@@ -447,23 +452,40 @@ def create_app() -> Flask:
                 error = f"Benutzername '{username}' ist bereits vergeben."
         if error:
             users = db.session.execute(
-                db.select(User).where(User.is_admin == False)  # noqa: E712
+                db.select(User).where(User.role != 'superuser').order_by(User.id)
             ).scalars().all()
             return render_template("admin.html", users=users,
                                    total_questions=_db_question_count(), error=error)
-        u = User(username=username, display_name=display_name or None)
+        u = User(username=username, display_name=display_name or None, role=role)
         u.set_password(password)
         db.session.add(u)
+        db.session.commit()
+        return redirect(url_for("admin_overview"))
+
+    @app.route("/admin/user/<int:uid>/set-role", methods=["POST"])
+    @login_required
+    def admin_user_set_role(uid: int):
+        if not current_user.is_superuser:
+            abort(403)
+        if uid == current_user.id:
+            abort(400)
+        user = db.session.get(User, uid)
+        if not user or user.is_superuser:
+            abort(403)
+        new_role = request.form.get("role", "user")
+        if new_role not in ('user', 'admin'):
+            abort(400)
+        user.role = new_role
         db.session.commit()
         return redirect(url_for("admin_overview"))
 
     @app.route("/admin/user/<int:uid>/delete", methods=["POST"])
     @login_required
     def admin_user_delete(uid: int):
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         user = db.session.get(User, uid)
-        if not user or user.is_admin:
+        if not user or user.is_superuser:
             abort(403)
         db.session.delete(user)
         db.session.commit()
@@ -472,10 +494,10 @@ def create_app() -> Flask:
     @app.route("/admin/user/<int:uid>/toggle-lock", methods=["POST"])
     @login_required
     def admin_user_toggle_lock(uid: int):
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         user = db.session.get(User, uid)
-        if not user or user.is_admin:
+        if not user or user.is_superuser:
             abort(403)
         user.is_locked = not user.is_locked
         db.session.commit()
@@ -488,7 +510,7 @@ def create_app() -> Flask:
     @app.route("/admin/questions")
     @login_required
     def admin_questions():
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         cats = db.session.execute(
             db.select(Category).order_by(Category.sort_order)
@@ -503,7 +525,7 @@ def create_app() -> Flask:
     @app.route("/admin/question/new", methods=["POST"])
     @login_required
     def admin_question_new():
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         category_id = request.form.get("category_id", "").strip()
         text = request.form.get("text", "").strip()
@@ -536,7 +558,7 @@ def create_app() -> Flask:
     @app.route("/admin/question/<qid>/edit", methods=["POST"])
     @login_required
     def admin_question_edit(qid: str):
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         q = db.session.get(Question, qid)
         if not q:
@@ -552,7 +574,7 @@ def create_app() -> Flask:
     @app.route("/admin/question/<qid>/delete", methods=["POST"])
     @login_required
     def admin_question_delete(qid: str):
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         q = db.session.get(Question, qid)
         if q:
@@ -566,7 +588,7 @@ def create_app() -> Flask:
     @app.route("/admin/category/new", methods=["POST"])
     @login_required
     def admin_category_new():
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         cat_id = request.form.get("id", "").strip()
         title = request.form.get("title", "").strip()
@@ -599,7 +621,7 @@ def create_app() -> Flask:
     @app.route("/admin/category/<cid>/edit", methods=["POST"])
     @login_required
     def admin_category_edit(cid: str):
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         cat = db.session.get(Category, cid)
         if not cat:
@@ -615,7 +637,7 @@ def create_app() -> Flask:
     @app.route("/admin/category/<cid>/delete", methods=["POST"])
     @login_required
     def admin_category_delete(cid: str):
-        if not current_user.is_admin:
+        if not current_user.is_superuser:
             abort(403)
         cat = db.session.get(Category, cid)
         if cat:
@@ -631,8 +653,10 @@ def create_app() -> Flask:
     @app.route("/project/new", methods=["GET", "POST"])
     @login_required
     def new_project():
-        if current_user.is_admin:
+        if current_user.is_superuser:
             return redirect(url_for("admin_overview"))
+        if current_user.is_admin:
+            return redirect(url_for("inbox"))
         if request.method == "POST":
             name = request.form.get("name", "").strip() or "Neues Projekt"
             project = Project(
@@ -695,8 +719,10 @@ def create_app() -> Flask:
         project = _get_project_or_403(pid)
         db.session.delete(project)
         db.session.commit()
-        if current_user.is_admin:
+        if current_user.is_superuser:
             return redirect(url_for("admin_overview"))
+        if current_user.is_admin:
+            return redirect(url_for("inbox"))
         remaining = current_user.projects
         if remaining:
             return redirect(url_for("questionnaire", pid=remaining[0].id))

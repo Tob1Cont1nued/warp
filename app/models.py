@@ -12,8 +12,19 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(80), unique=True, nullable=False)
     display_name = db.Column(db.String(120), nullable=True)
     password_hash = db.Column(db.String(200), nullable=False)
-    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    # role: 'user' | 'admin' | 'superuser'
+    role = db.Column(db.String(20), default='user', nullable=False)
     is_locked = db.Column(db.Boolean, default=False, nullable=False)
+
+    @property
+    def is_admin(self) -> bool:
+        """True für admin und superuser — darf Postkorb sehen/bearbeiten."""
+        return self.role in ('admin', 'superuser')
+
+    @property
+    def is_superuser(self) -> bool:
+        """True nur für superuser — darf alles (Nutzer, Fragenkatalog)."""
+        return self.role == 'superuser'
 
     projects = db.relationship(
         "Project", back_populates="user",

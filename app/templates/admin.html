@@ -102,6 +102,13 @@
         <label for="password">Passwort <span class="label-optional">(min. 6 Zeichen)</span></label>
         <input type="password" id="password" name="password" required />
       </div>
+      <div class="field">
+        <label for="role">Rolle</label>
+        <select id="role" name="role" style="padding:8px 10px;border:1px solid var(--c-border);border-radius:8px;font-size:.9rem;width:100%">
+          <option value="user">Benutzer — kann Assessments durchführen</option>
+          <option value="admin">Admin — kann Postkorb sehen &amp; bearbeiten</option>
+        </select>
+      </div>
       <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 24px">Benutzer anlegen</button>
     </form>
   </section>
@@ -120,10 +127,22 @@
         <span class="admin-user-name">
           {{ user.display_name or user.username }}
           {% if user.is_locked %}<span class="admin-locked-badge">gesperrt</span>{% endif %}
+          {% if user.role == 'admin' %}
+          <span style="display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:999px;padding:2px 8px;margin-left:6px">Admin</span>
+          {% else %}
+          <span style="display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;background:#f0f9ff;color:#0369a1;border-radius:999px;padding:2px 8px;margin-left:6px">Benutzer</span>
+          {% endif %}
         </span>
         <span class="admin-user-meta">@{{ user.username }} &nbsp;&middot;&nbsp; {{ user.projects | length }} Projekt(e)</span>
       </div>
       <div class="admin-user-actions">
+        <form method="POST" action="{{ url_for('admin_user_set_role', uid=user.id) }}" style="display:flex;gap:4px;align-items:center">
+          <select name="role" style="padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.8rem">
+            <option value="user" {% if user.role == 'user' %}selected{% endif %}>Benutzer</option>
+            <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+          </select>
+          <button type="submit" class="btn-admin-action" style="white-space:nowrap">Rolle setzen</button>
+        </form>
         <form method="POST" action="{{ url_for('admin_user_toggle_lock', uid=user.id) }}">
           <button type="submit" class="btn-admin-action {% if user.is_locked %}btn-admin-unlock{% else %}btn-admin-lock{% endif %}">
             {% if user.is_locked %}Entsperren{% else %}Sperren{% endif %}
