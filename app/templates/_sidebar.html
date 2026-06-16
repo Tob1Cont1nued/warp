@@ -106,8 +106,9 @@
       </div>
     </div>
 
-    {# ── KI-Vorausfüllen – nur mit Projektkontext ──────────────────── #}
-    {% if project %}
+    {# ── KI-Vorausfüllen – Projekt oder erstes verfügbares Projekt ───── #}
+    {% set ki_project = project if project else (projects[0] if projects else none) %}
+    {% if ki_project %}
     <div class="sidebar-section">
       <button class="sidebar-section-hd" onclick="sidebarToggle(this)" aria-expanded="true">
         <span class="sidebar-downloads-label" style="margin:0">KI-Vorausfüllen</span>
@@ -116,7 +117,7 @@
       </button>
       <div class="sidebar-section-body">
         {% for doc_type, label in [('mastertestkonzept','Mastertestkonzept'),('teststrategie','Teststrategie'),('stufentestkonzept','Stufentestkonzept')] %}
-        <form method="POST" action="{{ url_for('generate_document', pid=project.id, doc_type=doc_type) }}"
+        <form method="POST" action="{{ url_for('generate_document', pid=ki_project.id, doc_type=doc_type) }}"
               class="sidebar-gen-form">
           <button type="submit" class="sidebar-download-btn sidebar-gen-btn">
             <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
