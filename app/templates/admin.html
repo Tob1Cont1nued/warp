@@ -132,8 +132,10 @@
         <span class="admin-user-name">
           {{ user.display_name or user.username }}
           {% if user.is_locked %}<span class="admin-locked-badge">gesperrt</span>{% endif %}
-          {% if user.role == 'admin' %}
-          <span style="display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:999px;padding:2px 8px;margin-left:6px">Admin</span>
+          {% if user.role == 'superuser' %}
+          <span style="display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;background:#ede9fe;color:#6d28d9;border-radius:999px;padding:2px 8px;margin-left:6px">Superuser</span>
+          {% elif user.role == 'admin' %}
+          <span style="display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;background:#fef3c7;color:#b45309;border-radius:999px;padding:2px 8px;margin-left:6px">Admin</span>
           {% else %}
           <span style="display:inline-flex;align-items:center;font-size:.68rem;font-weight:700;background:#f0f9ff;color:#0369a1;border-radius:999px;padding:2px 8px;margin-left:6px">Benutzer</span>
           {% endif %}
