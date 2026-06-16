@@ -162,71 +162,8 @@
   </a>
 </header>
 
-<div class="sidebar-backdrop" id="js-backdrop"></div>
-
-<aside class="sidebar" id="js-sidebar">
-  <div class="sidebar-logo">
-    <div class="sidebar-brand">
-      <span class="sidebar-brand-name">WARP</span>
-      <span class="sidebar-brand-tagline">Wavestone Assessment Risk Planner</span>
-    </div>
-  </div>
-
-  <div class="sidebar-scroll">
-
-    {# Projekte (nur wenn vorhanden – relevant für Superuser) #}
-    {% if projects %}
-    <div class="sidebar-projects">
-      <div class="sidebar-projects-header">
-        <span>Meine Projekte</span>
-        <a href="{{ url_for('new_project') }}" class="sidebar-new-btn" title="Neues Projekt">+</a>
-      </div>
-      <nav class="sidebar-projects-list">
-        {% for p in projects %}
-        <div class="sidebar-project-row">
-          <a href="{{ url_for('questionnaire', pid=p.id) }}" class="sidebar-project-name">{{ p.name }}</a>
-        </div>
-        {% endfor %}
-      </nav>
-    </div>
-    {% endif %}
-
-    <nav class="sidebar-nav">
-      {% if first_pid %}
-      <a class="sidebar-nav-item" href="{{ url_for('questionnaire', pid=first_pid) }}">
-        <span class="dot"></span>Fragenkatalog
-      </a>
-      {% endif %}
-      <a class="sidebar-nav-item active" href="{{ url_for('inbox') }}">
-        <span class="dot"></span>Postkorb
-        <span class="sidebar-inbox-count" id="js-sidebar-badge"{% if neu_count == 0 %} style="display:none"{% endif %}>{{ neu_count }}</span>
-      </a>
-      {% if current_user.is_superuser %}
-      <div class="sidebar-nav-divider"></div>
-      <a class="sidebar-nav-item" href="{{ url_for('admin_overview') }}">
-        <span class="dot"></span>Administration
-      </a>
-      {% endif %}
-    </nav>
-
-  </div>
-
-  <div class="sidebar-foot">
-    <div class="sidebar-foot-user">
-      <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
-      <span style="font-size:.68rem;font-weight:700;border-radius:999px;padding:1px 8px;margin-top:2px;display:inline-block;
-        {% if current_user.is_superuser %}background:#ede9fe;color:#6d28d9{% elif current_user.is_admin %}background:#fef3c7;color:#b45309{% else %}background:#f0f9ff;color:#0369a1{% endif %}">
-        {% if current_user.is_superuser %}Superuser{% elif current_user.is_admin %}Admin{% else %}Benutzer{% endif %}
-      </span>
-      <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
-    </div>
-    <div class="sidebar-foot-brand">
-      <span class="brand-mark"></span>
-      <span class="brand-name">wavestone</span>
-    </div>
-    <span class="sidebar-foot-meta">WARP Tool &middot; v0.1</span>
-  </div>
-</aside>
+{% set active_nav = 'postkorb' %}
+{% include '_sidebar.html' %}
 
 <main class="main">
 
@@ -456,16 +393,6 @@
     btn.classList.toggle('open', !open);
     btn.title = open ? 'Details aufklappen' : 'Details zuklappen';
   }
-
-  /* ── Sidebar ─────────────────────────────────────────────────────────── */
-  (function () {
-    const sb = document.getElementById("js-sidebar");
-    const bd = document.getElementById("js-backdrop");
-    const bt = document.getElementById("js-burger");
-    function closeSidebar() { sb.classList.remove("open"); bd.classList.remove("open"); }
-    bt.addEventListener("click", () => { sb.classList.toggle("open"); bd.classList.toggle("open"); });
-    bd.addEventListener("click", closeSidebar);
-  })();
 
   /* ── Delete confirm modal ────────────────────────────────────────────── */
   (function () {

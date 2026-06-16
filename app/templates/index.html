@@ -26,133 +26,8 @@
   </div>
 </header>
 
-<div class="sidebar-backdrop" id="js-backdrop"></div>
-
-<aside class="sidebar" id="js-sidebar">
-  {# ── Logo (fest oben) ───────────────────────────────────────────── #}
-  <div class="sidebar-logo">
-    <div class="sidebar-brand">
-      <span class="sidebar-brand-name">WARP</span>
-      <span class="sidebar-brand-tagline">Wavestone Assessment Risk Planner</span>
-    </div>
-  </div>
-
-  {# ── Scrollbarer Mittelteil ──────────────────────────────────────── #}
-  <div class="sidebar-scroll">
-
-    {# Projekte #}
-    <div class="sidebar-projects">
-      <div class="sidebar-projects-header">
-        <span>Meine Projekte</span>
-        <a href="{{ url_for('new_project') }}" class="sidebar-new-btn" title="Neues Projekt">+</a>
-      </div>
-      <nav class="sidebar-projects-list">
-        {% for p in projects %}
-        <div class="sidebar-project-row {% if p.id == project.id %}active{% endif %}">
-          <a href="{{ url_for('questionnaire', pid=p.id) }}" class="sidebar-project-name">{{ p.name }}</a>
-          <form method="POST" action="{{ url_for('delete_project', pid=p.id) }}"
-                data-confirm="Soll das Projekt »{{ p.name }}« wirklich gelöscht werden?">
-            <button type="submit" class="sidebar-project-delete" title="Löschen">&times;</button>
-          </form>
-        </div>
-        {% endfor %}
-      </nav>
-    </div>
-
-    {# Navigation #}
-    <nav class="sidebar-nav" id="js-sidebar-nav">
-      <a class="sidebar-nav-item active" href="#" data-target="top">
-        <span class="dot"></span>Fragenkatalog
-      </a>
-      <a class="sidebar-nav-item" href="#auswertung-section" data-target="auswertung-section">
-        <span class="dot"></span>Auswertung
-      </a>
-      {% if current_user.is_admin %}
-      <div class="sidebar-nav-divider"></div>
-      <a class="sidebar-nav-item" href="{{ url_for('inbox') }}">
-        <span class="dot"></span>Postkorb
-      </a>
-      {% endif %}
-      {% if current_user.is_superuser %}
-      <a class="sidebar-nav-item" href="{{ url_for('admin_overview') }}">
-        <span class="dot"></span>Administration
-      </a>
-      {% endif %}
-    </nav>
-
-    {# Vorlagen (einklappbar) #}
-    <div class="sidebar-section">
-      <button class="sidebar-section-hd" onclick="sidebarToggle(this)" aria-expanded="true">
-        <span class="sidebar-downloads-label" style="margin:0">Vorlagen</span>
-        <svg class="sidebar-chevron" viewBox="0 0 16 16" width="12" height="12" fill="none"
-             stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
-      </button>
-      <div class="sidebar-section-body">
-        <a class="sidebar-download-btn"
-           href="{{ url_for('static', filename='docs/WARP_Mastertestkonzept.docx') }}" download>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
-          </svg>Mastertestkonzept
-        </a>
-        <a class="sidebar-download-btn"
-           href="{{ url_for('static', filename='docs/WARP_Teststrategie.docx') }}" download>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
-          </svg>Teststrategie
-        </a>
-        <a class="sidebar-download-btn"
-           href="{{ url_for('static', filename='docs/WARP_Stufentestkonzept.docx') }}" download>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
-          </svg>Teststufenkonzept
-        </a>
-      </div>
-    </div>
-
-    {# KI-Vorausfüllen (einklappbar) #}
-    <div class="sidebar-section">
-      <button class="sidebar-section-hd" onclick="sidebarToggle(this)" aria-expanded="true">
-        <span class="sidebar-downloads-label" style="margin:0">KI-Vorausfüllen</span>
-        <svg class="sidebar-chevron" viewBox="0 0 16 16" width="12" height="12" fill="none"
-             stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
-      </button>
-      <div class="sidebar-section-body">
-        {% for doc_type, label in [('mastertestkonzept','Mastertestkonzept'),('teststrategie','Teststrategie'),('stufentestkonzept','Stufentestkonzept')] %}
-        <form method="POST" action="{{ url_for('generate_document', pid=project.id, doc_type=doc_type) }}"
-              class="sidebar-gen-form">
-          <button type="submit" class="sidebar-download-btn sidebar-gen-btn">
-            <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M8 1v10M4 7l4 4 4-4"/><rect x="2" y="13" width="12" height="2" rx="1"/>
-              <circle cx="13" cy="3" r="2.5" fill="#451DC7" stroke="none"/>
-              <text x="13" y="4" text-anchor="middle" font-size="3.5" fill="white" font-weight="bold">✦</text>
-            </svg>
-            <span class="gen-label">{{ label }}</span>
-            <span class="gen-spinner" style="display:none">…</span>
-          </button>
-        </form>
-        {% endfor %}
-      </div>
-    </div>
-
-  </div>{# /sidebar-scroll #}
-
-  {# ── Footer (fest unten) ─────────────────────────────────────────── #}
-  <div class="sidebar-foot">
-    <div class="sidebar-foot-user">
-      <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
-      <span style="font-size:.68rem;font-weight:700;border-radius:999px;padding:1px 8px;margin-top:2px;display:inline-block;
-        {% if current_user.is_superuser %}background:#ede9fe;color:#6d28d9{% elif current_user.is_admin %}background:#fef3c7;color:#b45309{% else %}background:#f0f9ff;color:#0369a1{% endif %}">
-        {% if current_user.is_superuser %}Superuser{% elif current_user.is_admin %}Admin{% else %}Benutzer{% endif %}
-      </span>
-      <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
-    </div>
-    <div class="sidebar-foot-brand">
-      <span class="brand-mark"></span>
-      <span class="brand-name">wavestone</span>
-    </div>
-    <span class="sidebar-foot-meta">WARP Tool &middot; v0.1</span>
-  </div>
-</aside>
+{% set active_nav = 'fragenkatalog' %}
+{% include '_sidebar.html' %}
 
 <main class="main">
 
@@ -267,34 +142,18 @@
   const SAVE_URL   = "/project/" + PROJECT_ID + "/answer";
   const INFO_URL   = "/project/" + PROJECT_ID + "/info";
 
-  // ── Drawer-Toggle (mobile) ──────────────────────────────────────────
-  const sb = document.getElementById("js-sidebar");
-  const bd = document.getElementById("js-backdrop");
-  const bt = document.getElementById("js-burger");
-  function closeSidebar() { sb.classList.remove("open"); bd.classList.remove("open"); }
-  bt.addEventListener("click", () => {
-    const open = !sb.classList.contains("open");
-    sb.classList.toggle("open", open);
-    bd.classList.toggle("open", open);
-  });
-  bd.addEventListener("click", closeSidebar);
-  sb.querySelectorAll("a").forEach(a => a.addEventListener("click", closeSidebar));
-
   // ── Aktiver Nav-Punkt via IntersectionObserver ───────────────────────
-  const navItems = document.querySelectorAll('#js-sidebar-nav .sidebar-nav-item');
   const auswSection = document.getElementById('auswertung-section');
   if (auswSection) {
+    const navItems = document.querySelectorAll('#js-sidebar-nav .sidebar-nav-item');
     const obs = new IntersectionObserver(entries => {
       const isVisible = entries[0].isIntersecting;
       navItems.forEach(a => a.classList.remove('active'));
-      navItems[isVisible ? 1 : 0].classList.add('active');
+      // Fragenkatalog ist index 0, Auswertung index 1
+      if (navItems[isVisible ? 1 : 0]) navItems[isVisible ? 1 : 0].classList.add('active');
     }, { threshold: 0.15 });
     obs.observe(auswSection);
   }
-  navItems.forEach(a => a.addEventListener('click', () => {
-    navItems.forEach(x => x.classList.remove('active'));
-    a.classList.add('active');
-  }));
 
   // ── AJAX Helper ─────────────────────────────────────────────────────
   function post(url, body) {
