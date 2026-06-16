@@ -105,11 +105,11 @@
     .btn-toggle {
       width: 34px; height: 34px; padding: 0;
       display: inline-flex; align-items: center; justify-content: center;
-      background: transparent; border: 1.5px solid var(--c-border);
+      background: transparent; border: none;
       border-radius: 8px; cursor: pointer; color: var(--c-text-muted);
-      flex-shrink: 0; transition: background .15s, border-color .15s;
+      flex-shrink: 0; transition: background .15s;
     }
-    .btn-toggle:hover { background: var(--c-bg); border-color: var(--c-text-muted); }
+    .btn-toggle:hover { background: var(--c-bg); }
     .btn-toggle .toggle-icon { display: block; transition: transform .2s; }
     .btn-toggle.open .toggle-icon { transform: rotate(180deg); }
 
@@ -275,7 +275,7 @@
             {% endif %}
             {% if msg.status == 'in_bearbeitung' %}
             <form method="POST" action="{{ url_for('inbox_done', mid=msg.id) }}">
-              <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem;background:#15803d;border-color:#15803d">Erledigt</button>
+              <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem;background:#16a34a;border-color:#16a34a">Erledigt</button>
             </form>
             <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
               <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Freigeben</button>
