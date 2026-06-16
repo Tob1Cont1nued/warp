@@ -760,6 +760,149 @@ def create_app() -> Flask:
         )
 
     # ------------------------------------------------------------------
+    # KI-Dokumentgenerierung
+    # ------------------------------------------------------------------
+
+    _DOC_TEMPLATES = {
+        'teststrategie':     'WARP_Teststrategie.docx',
+        'mastertestkonzept': 'WARP_Mastertestkonzept.docx',
+        'stufentestkonzept': 'WARP_Stufentestkonzept.docx',
+    }
+    _DOC_LABELS = {
+        'teststrategie':     'Teststrategie',
+        'mastertestkonzept': 'Mastertestkonzept',
+        'stufentestkonzept': 'Stufentestkonzept',
+    }
+
+    def _build_ai_document(project: Project, doc_type: str) -> tuple[io.BytesIO, str]:
+        import json as _json2
+        import anthropic
+        from docx import Document as DocxDoc
+
+        api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+        if not api_key:
+            raise ValueError("ANTHROPIC_API_KEY ist nicht gesetzt.")
+
+        answers = project.answers_dict()
+        notes   = project.notes_dict()
+        db_cats = _load_categories_from_db()
+
+        cat_lines, strengths, improvements = [], [], []
+        for cat in db_cats:
+            scores = [score_lookup.get(answers.get(q['id'], ''), 0) for q in cat['questions']]
+            filled = [s for s in scores if s > 0]
+            if not filled:
+                continue
+            pct = round(sum(filled) / (len(cat['questions']) * 4) * 100)
+            cat_lines.append(f"  - {cat['title']} ({cat['parent']}): {pct}%")
+            if pct >= 70:
+                strengths.append(cat['title'])
+            elif pct < 40:
+                improvements.append(cat['title'])
+            for q in cat['questions']:
+                note = notes.get(q['id'])
+                if note:
+                    cat_lines.append(f"    Notiz: {note}")
+
+        # Kapitelstruktur aus der Vorlage lesen
+        tpl_path = ROOT / "app" / "static" / "docs" / _DOC_TEMPLATES[doc_type]
+        doc = DocxDoc(str(tpl_path))
+        sections: list[tuple[str, str]] = []
+        cur_head = cur_desc = None
+        for para in doc.paragraphs:
+            if para.style.name == 'Heading 1':
+                if cur_head:
+                    sections.append((cur_head, cur_desc or ''))
+                cur_head, cur_desc = para.text.strip(), None
+            elif para.style.name == 'Normal' and cur_head and cur_desc is None:
+                cur_desc = para.text.strip()
+        if cur_head:
+            sections.append((cur_head, cur_desc or ''))
+
+        sections_desc  = '\n'.join(f'- "{h}": {d}' for h, d in sections)
+        sections_json  = '\n'.join(f'  "{h}": "..."' for h, _ in sections)
+
+        context = (
+            f"Projekt: {project.name}\n"
+            f"Verantwortliche/r: {project.owner or 'nicht angegeben'}\n"
+            f"Datum: {project.date or 'nicht angegeben'}\n\n"
+            f"WARP-Kategorie-Scores:\n" +
+            ('\n'.join(cat_lines) or '  (keine Antworten)') +
+            f"\n\nStärken: {', '.join(strengths) or '—'}\n"
+            f"Handlungsfelder: {', '.join(improvements) or '—'}"
+        )
+
+        prompt = (
+            f"Du bist ein erfahrener Testmanagement-Berater bei Wavestone.\n"
+            f"Erstelle auf Basis der folgenden WARP-Assessment-Ergebnisse professionellen deutschen "
+            f"Fachtext für ein \"{_DOC_LABELS[doc_type]}\"-Dokument.\n\n"
+            f"{context}\n\n"
+            f"Schreibe für jedes Kapitel 4–6 prägnante, sachliche Sätze im Beratungsstil.\n"
+            f"Leite konkrete, auf die Scores bezogene Aussagen und Empfehlungen ab.\n\n"
+            f"Kapitel:\n{sections_desc}\n\n"
+            f"Antworte AUSSCHLIESSLICH mit gültigem JSON, ohne Erklärungen:\n"
+            f"{{\n{sections_json}\n}}"
+        )
+
+        client = anthropic.Anthropic(api_key=api_key)
+        msg = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=4096,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        raw = msg.content[0].text.strip()
+        if raw.startswith("```"):
+            raw = raw.split("```")[1]
+            if raw.startswith("json"):
+                raw = raw[4:]
+        content: dict = _json2.loads(raw.strip())
+
+        # Vorlage mit generierten Texten befüllen
+        filled: set[str] = set()
+        cur_head = None
+        for para in doc.paragraphs:
+            if para.style.name == 'Heading 1':
+                cur_head = para.text.strip()
+            elif para.style.name == 'Normal' and cur_head and cur_head not in filled:
+                gen = content.get(cur_head)
+                if gen:
+                    for run in para.runs:
+                        run.text = ''
+                    if para.runs:
+                        para.runs[0].text = gen
+                    else:
+                        para.add_run(gen)
+                    filled.add(cur_head)
+
+        buf = io.BytesIO()
+        doc.save(buf)
+        buf.seek(0)
+        label  = _DOC_LABELS[doc_type]
+        fname  = f"WARP_{label}_{project.name.replace(' ', '_')}.docx"
+        return buf, fname
+
+    @app.route("/project/<int:pid>/generate/<doc_type>", methods=["POST"])
+    @login_required
+    def generate_document(pid: int, doc_type: str):
+        if doc_type not in _DOC_TEMPLATES:
+            abort(404)
+        project = _get_project_or_403(pid)
+        try:
+            buf, fname = _build_ai_document(project, doc_type)
+            return send_file(
+                buf,
+                mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                as_attachment=True,
+                download_name=fname,
+            )
+        except ValueError as exc:
+            return render_template("error.html", message=str(exc)), 500
+        except Exception as exc:
+            import traceback
+            print(traceback.format_exc())
+            return render_template("error.html", message=f"Generierung fehlgeschlagen: {exc}"), 500
+
+    # ------------------------------------------------------------------
     # Inbox – Webhook + Admin-Postkorb
     # ------------------------------------------------------------------
 

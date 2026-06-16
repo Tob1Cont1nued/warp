@@ -6,3 +6,5 @@ gunicorn>=21.0
 psycopg2-binary>=2.9
 pytest>=7.0
 pytest-playwright>=0.4
+anthropic>=0.40
+python-docx>=1.1

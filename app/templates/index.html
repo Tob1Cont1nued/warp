@@ -87,6 +87,41 @@
     </a>
   </div>
 
+  <div class="sidebar-downloads" style="margin-top:4px">
+    <span class="sidebar-downloads-label">KI-Vorausfüllen</span>
+    {% for doc_type, label in [('mastertestkonzept','Mastertestkonzept'),('teststrategie','Teststrategie'),('stufentestkonzept','Stufentestkonzept')] %}
+    <form method="POST" action="{{ url_for('generate_document', pid=project.id, doc_type=doc_type) }}"
+          class="sidebar-gen-form" data-label="{{ label }}">
+      <button type="submit" class="sidebar-download-btn sidebar-gen-btn" style="width:100%;border:none;background:none;cursor:pointer;text-align:left">
+        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M8 1v10M4 7l4 4 4-4"/><rect x="2" y="13" width="12" height="2" rx="1"/>
+          <circle cx="13" cy="3" r="2.5" fill="#451DC7" stroke="none"/>
+          <text x="13" y="4" text-anchor="middle" font-size="3.5" fill="white" font-weight="bold">✦</text>
+        </svg>
+        <span class="gen-label">{{ label }}</span>
+        <span class="gen-spinner" style="display:none">…</span>
+      </button>
+    </form>
+    {% endfor %}
+  </div>
+
+  <style>
+    .sidebar-gen-btn { transition: opacity .15s; }
+    .sidebar-gen-btn.loading { opacity: .6; pointer-events: none; }
+  </style>
+  <script>
+    document.querySelectorAll('.sidebar-gen-form').forEach(form => {
+      form.addEventListener('submit', () => {
+        const btn = form.querySelector('.sidebar-gen-btn');
+        const lbl = form.querySelector('.gen-label');
+        const spin = form.querySelector('.gen-spinner');
+        btn.classList.add('loading');
+        lbl.textContent = 'Generiere…';
+        spin.style.display = 'inline';
+      });
+    });
+  </script>
+
   <div class="sidebar-foot">
     <div class="sidebar-foot-user">
       <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Fehler &middot; WARP</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px">
+  <div style="max-width:480px;background:#fff;border-radius:12px;padding:32px 28px;box-shadow:0 2px 16px rgba(0,0,0,.08);text-align:center">
+    <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="#e11d48" stroke-width="2" style="margin-bottom:16px">
+      <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+    </svg>
+    <h2 style="margin:0 0 10px;font-size:1.1rem;font-weight:700">Fehler</h2>
+    <p style="color:#555;font-size:.9rem;margin:0 0 20px">{{ message }}</p>
+    <a href="javascript:history.back()" style="display:inline-block;padding:8px 20px;background:#451DC7;color:#fff;border-radius:8px;text-decoration:none;font-size:.9rem">Zurück</a>
+  </div>
+</body>
+</html>
