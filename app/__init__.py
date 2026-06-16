@@ -778,6 +778,8 @@ def create_app() -> Flask:
         import json as _json2
         import anthropic
         from docx import Document as DocxDoc
+        from docx.oxml import OxmlElement
+        from docx.oxml.ns import qn as _qn
 
         api_key = os.environ.get("ANTHROPIC_API_KEY", "")
         if not api_key:
@@ -787,22 +789,30 @@ def create_app() -> Flask:
         notes   = project.notes_dict()
         db_cats = _load_categories_from_db()
 
+        label_lookup = {opt["id"]: opt["label"] for opt in ANSWER_OPTIONS}
         cat_lines, strengths, improvements = [], [], []
+        weak_questions: list[str] = []
+
         for cat in db_cats:
             scores = [score_lookup.get(answers.get(q['id'], ''), 0) for q in cat['questions']]
-            filled = [s for s in scores if s > 0]
-            if not filled:
+            answered = [s for q, s in zip(cat['questions'], scores) if answers.get(q['id'])]
+            if not answered:
                 continue
-            pct = round(sum(filled) / (len(cat['questions']) * 4) * 100)
+            pct = round(sum(scores) / (len(cat['questions']) * 100) * 100)
             cat_lines.append(f"  - {cat['title']} ({cat['parent']}): {pct}%")
             if pct >= 70:
                 strengths.append(cat['title'])
             elif pct < 40:
                 improvements.append(cat['title'])
             for q in cat['questions']:
-                note = notes.get(q['id'])
-                if note:
-                    cat_lines.append(f"    Notiz: {note}")
+                ans_id = answers.get(q['id'], '')
+                score  = score_lookup.get(ans_id, 0)
+                note   = notes.get(q['id'], '')
+                if ans_id and score < 50:
+                    line = f"    [{cat['title']}] {q['text'][:110]} → {label_lookup.get(ans_id, ans_id)}"
+                    if note:
+                        line += f" | Notiz: {note[:80]}"
+                    weak_questions.append(line)
 
         # Kapitelstruktur aus der Vorlage lesen
         tpl_path = ROOT / "app" / "static" / "docs" / _DOC_TEMPLATES[doc_type]
@@ -819,35 +829,61 @@ def create_app() -> Flask:
         if cur_head:
             sections.append((cur_head, cur_desc or ''))
 
-        sections_desc  = '\n'.join(f'- "{h}": {d}' for h, d in sections)
-        sections_json  = '\n'.join(f'  "{h}": "..."' for h, _ in sections)
+        sections_desc = '\n'.join(f'- "{h}": {d}' for h, d in sections)
+        sections_json = '\n'.join(
+            f'  "{h}": {{"intro": "...", "bullets": ["...", "...", "..."]}}'
+            for h, _ in sections
+        )
 
         context = (
             f"Projekt: {project.name}\n"
             f"Verantwortliche/r: {project.owner or 'nicht angegeben'}\n"
             f"Datum: {project.date or 'nicht angegeben'}\n\n"
-            f"WARP-Kategorie-Scores:\n" +
-            ('\n'.join(cat_lines) or '  (keine Antworten)') +
-            f"\n\nStärken: {', '.join(strengths) or '—'}\n"
-            f"Handlungsfelder: {', '.join(improvements) or '—'}"
+            f"WARP-Kategorie-Scores (Erfüllungsgrad je Prozessbereich):\n"
+            + ('\n'.join(cat_lines) or '  (keine Antworten)')
+            + f"\n\nStärken (≥70 %): {', '.join(strengths) or '—'}\n"
+            f"Handlungsfelder (<40 %): {', '.join(improvements) or '—'}"
         )
 
-        prompt = (
-            f"Du bist ein erfahrener Testmanagement-Berater bei Wavestone.\n"
-            f"Erstelle auf Basis der folgenden WARP-Assessment-Ergebnisse professionellen deutschen "
-            f"Fachtext für ein \"{_DOC_LABELS[doc_type]}\"-Dokument.\n\n"
-            f"{context}\n\n"
-            f"Schreibe für jedes Kapitel 4–6 prägnante, sachliche Sätze im Beratungsstil.\n"
-            f"Leite konkrete, auf die Scores bezogene Aussagen und Empfehlungen ab.\n\n"
-            f"Kapitel:\n{sections_desc}\n\n"
-            f"Antworte AUSSCHLIESSLICH mit gültigem JSON, ohne Erklärungen:\n"
-            f"{{\n{sections_json}\n}}"
-        )
+        weak_ctx = (
+            "\n\nEinzelfragen mit Handlungsbedarf (Score <50 %):\n"
+            + '\n'.join(weak_questions[:40])
+        ) if weak_questions else ""
+
+        prompt = f"""Du bist ein erfahrener Testmanagement-Berater bei Wavestone und erstellst auf Basis \
+eines WARP-Reifegradassessments ein professionelles Beratungsdokument.
+
+ASSESSMENT-ERGEBNISSE:
+{context}{weak_ctx}
+
+DOKUMENT-TYP: {_DOC_LABELS[doc_type]}
+
+ANFORDERUNGEN PRO KAPITEL:
+- Schreibe einen einleitenden Fließtext-Absatz (3–5 Sätze), der den Ist-Zustand des Projekts \
+bewertet und die Relevanz des Kapitels begründet. Beziehe dich konkret auf die Score-Werte.
+- Erstelle 5–8 handlungsorientierte Aufzählungspunkte. Jeder Punkt soll eine konkrete Maßnahme, \
+Methode oder Empfehlung beschreiben – nicht nur benennen, sondern kurz erläutern WAS, WIE und WARUM.
+- Verwende präzise Fachbegriffe aus dem Testmanagement (z. B. risikobasiertes Testen, \
+Äquivalenzklassen, Grenzwertanalyse, Shift-Left, exploratives Testen, kontinuierliche Integration, \
+Test Coverage, Defect-Escape-Rate, Regressionsstrategie, RACI, Testautomatisierungspyramide usw.).
+- Bleibe tool-agnostisch: beschreibe Tool-KATEGORIEN mit Funktion und Integrationsbedarf, \
+nenne wenn hilfreich bekannte Vertreter als Beispiele in Klammern (z. B. „Testmanagement-Tool \
+(z. B. Azure DevOps, Jira/Xray)"), schreibe aber keine Produktempfehlung.
+- Leite alle Inhalte aus den Assessment-Scores ab: Stärken festigen, Handlungsfelder konkret adressieren.
+- Sprache: professionelles Deutsch, formeller Beratungsstil, aktive Formulierungen.
+
+KAPITEL-BESCHREIBUNGEN AUS DER VORLAGE:
+{sections_desc}
+
+Antworte AUSSCHLIESSLICH mit validem JSON, ohne Erklärungen oder Markdown-Blöcke:
+{{
+{sections_json}
+}}"""
 
         client = anthropic.Anthropic(api_key=api_key)
         msg = client.messages.create(
             model="claude-sonnet-4-6",
-            max_tokens=4096,
+            max_tokens=8192,
             messages=[{"role": "user", "content": prompt}],
         )
         raw = msg.content[0].text.strip()
@@ -857,22 +893,53 @@ def create_app() -> Flask:
                 raw = raw[4:]
         content: dict = _json2.loads(raw.strip())
 
-        # Vorlage mit generierten Texten befüllen
+        # Hilfsfunktion: neuen Absatz direkt nach einem XML-Element einfügen
+        def _insert_para_after(ref_p_xml, text: str, indent: bool = False):
+            new_p = OxmlElement('w:p')
+            if indent:
+                pPr = OxmlElement('w:pPr')
+                ind = OxmlElement('w:ind')
+                ind.set(_qn('w:left'), '360')
+                pPr.append(ind)
+                new_p.append(pPr)
+            r = OxmlElement('w:r')
+            t = OxmlElement('w:t')
+            t.text = text
+            t.set(_qn('xml:space'), 'preserve')
+            r.append(t)
+            new_p.append(r)
+            ref_p_xml.addnext(new_p)
+            return new_p
+
+        # Vorlage befüllen: Intro in Normal-Absatz, Bullets als eingefügte Absätze
+        # list() einmalig auswerten – neu eingefügte Elemente sollen nicht mititeriert werden
         filled: set[str] = set()
         cur_head = None
-        for para in doc.paragraphs:
+        for para in list(doc.paragraphs):
             if para.style.name == 'Heading 1':
                 cur_head = para.text.strip()
             elif para.style.name == 'Normal' and cur_head and cur_head not in filled:
-                gen = content.get(cur_head)
-                if gen:
-                    for run in para.runs:
-                        run.text = ''
-                    if para.runs:
-                        para.runs[0].text = gen
-                    else:
-                        para.add_run(gen)
-                    filled.add(cur_head)
+                chapter_data = content.get(cur_head)
+                if not chapter_data:
+                    continue
+                intro   = chapter_data.get('intro', '') if isinstance(chapter_data, dict) else str(chapter_data)
+                bullets = chapter_data.get('bullets', []) if isinstance(chapter_data, dict) else []
+
+                # Intro in bestehenden Normal-Absatz schreiben
+                for run in para.runs:
+                    run.text = ''
+                if para.runs:
+                    para.runs[0].text = intro
+                else:
+                    para.add_run(intro)
+
+                # Bullets als neue Absätze nach dem Intro einfügen (umgekehrte Reihenfolge wegen addnext)
+                last_xml = para._p
+                for bullet in bullets:
+                    new_xml = _insert_para_after(last_xml, f'•  {bullet}', indent=True)
+                    last_xml = new_xml
+
+                filled.add(cur_head)
 
         buf = io.BytesIO()
         doc.save(buf)
