@@ -819,7 +819,32 @@ def create_app() -> Flask:
             m.scores = _json.loads(m.scores_json or "{}")
             m.top_factors = _json.loads(m.top_factors_json or "[]")
         neu_count = sum(1 for m in messages if m.status == "neu")
-        return render_template("inbox.html", messages=messages, neu_count=neu_count)
+        admins = db.session.execute(
+            db.select(User).where(User.role.in_(['admin', 'superuser']))
+            .order_by(User.display_name)
+        ).scalars().all()
+        return render_template("inbox.html", messages=messages, neu_count=neu_count, admins=admins)
+
+    @app.route("/inbox/<int:mid>/assign", methods=["POST"])
+    @login_required
+    def inbox_assign(mid: int):
+        if not current_user.is_admin:
+            abort(403)
+        msg = db.session.get(InboxMessage, mid)
+        if not msg:
+            abort(404)
+        try:
+            assignee_id = int(request.form.get("assignee_id", 0))
+        except ValueError:
+            abort(400)
+        assignee = db.session.get(User, assignee_id)
+        if not assignee or not assignee.is_admin:
+            abort(400)
+        msg.status = "in_bearbeitung"
+        msg.claimed_by_id = assignee_id
+        msg.claimed_at = dt.datetime.utcnow()
+        db.session.commit()
+        return redirect(url_for("inbox"))
 
     @app.route("/inbox/<int:mid>/claim", methods=["POST"])
     @login_required
