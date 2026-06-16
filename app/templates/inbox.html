@@ -41,6 +41,7 @@
 
     .inbox-card {
       margin-bottom: 10px; border-left: 3px solid transparent;
+      overflow: hidden;
     }
     .inbox-card--neu { border-left-color: #e11d48; }
     .inbox-card--in_bearbeitung { border-left-color: #f59e0b; }
@@ -76,7 +77,6 @@
                    overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
     .score-track { flex:1; height:8px; background:var(--c-border); border-radius:4px; overflow:hidden; min-width:60px; }
     .score-fill  { height:100%; background:var(--ws-blue); border-radius:4px; transition:width .3s; }
-    .score-fill--top { background:#15803d; }
     .score-val   { width:36px; font-size:.78rem; font-weight:700; color:var(--c-text-muted); flex-shrink:0; }
     .inbox-factors { display: flex; gap: 6px; flex-wrap: wrap; }
     .inbox-factor {
@@ -100,6 +100,39 @@
       text-align: center; color: var(--c-text-muted); padding: 56px 24px;
     }
     .inbox-empty svg { opacity: .25; margin-bottom: 14px; }
+
+    /* ── Toggle arrow button (replaces "Details") ─────────────────────── */
+    .btn-toggle {
+      width: 34px; height: 34px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; border: 1.5px solid var(--c-border);
+      border-radius: 8px; cursor: pointer; color: var(--c-text-muted);
+      flex-shrink: 0; transition: background .15s, border-color .15s;
+    }
+    .btn-toggle:hover { background: var(--c-bg); border-color: var(--c-text-muted); }
+    .btn-toggle .toggle-icon { display: block; transition: transform .2s; }
+    .btn-toggle.open .toggle-icon { transform: rotate(180deg); }
+
+    /* ── Desktop trash icon ────────────────────────────────────────────── */
+    .btn-icon-delete {
+      width: 34px; height: 34px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; border: 1.5px solid #fca5a5;
+      border-radius: 8px; cursor: pointer; color: #dc2626; flex-shrink: 0;
+      transition: background .15s, border-color .15s; line-height: 1;
+    }
+    .btn-icon-delete:hover { background: #fee2e2; border-color: #f87171; }
+    @media (max-width: 640px) { .btn-icon-delete { display: none !important; } }
+
+    /* ── Mobile swipe-to-delete ────────────────────────────────────────── */
+    .swipe-wrap { display: flex; }
+    .swipe-main { flex: 0 0 100%; min-width: 0; }
+    .swipe-del-btn {
+      flex: 0 0 72px; border: none; background: #e11d48; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 0 6px 6px 0;
+    }
+    @media (min-width: 641px) { .swipe-del-btn { display: none !important; } }
   </style>
 </head>
 <body>
@@ -194,101 +227,137 @@
   {# ── Macro: eine Nachrichtenkarte ───────────────────────────────────── #}
   {% macro msg_card(msg) %}
   <div class="card inbox-card inbox-card--{{ msg.status }}">
-    <div class="inbox-head">
-      <div class="inbox-head-info">
-        <p class="inbox-sender-name">{{ msg.user_name }}</p>
-        <p class="inbox-sender-email">{{ msg.user_email }}</p>
-        <span class="inbox-rec">{{ msg.recommendation }}</span>
-        {% if msg.maturity %}
-        <span class="maturity-badge maturity-{{ msg.maturity }}" style="margin-left:6px">
-          {%- if msg.maturity == 'gut' -%}😊 Gut aufgestellt
-          {%- elif msg.maturity == 'ausbaufaehig' -%}😐 Ausbaufähig
-          {%- else -%}😕 Handlungsbedarf
-          {%- endif -%}
-        </span>
-        {% endif %}
-        {% if msg.contact_pref %}
-        <div class="inbox-contact">
-          {%- if msg.contact_pref == 'email' -%}
-            ✉️ Kontakt per <strong>E-Mail</strong>
-          {%- elif msg.contact_pref == 'telefon' -%}
-            📞 Kontakt per <strong>Telefon</strong>{% if msg.contact_phone %}: <strong>{{ msg.contact_phone }}</strong>{% endif %}
-          {%- else -%}
-            ✉️📞 Kontakt per <strong>E-Mail &amp; Telefon</strong>{% if msg.contact_phone %} &mdash; {{ msg.contact_phone }}{% endif %}
-          {%- endif -%}
-        </div>
-        {% endif %}
-        <div class="inbox-meta">
-          <span class="status-badge status-{{ msg.status }}">
-            {%- if msg.status == 'neu' -%}Neu
-            {%- elif msg.status == 'in_bearbeitung' -%}In Bearbeitung
-            {%- else -%}Erledigt
-            {%- endif -%}
-          </span>
-          {% if msg.status == 'in_bearbeitung' and msg.claimed_by %}
-          <span>&rarr; {{ msg.claimed_by.display_name or msg.claimed_by.username }}</span>
-          {% endif %}
-          <span>{{ msg.received_at.strftime('%d.%m.%Y, %H:%M') }} Uhr</span>
-        </div>
-      </div>
-      <div class="inbox-actions">
-        {% if msg.status == 'neu' %}
-        <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
-          <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Übernehmen</button>
-        </form>
-        {% endif %}
-        {% if msg.status == 'in_bearbeitung' %}
-        <form method="POST" action="{{ url_for('inbox_done', mid=msg.id) }}">
-          <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem;background:#15803d;border-color:#15803d">Erledigt</button>
-        </form>
-        <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
-          <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Freigeben</button>
-        </form>
-        {% endif %}
-        {% if msg.status == 'erledigt' %}
-        <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
-          <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Wieder öffnen</button>
-        </form>
-        {% endif %}
-        <button type="button" class="btn" style="padding:7px 16px;font-size:.85rem"
-                onclick="toggleDetail(this)">Details</button>
-        <form method="POST" action="{{ url_for('inbox_delete', mid=msg.id) }}"
-              data-confirm="Nachricht von »{{ msg.user_name }}« wirklich löschen?">
-          <button type="submit" class="btn-admin-delete" style="padding:7px 16px;font-size:.85rem">Löschen</button>
-        </form>
-      </div>
-    </div>
+    <div class="swipe-wrap">
+      {# ── Main card content (slides left on mobile swipe) ── #}
+      <div class="swipe-main">
+        <div class="inbox-head">
+          <div class="inbox-head-info">
+            <p class="inbox-sender-name">{{ msg.user_name }}</p>
+            <p class="inbox-sender-email">{{ msg.user_email }}</p>
+            <span class="inbox-rec">{{ msg.recommendation }}</span>
+            {% if msg.maturity %}
+            <span class="maturity-badge maturity-{{ msg.maturity }}" style="margin-left:6px">
+              {%- if msg.maturity == 'gut' -%}😊 Gut aufgestellt
+              {%- elif msg.maturity == 'ausbaufaehig' -%}😐 Ausbaufähig
+              {%- else -%}😕 Handlungsbedarf
+              {%- endif -%}
+            </span>
+            {% endif %}
+            {% if msg.contact_pref %}
+            <div class="inbox-contact">
+              {%- if msg.contact_pref == 'email' -%}
+                ✉️ Kontakt per <strong>E-Mail</strong>
+              {%- elif msg.contact_pref == 'telefon' -%}
+                📞 Kontakt per <strong>Telefon</strong>{% if msg.contact_phone %}: <strong>{{ msg.contact_phone }}</strong>{% endif %}
+              {%- else -%}
+                ✉️📞 Kontakt per <strong>E-Mail &amp; Telefon</strong>{% if msg.contact_phone %} &mdash; {{ msg.contact_phone }}{% endif %}
+              {%- endif -%}
+            </div>
+            {% endif %}
+            <div class="inbox-meta">
+              <span class="status-badge status-{{ msg.status }}">
+                {%- if msg.status == 'neu' -%}Neu
+                {%- elif msg.status == 'in_bearbeitung' -%}In Bearbeitung
+                {%- else -%}Erledigt
+                {%- endif -%}
+              </span>
+              {% if msg.status == 'in_bearbeitung' and msg.claimed_by %}
+              <span>&rarr; {{ msg.claimed_by.display_name or msg.claimed_by.username }}</span>
+              {% endif %}
+              <span>{{ msg.received_at.strftime('%d.%m.%Y, %H:%M') }} Uhr</span>
+            </div>
+          </div>
+          <div class="inbox-actions">
+            {% if msg.status == 'neu' %}
+            <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
+              <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Übernehmen</button>
+            </form>
+            {% endif %}
+            {% if msg.status == 'in_bearbeitung' %}
+            <form method="POST" action="{{ url_for('inbox_done', mid=msg.id) }}">
+              <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem;background:#15803d;border-color:#15803d">Erledigt</button>
+            </form>
+            <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
+              <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Freigeben</button>
+            </form>
+            {% endif %}
+            {% if msg.status == 'erledigt' %}
+            <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
+              <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Wieder öffnen</button>
+            </form>
+            {% endif %}
 
-    <div class="inbox-detail" style="display:none">
-      {% if msg.rationale %}
-      <p class="inbox-rationale"><strong>Begründung:</strong> {{ msg.rationale }}</p>
-      {% endif %}
-      {% if msg.scores %}
-      <p class="scores-legend"><strong>Methoden-Fit</strong> — je Methode max. 12 Punkte (3 Dimensionen × 4). Höchster Balken = Empfehlung.</p>
-      {% set sorted_scores = msg.scores.items() | sort(attribute=1, reverse=True) %}
-      {% set top_val = sorted_scores | first %}
-      {% for key, val in sorted_scores %}
-      <div class="score-row">
-        <span class="score-label" title="{{ key }}">{{ key }}</span>
-        <div class="score-track">
-          <div class="score-fill"
-               style="width:{{ [((val / 12) * 100) | round | int, 100] | min }}%"></div>
+            {# Arrow toggle – replaces the old "Details" button #}
+            <button type="button" class="btn-toggle" title="Details aufklappen"
+                    onclick="toggleDetail(this)">
+              <svg class="toggle-icon" viewBox="0 0 24 24" width="18" height="18"
+                   fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M6 9l6 6 6-6"/>
+              </svg>
+            </button>
+
+            {# Desktop trash icon – hidden on mobile #}
+            <button type="submit" form="del-{{ msg.id }}"
+                    class="btn-icon-delete" title="Löschen">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
+                   stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6l-1 14H6L5 6"/>
+                <path d="M10 11v6M14 11v6"/>
+                <path d="M9 6V4h6v2"/>
+              </svg>
+            </button>
+          </div>
         </div>
-        <span class="score-val">{{ val }}/12</span>
-      </div>
-      {% endfor %}
-      {% endif %}
-      {% if msg.top_factors %}
-      <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--c-text-muted);margin:12px 0 6px">Identifizierte Schwachstellen</p>
-      <div class="inbox-factors">
-        {% for factor in msg.top_factors %}
-        <span class="inbox-factor">{{ factor }}</span>
-        {% endfor %}
-      </div>
-      {% elif msg.scores %}
-      <p style="font-size:.8rem;color:#15803d;margin-top:10px">✓ Keine auffälligen Schwachstellen identifiziert</p>
-      {% endif %}
-    </div>
+
+        <div class="inbox-detail" style="display:none">
+          {% if msg.rationale %}
+          <p class="inbox-rationale"><strong>Begründung:</strong> {{ msg.rationale }}</p>
+          {% endif %}
+          {% if msg.scores %}
+          <p class="scores-legend"><strong>Methoden-Fit</strong> — je Methode max. 12 Punkte (3 Dimensionen × 4). Höchster Balken = Empfehlung.</p>
+          {% set sorted_scores = msg.scores.items() | sort(attribute=1, reverse=True) %}
+          {% for key, val in sorted_scores %}
+          <div class="score-row">
+            <span class="score-label" title="{{ key }}">{{ key }}</span>
+            <div class="score-track">
+              <div class="score-fill"
+                   style="width:{{ [((val / 12) * 100) | round | int, 100] | min }}%"></div>
+            </div>
+            <span class="score-val">{{ val }}/12</span>
+          </div>
+          {% endfor %}
+          {% endif %}
+          {% if msg.top_factors %}
+          <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--c-text-muted);margin:12px 0 6px">Identifizierte Schwachstellen</p>
+          <div class="inbox-factors">
+            {% for factor in msg.top_factors %}
+            <span class="inbox-factor">{{ factor }}</span>
+            {% endfor %}
+          </div>
+          {% elif msg.scores %}
+          <p style="font-size:.8rem;color:#15803d;margin-top:10px">✓ Keine auffälligen Schwachstellen identifiziert</p>
+          {% endif %}
+        </div>
+      </div>{# /swipe-main #}
+
+      {# Mobile swipe-delete panel – hidden on desktop #}
+      <button type="submit" form="del-{{ msg.id }}" class="swipe-del-btn" title="Löschen">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none"
+             stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6M14 11v6"/>
+          <path d="M9 6V4h6v2"/>
+        </svg>
+      </button>
+    </div>{# /swipe-wrap #}
+
+    {# Hidden form – both buttons (desktop icon + mobile swipe) reference it via form="del-..." #}
+    <form id="del-{{ msg.id }}" method="POST"
+          action="{{ url_for('inbox_delete', mid=msg.id) }}"
+          data-confirm="Nachricht von »{{ msg.user_name }}« wirklich löschen?"
+          style="display:none"></form>
   </div>
   {% endmacro %}
 
@@ -328,14 +397,17 @@
 </div>
 
 <script>
+  /* ── Details expand / collapse ───────────────────────────────────────── */
   function toggleDetail(btn) {
     const card = btn.closest('.inbox-card');
     const detail = card.querySelector('.inbox-detail');
     const open = detail.style.display === 'block';
     detail.style.display = open ? 'none' : 'block';
-    btn.textContent = open ? 'Details' : 'Schließen';
+    btn.classList.toggle('open', !open);
+    btn.title = open ? 'Details aufklappen' : 'Details zuklappen';
   }
 
+  /* ── Sidebar ─────────────────────────────────────────────────────────── */
   (function () {
     const sb = document.getElementById("js-sidebar");
     const bd = document.getElementById("js-backdrop");
@@ -345,6 +417,7 @@
     bd.addEventListener("click", closeSidebar);
   })();
 
+  /* ── Delete confirm modal ────────────────────────────────────────────── */
   (function () {
     const backdrop  = document.getElementById("js-modal-backdrop");
     const msgEl     = document.getElementById("js-modal-message");
@@ -369,6 +442,7 @@
     backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
   })();
 
+  /* ── Bell badge auto-refresh ─────────────────────────────────────────── */
   (function () {
     function updateBell(count) {
       const badge = document.getElementById("js-bell-badge");
@@ -379,6 +453,56 @@
     setInterval(function () {
       fetch("/api/inbox/count").then(r => r.json()).then(d => updateBell(d.count || 0)).catch(() => {});
     }, 60000);
+  })();
+
+  /* ── Mobile swipe-to-delete ──────────────────────────────────────────── */
+  (function () {
+    if (!('ontouchstart' in window)) return;
+    const DEL_W = 72;
+    let swipedCard = null;
+
+    document.querySelectorAll('.inbox-card').forEach(card => {
+      const main = card.querySelector('.swipe-main');
+      if (!main) return;
+      let startX = 0;
+
+      function snapTo(x) {
+        main.style.transition = 'transform .25s cubic-bezier(.4,0,.2,1)';
+        main.style.transform = x === 0 ? '' : `translateX(${x}px)`;
+      }
+
+      card.addEventListener('touchstart', e => {
+        /* close any other swiped card */
+        if (swipedCard && swipedCard !== card) {
+          const om = swipedCard.querySelector('.swipe-main');
+          if (om) { om.style.transition = 'transform .25s'; om.style.transform = ''; }
+          swipedCard = null;
+        }
+        startX = e.touches[0].clientX;
+        main.style.transition = 'none';
+      }, { passive: true });
+
+      card.addEventListener('touchmove', e => {
+        const dx = e.touches[0].clientX - startX;
+        const base = swipedCard === card ? -DEL_W : 0;
+        const x = Math.max(-DEL_W, Math.min(0, base + dx));
+        main.style.transform = `translateX(${x}px)`;
+      }, { passive: true });
+
+      card.addEventListener('touchend', e => {
+        const dx = e.changedTouches[0].clientX - startX;
+        const wasSwiped = swipedCard === card;
+        if (!wasSwiped && dx < -DEL_W * 0.4) {
+          snapTo(-DEL_W);
+          swipedCard = card;
+        } else if (wasSwiped && dx > DEL_W * 0.4) {
+          snapTo(0);
+          swipedCard = null;
+        } else {
+          snapTo(wasSwiped ? -DEL_W : 0);
+        }
+      });
+    });
   })();
 </script>
 
