@@ -165,10 +165,10 @@ def test_assessment_full_workflow(page: Page) -> None:
     report.wait_for_load_state("networkidle")
     report.screenshot(path=str(SCREENSHOTS / "04_report.png"), full_page=True)
 
-    # Stufe 2 muss als erreicht markiert sein
-    expect(report.locator("text=Stufe 2")).to_be_visible()
+    # Stufe 2 muss als erreicht markiert sein (mehrere Treffer möglich → .first)
+    expect(report.locator("text=Stufe 2").first).to_be_visible()
     # Stufe 3 soll sichtbar sein (auch wenn nicht vollständig erreicht)
-    expect(report.locator("text=Stufe 3")).to_be_visible()
+    expect(report.locator("text=Stufe 3").first).to_be_visible()
 
     print(f"  ✓ Report gerendert: {report.url}")
     print(f"\n✅ Test abgeschlossen. Screenshots in: {SCREENSHOTS.resolve()}")
