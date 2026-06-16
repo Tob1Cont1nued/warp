@@ -67,6 +67,17 @@
       <a class="sidebar-nav-item" href="#auswertung-section" data-target="auswertung-section">
         <span class="dot"></span>Auswertung
       </a>
+      {% if current_user.is_admin %}
+      <div class="sidebar-nav-divider"></div>
+      <a class="sidebar-nav-item" href="{{ url_for('inbox') }}">
+        <span class="dot"></span>Postkorb
+      </a>
+      {% endif %}
+      {% if current_user.is_superuser %}
+      <a class="sidebar-nav-item" href="{{ url_for('admin_overview') }}">
+        <span class="dot"></span>Administration
+      </a>
+      {% endif %}
     </nav>
 
     {# Vorlagen (einklappbar) #}

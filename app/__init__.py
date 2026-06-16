@@ -409,10 +409,10 @@ def create_app() -> Flask:
     @app.route("/")
     @login_required
     def index():
-        if current_user.is_superuser:
-            return redirect(url_for("admin_overview"))
-        if current_user.is_admin:
+        # Admin (ohne Superuser-Rechte): Postkorb ist Startseite
+        if current_user.is_admin and not current_user.is_superuser:
             return redirect(url_for("inbox"))
+        # Alle anderen (user + superuser): zum ersten Projekt oder Neuanlage
         projects = current_user.projects
         if projects:
             return redirect(url_for("questionnaire", pid=projects[0].id))
@@ -657,9 +657,8 @@ def create_app() -> Flask:
     @app.route("/project/new", methods=["GET", "POST"])
     @login_required
     def new_project():
-        if current_user.is_superuser:
-            return redirect(url_for("admin_overview"))
-        if current_user.is_admin:
+        # Admin (ohne Superuser) hat keine eigenen Projekte – zum Postkorb
+        if current_user.is_admin and not current_user.is_superuser:
             return redirect(url_for("inbox"))
         if request.method == "POST":
             name = request.form.get("name", "").strip() or "Neues Projekt"
@@ -723,9 +722,7 @@ def create_app() -> Flask:
         project = _get_project_or_403(pid)
         db.session.delete(project)
         db.session.commit()
-        if current_user.is_superuser:
-            return redirect(url_for("admin_overview"))
-        if current_user.is_admin:
+        if current_user.is_admin and not current_user.is_superuser:
             return redirect(url_for("inbox"))
         remaining = current_user.projects
         if remaining:

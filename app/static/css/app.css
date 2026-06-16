@@ -235,6 +235,11 @@ button { cursor: pointer; }
   background: var(--ws-green);
   box-shadow: 0 0 0 3px rgba(4,240,106,0.25);
 }
+.sidebar-nav-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 4px 14px;
+}
 .sidebar-foot {
   padding: 16px 20px;
   border-top: 1px solid rgba(255,255,255,0.08);
