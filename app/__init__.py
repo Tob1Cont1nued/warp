@@ -829,12 +829,6 @@ def create_app() -> Flask:
         if cur_head:
             sections.append((cur_head, cur_desc or ''))
 
-        sections_desc = '\n'.join(f'- "{h}": {d}' for h, d in sections)
-        sections_json = '\n'.join(
-            f'  "{h}": {{"intro": "...", "bullets": ["...", "...", "..."]}}'
-            for h, _ in sections
-        )
-
         context = (
             f"Projekt: {project.name}\n"
             f"Verantwortliche/r: {project.owner or 'nicht angegeben'}\n"
@@ -844,54 +838,57 @@ def create_app() -> Flask:
             + f"\n\nStärken (≥70 %): {', '.join(strengths) or '—'}\n"
             f"Handlungsfelder (<40 %): {', '.join(improvements) or '—'}"
         )
-
         weak_ctx = (
             "\n\nEinzelfragen mit Handlungsbedarf (Score <50 %):\n"
             + '\n'.join(weak_questions[:40])
         ) if weak_questions else ""
 
-        prompt = f"""Du bist ein erfahrener Testmanagement-Berater bei Wavestone und erstellst auf Basis \
-eines WARP-Reifegradassessments ein professionelles Beratungsdokument.
+        def _parse_chapter_response(raw: str) -> dict:
+            raw = raw.strip()
+            if raw.startswith("```"):
+                raw = raw.split("```")[1]
+                if raw.startswith("json"):
+                    raw = raw[4:]
+            return _json2.loads(raw.strip())
+
+        # Ein API-Call pro Kapitel – verhindert JSON-Truncation bei langen Dokumenten
+        client = anthropic.Anthropic(api_key=api_key)
+        content: dict = {}
+        for heading, desc in sections:
+            chapter_prompt = f"""Du bist ein erfahrener Testmanagement-Berater bei Wavestone.
+Erstelle auf Basis des folgenden WARP-Assessments professionellen deutschen Fachtext \
+für das Kapitel „{heading}" eines „{_DOC_LABELS[doc_type]}"-Dokuments.
 
 ASSESSMENT-ERGEBNISSE:
 {context}{weak_ctx}
 
-DOKUMENT-TYP: {_DOC_LABELS[doc_type]}
+KAPITEL: {heading}
+KAPITEL-BESCHREIBUNG: {desc}
 
-ANFORDERUNGEN PRO KAPITEL:
-- Schreibe einen einleitenden Fließtext-Absatz (3–5 Sätze), der den Ist-Zustand des Projekts \
-bewertet und die Relevanz des Kapitels begründet. Beziehe dich konkret auf die Score-Werte.
-- Erstelle 5–8 handlungsorientierte Aufzählungspunkte. Jeder Punkt soll eine konkrete Maßnahme, \
-Methode oder Empfehlung beschreiben – nicht nur benennen, sondern kurz erläutern WAS, WIE und WARUM.
-- Verwende präzise Fachbegriffe aus dem Testmanagement (z. B. risikobasiertes Testen, \
-Äquivalenzklassen, Grenzwertanalyse, Shift-Left, exploratives Testen, kontinuierliche Integration, \
-Test Coverage, Defect-Escape-Rate, Regressionsstrategie, RACI, Testautomatisierungspyramide usw.).
-- Bleibe tool-agnostisch: beschreibe Tool-KATEGORIEN mit Funktion und Integrationsbedarf, \
-nenne wenn hilfreich bekannte Vertreter als Beispiele in Klammern (z. B. „Testmanagement-Tool \
-(z. B. Azure DevOps, Jira/Xray)"), schreibe aber keine Produktempfehlung.
-- Leite alle Inhalte aus den Assessment-Scores ab: Stärken festigen, Handlungsfelder konkret adressieren.
-- Sprache: professionelles Deutsch, formeller Beratungsstil, aktive Formulierungen.
+ANFORDERUNGEN:
+- Einleitender Fließtext (3–4 Sätze): bewertet den Ist-Zustand des Projekts in Bezug \
+auf dieses Kapitel und begründet die Relevanz. Beziehe dich konkret auf die Score-Werte.
+- 5–7 handlungsorientierte Aufzählungspunkte: jeder Punkt beschreibt eine konkrete \
+Maßnahme oder Empfehlung mit WAS, WIE und WARUM (vollständiger Satz, ~30–50 Wörter).
+- Verwende Fachbegriffe: risikobasiertes Testen, Äquivalenzklassen, Grenzwertanalyse, \
+Shift-Left, Test Coverage, Defect-Escape-Rate, RACI, Regressionsstrategie usw.
+- Tool-agnostisch: Tool-Kategorien beschreiben, Beispiele in Klammern erlaubt.
+- Sprache: professionelles Deutsch, formeller Beratungsstil.
+- Keine Zeilenumbrüche innerhalb von JSON-Strings. Keine einfachen oder doppelten \
+Anführungszeichen innerhalb der Texte (stattdessen Langstriche oder Umschreibungen).
 
-KAPITEL-BESCHREIBUNGEN AUS DER VORLAGE:
-{sections_desc}
+Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
+{{"intro": "...", "bullets": ["...", "...", "...", "...", "..."]}}"""
 
-Antworte AUSSCHLIESSLICH mit validem JSON, ohne Erklärungen oder Markdown-Blöcke:
-{{
-{sections_json}
-}}"""
-
-        client = anthropic.Anthropic(api_key=api_key)
-        msg = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=8192,
-            messages=[{"role": "user", "content": prompt}],
-        )
-        raw = msg.content[0].text.strip()
-        if raw.startswith("```"):
-            raw = raw.split("```")[1]
-            if raw.startswith("json"):
-                raw = raw[4:]
-        content: dict = _json2.loads(raw.strip())
+            msg = client.messages.create(
+                model="claude-sonnet-4-6",
+                max_tokens=2048,
+                messages=[{"role": "user", "content": chapter_prompt}],
+            )
+            try:
+                content[heading] = _parse_chapter_response(msg.content[0].text)
+            except Exception:
+                content[heading] = {"intro": msg.content[0].text[:500], "bullets": []}
 
         # Hilfsfunktion: neuen Absatz direkt nach einem XML-Element einfügen
         def _insert_para_after(ref_p_xml, text: str, indent: bool = False):
