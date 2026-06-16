@@ -1027,7 +1027,10 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             db.select(User).where(User.role.in_(['admin', 'superuser']))
             .order_by(User.display_name)
         ).scalars().all()
-        return render_template("inbox.html", messages=messages, neu_count=neu_count, admins=admins)
+        projects = current_user.projects
+        first_pid = projects[0].id if projects else None
+        return render_template("inbox.html", messages=messages, neu_count=neu_count,
+                               admins=admins, projects=projects, first_pid=first_pid)
 
     @app.route("/inbox/<int:mid>/assign", methods=["POST"])
     @login_required
