@@ -69,12 +69,6 @@
         </span>
       </a>
       {% endif %}
-      {% if current_user.is_superuser %}
-      <a class="sidebar-nav-item {% if active_nav == 'administration' %}active{% endif %}"
-         href="{{ url_for('admin_overview') }}">
-        <span class="dot"></span>Administration
-      </a>
-      {% endif %}
     </nav>
 
     {# ── Vorlagen (einklappbar) ────────────────────────────────────── #}
@@ -135,6 +129,16 @@
     {% endif %}
 
   </div>{# /sidebar-scroll #}
+
+  {% if current_user.is_superuser %}
+  <a class="sidebar-admin-btn {% if active_nav == 'administration' %}active{% endif %}"
+     href="{{ url_for('admin_overview') }}">
+    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="8" cy="5" r="2.5"/><path d="M2 13c0-3 2.5-5 6-5s6 2 6 5"/>
+    </svg>
+    Administration
+  </a>
+  {% endif %}
 
   <div class="sidebar-foot">
     <div class="sidebar-foot-user">

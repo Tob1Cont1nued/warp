@@ -235,6 +235,23 @@ button { cursor: pointer; }
   background: var(--ws-green);
   box-shadow: 0 0 0 3px rgba(4,240,106,0.25);
 }
+.sidebar-admin-btn {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--ws-green);
+  text-decoration: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  transition: background 0.15s;
+  letter-spacing: 0.01em;
+}
+.sidebar-admin-btn:hover { background: rgba(4,240,106,0.08); }
+.sidebar-admin-btn.active { background: rgba(4,240,106,0.12); }
+.sidebar-admin-btn svg { flex-shrink: 0; stroke: var(--ws-green); }
+
 .sidebar-nav-divider {
   height: 1px;
   background: rgba(255,255,255,0.08);
