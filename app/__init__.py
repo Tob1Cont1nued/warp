@@ -702,6 +702,19 @@ def create_app() -> Flask:
         _upsert_answer(project.id, question_id, answer_id, note)
         return jsonify({"ok": True})
 
+    @app.route("/project/<int:pid>/autofill", methods=["POST"])
+    @login_required
+    def autofill_project(pid: int):
+        """Testhelfer: alle Fragen zufällig befüllen."""
+        import random
+        project = _get_project_or_403(pid)
+        questions = db.session.execute(db.select(Question)).scalars().all()
+        option_ids = [o["id"] for o in ANSWER_OPTIONS]
+        for q in questions:
+            _upsert_answer(project.id, q.id, random.choice(option_ids), None)
+        db.session.commit()
+        return redirect(url_for("questionnaire", pid=pid))
+
     @app.route("/project/<int:pid>/info", methods=["POST"])
     @login_required
     def save_project_info(pid: int):
@@ -1060,6 +1073,9 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         msg = db.session.get(InboxMessage, mid)
         if not msg:
             abort(404)
+        # Serverseitiger Guard: Projekt bereits vorhanden → direkt weiterleiten
+        if msg.project_id:
+            return redirect(url_for("questionnaire", pid=msg.project_id))
         # Projekt-Besitzer: zugewiesener User falls vorhanden, sonst aktueller User
         owner_user = db.session.get(User, msg.claimed_by_id) if msg.claimed_by_id else current_user
         project = Project(
@@ -1069,6 +1085,9 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             date=dt.date.today().isoformat(),
         )
         db.session.add(project)
+        db.session.commit()  # Commit first so project.id is available
+        # Nachricht mit Projekt verknüpfen
+        msg.project_id = project.id
         if msg.status == "neu":
             msg.status = "in_bearbeitung"
             msg.claimed_by_id = owner_user.id

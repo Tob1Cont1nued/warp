@@ -31,6 +31,22 @@
 
 <main class="main">
 
+  {# ── DEV-ONLY: Zufällig befüllen ─────────────────────────────────── #}
+  <div style="margin-bottom:12px;padding:10px 14px;background:#fffbeb;border:1.5px dashed #f59e0b;border-radius:8px;display:flex;align-items:center;gap:12px;font-size:.82rem;color:#92400e">
+    <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="#f59e0b" stroke-width="1.8" style="flex-shrink:0">
+      <path d="M8 2L2 14h12L8 2z"/><path d="M8 7v3M8 11.5v.5"/>
+    </svg>
+    <span><strong>Testmodus</strong> – Antworten zufällig befüllen</span>
+    <form method="POST" action="{{ url_for('autofill_project', pid=project.id) }}" style="margin-left:auto">
+      <button type="submit" style="padding:5px 14px;font-size:.82rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
+          <path d="M13.5 2.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1h1.8A5 5 0 1 0 13 9a.5.5 0 0 1 1 .09A6 6 0 1 1 12.3 4H13a.5.5 0 0 1 .5-.5z"/>
+        </svg>
+        Zufällig befüllen
+      </button>
+    </form>
+  </div>
+
   <div class="card project-card">
     <h2>Projektinformationen</h2>
     <p class="card-sub">Diese Angaben erscheinen auf der ersten Seite des PDF-Reports.</p>

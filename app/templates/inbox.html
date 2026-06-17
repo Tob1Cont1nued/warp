@@ -243,9 +243,13 @@
             </div>
           </div>
           <div class="inbox-actions">
-            {# ── Projekt aus Nachricht erstellen (immer sichtbar) ── #}
+            {# ── Projekt aus Nachricht erstellen ── #}
             <form method="POST" action="{{ url_for('inbox_create_project', mid=msg.id) }}">
-              <button type="submit" class="btn" style="padding:7px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;background:rgba(69,29,199,0.08);border-color:rgba(69,29,199,0.3);color:#451DC7">
+              {% set has_project = msg.project_id is not none %}
+              <button type="submit" class="btn" {% if has_project %}disabled title="Projekt bereits angelegt"{% endif %}
+                style="padding:7px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;
+                  {% if has_project %}background:#f3f4f6;border-color:#d1d5db;color:#9ca3af;cursor:not-allowed
+                  {% else %}background:rgba(69,29,199,0.08);border-color:rgba(69,29,199,0.3);color:#451DC7{% endif %}">
                 <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
                   <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M8 6v6M5 9h6"/>
                 </svg>

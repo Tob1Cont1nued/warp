@@ -131,5 +131,7 @@ class InboxMessage(db.Model):
     status = db.Column(db.String(20), default="neu", nullable=False)
     claimed_by_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     claimed_at = db.Column(db.DateTime, nullable=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=True)
 
     claimed_by = db.relationship("User", foreign_keys=[claimed_by_id])
+    project = db.relationship("Project", foreign_keys=[project_id])
