@@ -1052,6 +1052,30 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         db.session.commit()
         return redirect(url_for("inbox"))
 
+    @app.route("/inbox/<int:mid>/create-project", methods=["POST"])
+    @login_required
+    def inbox_create_project(mid: int):
+        if not current_user.is_admin:
+            abort(403)
+        msg = db.session.get(InboxMessage, mid)
+        if not msg:
+            abort(404)
+        # Projekt-Besitzer: zugewiesener User falls vorhanden, sonst aktueller User
+        owner_user = db.session.get(User, msg.claimed_by_id) if msg.claimed_by_id else current_user
+        project = Project(
+            user_id=owner_user.id,
+            name=f"Assessment – {msg.user_name}",
+            owner=msg.user_name,
+            date=dt.date.today().isoformat(),
+        )
+        db.session.add(project)
+        if msg.status == "neu":
+            msg.status = "in_bearbeitung"
+            msg.claimed_by_id = owner_user.id
+            msg.claimed_at = dt.datetime.utcnow()
+        db.session.commit()
+        return redirect(url_for("questionnaire", pid=project.id))
+
     @app.route("/inbox/<int:mid>/claim", methods=["POST"])
     @login_required
     def inbox_claim(mid: int):
