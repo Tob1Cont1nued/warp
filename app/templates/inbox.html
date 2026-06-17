@@ -254,12 +254,12 @@
             </form>
             {% if msg.status == 'neu' %}
             <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
-              <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Übernehmen</button>
+              <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Mir zuweisen</button>
             </form>
             {% set other_users = admins | selectattr('id', '!=', current_user.id) | list %}
             {% if other_users %}
             <form method="POST" action="{{ url_for('inbox_assign', mid=msg.id) }}" style="display:flex;gap:4px;align-items:center">
-              <select name="assignee_id" style="padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.82rem;max-width:160px">
+              <select name="assignee_id" style="height:33px;padding:0 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.82rem;max-width:160px">
                 <optgroup label="Admins / Superuser">
                   {% for a in other_users if a.is_admin %}
                   <option value="{{ a.id }}">{{ a.display_name or a.username }}</option>
