@@ -1023,14 +1023,13 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             m.scores = _json.loads(m.scores_json or "{}")
             m.top_factors = _json.loads(m.top_factors_json or "[]")
         neu_count = sum(1 for m in messages if m.status == "neu")
-        admins = db.session.execute(
-            db.select(User).where(User.role.in_(['admin', 'superuser']))
-            .order_by(User.display_name)
+        all_users = db.session.execute(
+            db.select(User).order_by(User.display_name, User.username)
         ).scalars().all()
         projects = current_user.projects
         first_pid = projects[0].id if projects else None
         return render_template("inbox.html", messages=messages, neu_count=neu_count,
-                               admins=admins, projects=projects, first_pid=first_pid)
+                               admins=all_users, projects=projects, first_pid=first_pid)
 
     @app.route("/inbox/<int:mid>/assign", methods=["POST"])
     @login_required
@@ -1045,7 +1044,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         except ValueError:
             abort(400)
         assignee = db.session.get(User, assignee_id)
-        if not assignee or not assignee.is_admin:
+        if not assignee:
             abort(400)
         msg.status = "in_bearbeitung"
         msg.claimed_by_id = assignee_id

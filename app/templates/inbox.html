@@ -247,12 +247,20 @@
             <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
               <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Übernehmen</button>
             </form>
-            {% if admins | length > 1 %}
+            {% set other_users = admins | selectattr('id', '!=', current_user.id) | list %}
+            {% if other_users %}
             <form method="POST" action="{{ url_for('inbox_assign', mid=msg.id) }}" style="display:flex;gap:4px;align-items:center">
-              <select name="assignee_id" style="padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.82rem;max-width:140px">
-                {% for a in admins %}{% if a.id != current_user.id %}
-                <option value="{{ a.id }}">{{ a.display_name or a.username }}</option>
-                {% endif %}{% endfor %}
+              <select name="assignee_id" style="padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.82rem;max-width:160px">
+                <optgroup label="Admins / Superuser">
+                  {% for a in other_users if a.is_admin %}
+                  <option value="{{ a.id }}">{{ a.display_name or a.username }}</option>
+                  {% endfor %}
+                </optgroup>
+                <optgroup label="Benutzer">
+                  {% for a in other_users if not a.is_admin %}
+                  <option value="{{ a.id }}">{{ a.display_name or a.username }}</option>
+                  {% endfor %}
+                </optgroup>
               </select>
               <button type="submit" class="btn" style="padding:7px 12px;font-size:.82rem;white-space:nowrap">Zuweisen</button>
             </form>
