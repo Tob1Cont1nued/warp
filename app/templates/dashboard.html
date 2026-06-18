@@ -1,0 +1,178 @@
+{# WARP – Dashboard #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Dashboard</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>Dashboard</h1>
+    <p>Willkommen, {{ current_user.display_name or current_user.username }}</p>
+  </div>
+</header>
+
+{% set active_nav = 'dashboard' %}
+{% include '_sidebar.html' %}
+
+<main class="main">
+
+  {# ── Eigene Stats ─────────────────────────────────────────────────── #}
+  <div class="dash-stats">
+    <div class="dash-stat-card">
+      <span class="dash-stat-value">{{ open_projects | length }}</span>
+      <span class="dash-stat-label">Offen</span>
+    </div>
+    <div class="dash-stat-card dash-stat-done">
+      <span class="dash-stat-value">{{ done_projects | length }}</span>
+      <span class="dash-stat-label">Abgeschlossen</span>
+    </div>
+    <div class="dash-stat-card dash-stat-total">
+      <span class="dash-stat-value">{{ (open_projects | length) + (done_projects | length) }}</span>
+      <span class="dash-stat-label">Gesamt</span>
+    </div>
+    {% if inbox_stats %}
+    <div class="dash-stat-card dash-stat-inbox">
+      <span class="dash-stat-value">{{ inbox_stats.neu }}</span>
+      <span class="dash-stat-label">Neu im Postkorb</span>
+    </div>
+    <div class="dash-stat-card">
+      <span class="dash-stat-value">{{ inbox_stats.in_bearbeitung }}</span>
+      <span class="dash-stat-label">In Bearbeitung</span>
+    </div>
+    <div class="dash-stat-card dash-stat-done">
+      <span class="dash-stat-value">{{ inbox_stats.erledigt }}</span>
+      <span class="dash-stat-label">Erledigt</span>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ── Offene Projekte ──────────────────────────────────────────────── #}
+  {% if open_projects %}
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <h2 style="margin:0">Offene Projekte</h2>
+      {% if not current_user.is_admin or current_user.is_superuser %}
+      <a href="{{ url_for('new_project') }}" class="btn btn-primary" style="font-size:.82rem;padding:6px 14px">+ Neues Projekt</a>
+      {% endif %}
+    </div>
+    <div class="dash-project-list">
+      {% for e in open_projects %}
+      <div class="dash-project-row">
+        <div class="dash-project-info">
+          <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="dash-project-name">{{ e.project.name }}</a>
+          {% if e.project.owner %}<span class="dash-project-meta">{{ e.project.owner }}</span>{% endif %}
+          <div class="dash-progress">
+            <div class="dash-progress-bar">
+              <div class="dash-progress-fill {% if e.pct == 100 %}dash-progress-full{% elif e.pct >= 50 %}dash-progress-mid{% endif %}"
+                   style="width:{{ e.pct }}%"></div>
+            </div>
+            <span class="dash-progress-label">{{ e.answered }} / {{ e.total }} &middot; {{ e.pct }}%</span>
+          </div>
+        </div>
+        <div class="dash-project-actions">
+          <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="btn" style="font-size:.8rem;padding:5px 12px">Öffnen</a>
+          <form method="POST" action="{{ url_for('toggle_project_complete', pid=e.project.id) }}">
+            <button type="submit" class="btn" style="font-size:.8rem;padding:5px 12px;color:#059669;border-color:#a7f3d0;background:#f0fdf4" title="Als abgeschlossen markieren">&#10003; Abschließen</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% elif not done_projects %}
+  <div class="card" style="text-align:center;padding:40px;color:var(--c-text-muted)">
+    <p style="font-size:1.1rem;margin-bottom:12px">Noch keine Projekte vorhanden.</p>
+    {% if not current_user.is_admin or current_user.is_superuser %}
+    <a href="{{ url_for('new_project') }}" class="btn btn-primary">Erstes Projekt anlegen</a>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {# ── Abgeschlossene Projekte ──────────────────────────────────────── #}
+  {% if done_projects %}
+  <div class="card" style="margin-bottom:16px">
+    <h2 style="margin:0 0 14px">Abgeschlossene Projekte</h2>
+    <div class="dash-project-list">
+      {% for e in done_projects %}
+      <div class="dash-project-row dash-project-row-done">
+        <div class="dash-project-info">
+          <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="dash-project-name">{{ e.project.name }}</a>
+          {% if e.project.owner %}<span class="dash-project-meta">{{ e.project.owner }}</span>{% endif %}
+          <div style="font-size:.75rem;color:#059669;margin-top:4px;display:flex;align-items:center;gap:4px">
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8l3.5 3.5L13 4"/></svg>
+            Abgeschlossen &middot; {{ e.pct }}% beantwortet
+          </div>
+        </div>
+        <div class="dash-project-actions">
+          <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="btn" style="font-size:.8rem;padding:5px 12px">Öffnen</a>
+          <form method="POST" action="{{ url_for('toggle_project_complete', pid=e.project.id) }}">
+            <button type="submit" class="btn" style="font-size:.8rem;padding:5px 12px;color:#6b7280;border-color:#d1d5db" title="Als offen markieren">&#8635; Wiederöffnen</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  {# ── Superuser: Gesamtübersicht ───────────────────────────────────── #}
+  {% if all_users_data %}
+  <div class="card">
+    <h2 style="margin:0 0 16px">Gesamtübersicht – alle Benutzer</h2>
+    {% for entry in all_users_data %}
+    <div class="dash-user-block">
+      <div class="dash-user-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="dash-user-avatar">{{ (entry.user.display_name or entry.user.username)[:1].upper() }}</span>
+          <div>
+            <div class="dash-user-name">{{ entry.user.display_name or entry.user.username }}</div>
+            <div class="dash-user-role">
+              {% if entry.user.is_superuser %}Superuser{% elif entry.user.is_admin %}Admin{% else %}Benutzer{% endif %}
+              &middot; {{ entry.projects | length }} Projekt(e)
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;font-size:.78rem;color:var(--c-text-muted)">
+          <span><strong style="color:#451DC7">{{ entry.open_count }}</strong> offen</span>
+          <span><strong style="color:#059669">{{ entry.done_count }}</strong> fertig</span>
+        </div>
+      </div>
+      {% if entry.projects %}
+      <div class="dash-user-projects">
+        {% for e in entry.projects %}
+        <div class="dash-user-project-row">
+          <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="dash-project-name" style="font-size:.85rem">{{ e.project.name }}</a>
+          <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+            {% if e.project.is_complete %}
+            <span style="font-size:.75rem;color:#059669;font-weight:600">&#10003; Fertig</span>
+            {% else %}
+            <span style="font-size:.75rem;color:var(--c-text-muted)">{{ e.pct }}%</span>
+            <div style="width:80px;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden">
+              <div style="width:{{ e.pct }}%;height:100%;background:{% if e.pct==100 %}#04F06A{% elif e.pct>=50 %}#5BC5DD{% else %}#F2A73B{% endif %};border-radius:3px"></div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="font-size:.82rem;color:var(--c-text-muted);margin:6px 0 0 0;padding:0 4px">Keine Projekte</p>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+</main>
+</body>
+</html>

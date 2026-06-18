@@ -43,6 +43,10 @@
 
     {# ── Navigation ────────────────────────────────────────────────── #}
     <nav class="sidebar-nav" id="js-sidebar-nav">
+      <a class="sidebar-nav-item {% if active_nav == 'dashboard' %}active{% endif %}"
+         href="{{ url_for('dashboard') }}">
+        <span class="dot"></span>Dashboard
+      </a>
       {# Fragenkatalog / Auswertung – nur wenn Projekte vorhanden #}
       {% if projects %}
       {% set fk_href = '#' if (project and active_nav == 'fragenkatalog') else url_for('questionnaire', pid=projects[0].id) %}

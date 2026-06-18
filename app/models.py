@@ -46,6 +46,7 @@ class Project(db.Model):
     owner = db.Column(db.String(120), nullable=True)
     date = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, default=dt.datetime.utcnow)
+    is_complete = db.Column(db.Boolean, default=False, nullable=False)
 
     user = db.relationship("User", back_populates="projects")
     answers = db.relationship(

@@ -409,14 +409,74 @@ def create_app() -> Flask:
     @app.route("/")
     @login_required
     def index():
-        # Admin (ohne Superuser-Rechte): Postkorb ist Startseite
-        if current_user.is_admin and not current_user.is_superuser:
-            return redirect(url_for("inbox"))
-        # Alle anderen (user + superuser): zum ersten Projekt oder Neuanlage
+        return redirect(url_for("dashboard"))
+
+    @app.route("/dashboard")
+    @login_required
+    def dashboard():
         projects = current_user.projects
-        if projects:
-            return redirect(url_for("questionnaire", pid=projects[0].id))
-        return redirect(url_for("new_project"))
+        total_questions = _db_question_count()
+
+        def project_progress(p):
+            answered = sum(1 for a in p.answers if a.answer_id)
+            return answered, total_questions
+
+        open_projects = []
+        done_projects = []
+        for p in projects:
+            answered, total = project_progress(p)
+            pct = round(answered / total * 100) if total else 0
+            entry = {"project": p, "answered": answered, "total": total, "pct": pct}
+            (done_projects if p.is_complete else open_projects).append(entry)
+
+        # Superuser: Gesamtübersicht aller User + Projekte
+        all_users_data = None
+        if current_user.is_superuser:
+            all_users = db.session.execute(
+                db.select(User).order_by(User.display_name, User.username)
+            ).scalars().all()
+            all_users_data = []
+            for u in all_users:
+                u_projects = []
+                for p in u.projects:
+                    answered, total = project_progress(p)
+                    pct = round(answered / total * 100) if total else 0
+                    u_projects.append({"project": p, "answered": answered, "total": total, "pct": pct})
+                all_users_data.append({
+                "user": u,
+                "projects": u_projects,
+                "open_count": sum(1 for e in u_projects if not e["project"].is_complete),
+                "done_count": sum(1 for e in u_projects if e["project"].is_complete),
+            })
+
+        # Admin: Postkorb-Stats
+        inbox_stats = None
+        if current_user.is_admin:
+            messages = db.session.execute(db.select(InboxMessage)).scalars().all()
+            inbox_stats = {
+                "neu": sum(1 for m in messages if m.status == "neu"),
+                "in_bearbeitung": sum(1 for m in messages if m.status == "in_bearbeitung"),
+                "erledigt": sum(1 for m in messages if m.status == "erledigt"),
+            }
+
+        neu_count = inbox_stats["neu"] if inbox_stats else 0
+        return render_template(
+            "dashboard.html",
+            projects=projects,
+            open_projects=open_projects,
+            done_projects=done_projects,
+            inbox_stats=inbox_stats,
+            all_users_data=all_users_data,
+            neu_count=neu_count,
+        )
+
+    @app.route("/project/<int:pid>/toggle-complete", methods=["POST"])
+    @login_required
+    def toggle_project_complete(pid: int):
+        project = _get_project_or_403(pid)
+        project.is_complete = not project.is_complete
+        db.session.commit()
+        return redirect(request.referrer or url_for("dashboard"))
 
     @app.route("/admin")
     @login_required

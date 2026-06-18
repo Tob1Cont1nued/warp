@@ -1091,6 +1091,130 @@ button { cursor: pointer; }
 }
 
 /* =================================================================
+   DASHBOARD
+   ================================================================= */
+.dash-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.dash-stat-card {
+  flex: 1;
+  min-width: 120px;
+  background: #fff;
+  border: 1px solid var(--c-border-soft);
+  border-radius: 10px;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dash-stat-value {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--ws-blue);
+  line-height: 1;
+}
+.dash-stat-label {
+  font-size: .75rem;
+  color: var(--c-text-muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.dash-stat-done .dash-stat-value  { color: #059669; }
+.dash-stat-total .dash-stat-value { color: var(--c-text); }
+.dash-stat-inbox .dash-stat-value { color: #d97706; }
+
+.dash-project-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.dash-project-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--c-border-soft);
+}
+.dash-project-row:last-child { border-bottom: none; }
+.dash-project-row-done { opacity: .8; }
+.dash-project-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.dash-project-name {
+  font-weight: 600;
+  font-size: .92rem;
+  color: var(--ws-blue);
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dash-project-name:hover { text-decoration: underline; }
+.dash-project-meta { font-size: .75rem; color: var(--c-text-muted); }
+.dash-project-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+.dash-progress { display: flex; align-items: center; gap: 8px; }
+.dash-progress-bar {
+  flex: 1;
+  max-width: 180px;
+  height: 6px;
+  background: #f3f4f6;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.dash-progress-fill {
+  height: 100%;
+  background: #F2A73B;
+  border-radius: 3px;
+  transition: width .3s;
+}
+.dash-progress-fill.dash-progress-mid  { background: #5BC5DD; }
+.dash-progress-fill.dash-progress-full { background: #04F06A; }
+.dash-progress-label { font-size: .75rem; color: var(--c-text-muted); white-space: nowrap; }
+
+/* Superuser: User-Blöcke */
+.dash-user-block {
+  border: 1px solid var(--c-border-soft);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.dash-user-block:last-child { margin-bottom: 0; }
+.dash-user-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: #f9fafb;
+  border-bottom: 1px solid var(--c-border-soft);
+}
+.dash-user-avatar {
+  width: 34px;
+  height: 34px;
+  background: var(--ws-blue);
+  color: #fff;
+  font-weight: 700;
+  font-size: .9rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dash-user-name { font-weight: 600; font-size: .9rem; }
+.dash-user-role { font-size: .72rem; color: var(--c-text-muted); }
+.dash-user-projects { padding: 4px 0; }
+.dash-user-project-row {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 12px;
+  border-bottom: 1px solid var(--c-border-soft);
+}
+.dash-user-project-row:last-child { border-bottom: none; }
+
+/* =================================================================
    PRINT
    ================================================================= */
 @media print {
