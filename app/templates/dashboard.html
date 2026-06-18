@@ -26,35 +26,45 @@
 
 <main class="main">
 
-  {# ── Eigene Stats ─────────────────────────────────────────────────── #}
-  <div class="dash-stats">
-    <div class="dash-stat-card">
-      <span class="dash-stat-value">{{ open_projects | length }}</span>
-      <span class="dash-stat-label">Offen</span>
+  {# ── Eigene Projekte – Stats ──────────────────────────────────────── #}
+  <div class="dash-stat-group">
+    <span class="dash-stat-group-label">Meine Projekte</span>
+    <div class="dash-stats">
+      <div class="dash-stat-card">
+        <span class="dash-stat-value">{{ open_projects | length }}</span>
+        <span class="dash-stat-label">Offen</span>
+      </div>
+      <div class="dash-stat-card dash-stat-done">
+        <span class="dash-stat-value">{{ done_projects | length }}</span>
+        <span class="dash-stat-label">Abgeschlossen</span>
+      </div>
+      <div class="dash-stat-card dash-stat-total">
+        <span class="dash-stat-value">{{ (open_projects | length) + (done_projects | length) }}</span>
+        <span class="dash-stat-label">Gesamt</span>
+      </div>
     </div>
-    <div class="dash-stat-card dash-stat-done">
-      <span class="dash-stat-value">{{ done_projects | length }}</span>
-      <span class="dash-stat-label">Abgeschlossen</span>
-    </div>
-    <div class="dash-stat-card dash-stat-total">
-      <span class="dash-stat-value">{{ (open_projects | length) + (done_projects | length) }}</span>
-      <span class="dash-stat-label">Gesamt</span>
-    </div>
-    {% if inbox_stats %}
-    <div class="dash-stat-card dash-stat-inbox">
-      <span class="dash-stat-value">{{ inbox_stats.neu }}</span>
-      <span class="dash-stat-label">Neu im Postkorb</span>
-    </div>
-    <div class="dash-stat-card">
-      <span class="dash-stat-value">{{ inbox_stats.in_bearbeitung }}</span>
-      <span class="dash-stat-label">In Bearbeitung</span>
-    </div>
-    <div class="dash-stat-card dash-stat-done">
-      <span class="dash-stat-value">{{ inbox_stats.erledigt }}</span>
-      <span class="dash-stat-label">Erledigt</span>
-    </div>
-    {% endif %}
   </div>
+
+  {% if inbox_stats %}
+  {# ── Postkorb – Stats ─────────────────────────────────────────────── #}
+  <div class="dash-stat-group">
+    <span class="dash-stat-group-label">Postkorb</span>
+    <div class="dash-stats">
+      <div class="dash-stat-card dash-stat-inbox">
+        <span class="dash-stat-value">{{ inbox_stats.neu }}</span>
+        <span class="dash-stat-label">Neu</span>
+      </div>
+      <div class="dash-stat-card">
+        <span class="dash-stat-value">{{ inbox_stats.in_bearbeitung }}</span>
+        <span class="dash-stat-label">In Bearbeitung</span>
+      </div>
+      <div class="dash-stat-card dash-stat-done">
+        <span class="dash-stat-value">{{ inbox_stats.erledigt }}</span>
+        <span class="dash-stat-label">Erledigt</span>
+      </div>
+    </div>
+  </div>
+  {% endif %}
 
   {# ── Offene Projekte ──────────────────────────────────────────────── #}
   {% if open_projects %}

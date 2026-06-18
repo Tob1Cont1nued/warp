@@ -1093,11 +1093,22 @@ button { cursor: pointer; }
 /* =================================================================
    DASHBOARD
    ================================================================= */
+.dash-stat-group {
+  margin-bottom: 20px;
+}
+.dash-stat-group-label {
+  display: block;
+  font-size: .72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--c-text-muted);
+  margin-bottom: 8px;
+}
 .dash-stats {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 20px;
 }
 .dash-stat-card {
   flex: 1;
