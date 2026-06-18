@@ -1128,9 +1128,9 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         msg = db.session.get(InboxMessage, mid)
         if not msg:
             abort(404)
-        # Serverseitiger Guard: Projekt bereits vorhanden → direkt weiterleiten
+        # Serverseitiger Guard: Projekt bereits vorhanden → zurück zum Postkorb
         if msg.project_id:
-            return redirect(url_for("questionnaire", pid=msg.project_id))
+            return redirect(url_for("inbox"))
         # Projekt-Besitzer: zugewiesener User falls vorhanden, sonst aktueller User
         owner_user = db.session.get(User, msg.claimed_by_id) if msg.claimed_by_id else current_user
         project = Project(
@@ -1148,7 +1148,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             msg.claimed_by_id = owner_user.id
             msg.claimed_at = dt.datetime.utcnow()
         db.session.commit()
-        return redirect(url_for("questionnaire", pid=project.id))
+        return redirect(url_for("inbox"))
 
     @app.route("/inbox/<int:mid>/claim", methods=["POST"])
     @login_required
