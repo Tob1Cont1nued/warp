@@ -243,41 +243,50 @@
             </div>
           </div>
           <div class="inbox-actions">
-            {# ── Projekt aus Nachricht erstellen ── #}
+            {# ── Projekt anlegen oder öffnen ── #}
+            {% if msg.project_id %}
+            <a href="{{ url_for('questionnaire', pid=msg.project_id) }}"
+               class="btn"
+               style="padding:7px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;background:rgba(69,29,199,0.08);border-color:rgba(69,29,199,0.3);color:#451DC7;text-decoration:none">
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 8h6M5 11h4"/>
+              </svg>
+              Projekt öffnen
+            </a>
+            {% else %}
             <form method="POST" action="{{ url_for('inbox_create_project', mid=msg.id) }}">
-              {% set has_project = msg.project_id is not none %}
-              <button type="submit" class="btn" {% if has_project %}disabled title="Projekt bereits angelegt"{% endif %}
-                style="padding:7px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;
-                  {% if has_project %}background:#f3f4f6;border-color:#d1d5db;color:#9ca3af;cursor:not-allowed
-                  {% else %}background:rgba(69,29,199,0.08);border-color:rgba(69,29,199,0.3);color:#451DC7{% endif %}">
+              <button type="submit" class="btn"
+                style="padding:7px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;background:rgba(69,29,199,0.08);border-color:rgba(69,29,199,0.3);color:#451DC7">
                 <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
                   <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M8 6v6M5 9h6"/>
                 </svg>
                 Projekt anlegen
               </button>
             </form>
+            {% endif %}
             {% if msg.status == 'neu' %}
             <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
               <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Mir zuweisen</button>
             </form>
-            {% set other_users = admins | selectattr('id', '!=', current_user.id) | list %}
+            {% endif %}
+            {# Zuweisen-Dropdown immer anzeigen (auch bei in_bearbeitung) damit Projekt umgehängt werden kann #}
+            {% set other_users = admins | list %}
             {% if other_users %}
             <form method="POST" action="{{ url_for('inbox_assign', mid=msg.id) }}" style="display:flex;gap:4px;align-items:center">
               <select name="assignee_id" style="height:33px;padding:0 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.82rem;max-width:160px">
                 <optgroup label="Admins / Superuser">
                   {% for a in other_users if a.is_admin %}
-                  <option value="{{ a.id }}">{{ a.display_name or a.username }}</option>
+                  <option value="{{ a.id }}" {% if msg.claimed_by_id == a.id %}selected{% endif %}>{{ a.display_name or a.username }}</option>
                   {% endfor %}
                 </optgroup>
                 <optgroup label="Benutzer">
                   {% for a in other_users if not a.is_admin %}
-                  <option value="{{ a.id }}">{{ a.display_name or a.username }}</option>
+                  <option value="{{ a.id }}" {% if msg.claimed_by_id == a.id %}selected{% endif %}>{{ a.display_name or a.username }}</option>
                   {% endfor %}
                 </optgroup>
               </select>
               <button type="submit" class="btn" style="padding:7px 12px;font-size:.82rem;white-space:nowrap">Zuweisen</button>
             </form>
-            {% endif %}
             {% endif %}
             {% if msg.status == 'in_bearbeitung' %}
             <form method="POST" action="{{ url_for('inbox_done', mid=msg.id) }}">

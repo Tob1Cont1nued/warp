@@ -153,7 +153,7 @@ def create_app() -> Flask:
         project = db.session.get(Project, pid)
         if not project:
             abort(403)
-        if not current_user.is_superuser and project.user_id != current_user.id:
+        if not current_user.is_admin and project.user_id != current_user.id:
             abort(403)
         return project
 
@@ -1117,6 +1117,11 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         msg.status = "in_bearbeitung"
         msg.claimed_by_id = assignee_id
         msg.claimed_at = dt.datetime.utcnow()
+        # Projekt mitumhängen falls vorhanden
+        if msg.project_id:
+            project = db.session.get(Project, msg.project_id)
+            if project:
+                project.user_id = assignee_id
         db.session.commit()
         return redirect(url_for("inbox"))
 
