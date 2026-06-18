@@ -111,18 +111,44 @@
       </button>
       <div class="sidebar-section-body">
         {% for doc_type, label in [('mastertestkonzept','Mastertestkonzept'),('teststrategie','Teststrategie'),('stufentestkonzept','Stufentestkonzept')] %}
-        <form method="POST" action="{{ url_for('generate_document', pid=ki_project.id, doc_type=doc_type) }}"
-              class="sidebar-gen-form">
-          <button type="submit" class="sidebar-download-btn sidebar-gen-btn">
-            <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M8 1v10M4 7l4 4 4-4"/><rect x="2" y="13" width="12" height="2" rx="1"/>
-              <circle cx="13" cy="3" r="2.5" fill="#451DC7" stroke="none"/>
-              <text x="13" y="4" text-anchor="middle" font-size="3.5" fill="white" font-weight="bold">✦</text>
+        {% set gen_date = (generated_docs or {}).get(doc_type) %}
+        <div class="sidebar-doc-row">
+          {% if gen_date %}
+          {# Bereits generiert: Download-Link mit Datum #}
+          <a class="sidebar-download-btn sidebar-doc-exists"
+             href="{{ url_for('download_generated_document', pid=ki_project.id, doc_type=doc_type) }}">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+              <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
             </svg>
-            <span class="gen-label">{{ label }}</span>
-            <span class="gen-spinner" style="display:none">…</span>
-          </button>
-        </form>
+            <span class="sidebar-doc-name">{{ label }}</span>
+            <span class="sidebar-doc-date">{{ gen_date.strftime('%d.%m.%y') }}</span>
+          </a>
+          {# Neu generieren: kleiner Icon-Button #}
+          <form method="POST" action="{{ url_for('generate_document', pid=ki_project.id, doc_type=doc_type) }}"
+                class="sidebar-gen-form sidebar-regen-form">
+            <button type="submit" class="sidebar-regen-btn" title="Neu generieren">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M13.5 2.5a.5.5 0 0 1 .5.5v3h-3M2.5 13.5v-3h3"/>
+                <path d="M14 6A6 6 0 1 1 8 2"/>
+              </svg>
+            </button>
+          </form>
+          {% else %}
+          {# Noch nicht generiert: voller Generier-Button #}
+          <form method="POST" action="{{ url_for('generate_document', pid=ki_project.id, doc_type=doc_type) }}"
+                class="sidebar-gen-form" style="flex:1">
+            <button type="submit" class="sidebar-download-btn sidebar-gen-btn">
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M8 1v10M4 7l4 4 4-4"/><rect x="2" y="13" width="12" height="2" rx="1"/>
+                <circle cx="13" cy="3" r="2.5" fill="#451DC7" stroke="none"/>
+                <text x="13" y="4" text-anchor="middle" font-size="3.5" fill="white" font-weight="bold">✦</text>
+              </svg>
+              <span class="gen-label">{{ label }}</span>
+              <span class="gen-spinner" style="display:none">…</span>
+            </button>
+          </form>
+          {% endif %}
+        </div>
         {% endfor %}
       </div>
     </div>

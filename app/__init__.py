@@ -51,7 +51,7 @@ from flask_login import (
     LoginManager, login_required, login_user, logout_user, current_user,
 )
 
-from .models import db, User, Project, Answer, Category, Question, InboxMessage
+from .models import db, User, Project, Answer, Category, Question, InboxMessage, GeneratedDocument
 from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER
 
 ROOT = Path(__file__).parent.parent
@@ -677,6 +677,12 @@ def create_app() -> Flask:
     def questionnaire(pid: int):
         project = _get_project_or_403(pid)
         projects = current_user.projects
+        generated_docs = {
+            d.doc_type: d.generated_at
+            for d in db.session.execute(
+                db.select(GeneratedDocument).where(GeneratedDocument.project_id == pid)
+            ).scalars().all()
+        }
         return render_template(
             "index.html",
             project=project,
@@ -687,6 +693,7 @@ def create_app() -> Flask:
             answer_options=ANSWER_OPTIONS,
             total_questions=_db_question_count(),
             today=dt.date.today().strftime("%Y-%m-%d"),
+            generated_docs=generated_docs,
         )
 
     @app.route("/project/<int:pid>/answer", methods=["POST"])
@@ -963,8 +970,28 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         project = _get_project_or_403(pid)
         try:
             buf, fname = _build_ai_document(project, doc_type)
+            file_bytes = buf.getvalue()
+            # Upsert: vorhandenes Dokument ersetzen oder neu anlegen
+            existing = db.session.execute(
+                db.select(GeneratedDocument).where(
+                    GeneratedDocument.project_id == pid,
+                    GeneratedDocument.doc_type == doc_type,
+                )
+            ).scalar_one_or_none()
+            if existing:
+                existing.file_data = file_bytes
+                existing.filename = fname
+                existing.generated_at = dt.datetime.utcnow()
+            else:
+                db.session.add(GeneratedDocument(
+                    project_id=pid,
+                    doc_type=doc_type,
+                    filename=fname,
+                    file_data=file_bytes,
+                ))
+            db.session.commit()
             return send_file(
-                buf,
+                io.BytesIO(file_bytes),
                 mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 as_attachment=True,
                 download_name=fname,
@@ -975,6 +1002,25 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             import traceback
             print(traceback.format_exc())
             return render_template("error.html", message=f"Generierung fehlgeschlagen: {exc}"), 500
+
+    @app.route("/project/<int:pid>/document/<doc_type>")
+    @login_required
+    def download_generated_document(pid: int, doc_type: str):
+        _get_project_or_403(pid)
+        doc = db.session.execute(
+            db.select(GeneratedDocument).where(
+                GeneratedDocument.project_id == pid,
+                GeneratedDocument.doc_type == doc_type,
+            )
+        ).scalar_one_or_none()
+        if not doc:
+            abort(404)
+        return send_file(
+            io.BytesIO(doc.file_data),
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            as_attachment=True,
+            download_name=doc.filename,
+        )
 
     # ------------------------------------------------------------------
     # Inbox – Webhook + Admin-Postkorb
@@ -1041,8 +1087,17 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         ).scalars().all()
         projects = current_user.projects
         first_pid = projects[0].id if projects else None
+        generated_docs = {}
+        if first_pid:
+            generated_docs = {
+                d.doc_type: d.generated_at
+                for d in db.session.execute(
+                    db.select(GeneratedDocument).where(GeneratedDocument.project_id == first_pid)
+                ).scalars().all()
+            }
         return render_template("inbox.html", messages=messages, neu_count=neu_count,
-                               admins=all_users, projects=projects, first_pid=first_pid)
+                               admins=all_users, projects=projects, first_pid=first_pid,
+                               generated_docs=generated_docs)
 
     @app.route("/inbox/<int:mid>/assign", methods=["POST"])
     @login_required

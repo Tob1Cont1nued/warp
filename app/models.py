@@ -135,3 +135,17 @@ class InboxMessage(db.Model):
 
     claimed_by = db.relationship("User", foreign_keys=[claimed_by_id])
     project = db.relationship("Project", foreign_keys=[project_id])
+
+
+class GeneratedDocument(db.Model):
+    __tablename__ = "generated_document"
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    doc_type = db.Column(db.String(60), nullable=False)
+    generated_at = db.Column(db.DateTime, default=dt.datetime.utcnow, nullable=False)
+    filename = db.Column(db.String(200), nullable=False)
+    file_data = db.Column(db.LargeBinary, nullable=False)
+
+    __table_args__ = (
+        db.UniqueConstraint("project_id", "doc_type", name="uq_project_doctype"),
+    )

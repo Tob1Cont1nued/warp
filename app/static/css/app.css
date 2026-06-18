@@ -762,6 +762,51 @@ button { cursor: pointer; }
 .sidebar-gen-btn { transition: opacity .15s; }
 .sidebar-gen-btn.loading { opacity: .6; pointer-events: none; }
 
+.sidebar-doc-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.sidebar-doc-exists {
+  flex: 1;
+  min-width: 0;
+  color: var(--c-text);
+}
+.sidebar-doc-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sidebar-doc-date {
+  font-size: .68rem;
+  color: var(--c-text-muted);
+  white-space: nowrap;
+  margin-left: auto;
+  padding-left: 4px;
+}
+.sidebar-regen-form { flex-shrink: 0; }
+.sidebar-regen-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: none;
+  border: 1px solid var(--c-border-soft);
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.sidebar-regen-btn:hover {
+  background: rgba(4,240,106,0.12);
+  color: var(--ws-green);
+  border-color: var(--ws-green);
+}
+
 /* =================================================================
    SIDEBAR USER
    ================================================================= */
