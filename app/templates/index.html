@@ -31,7 +31,7 @@
   </div>
 </header>
 
-{% set active_nav = 'fragenkatalog' %}
+{% set active_nav = 'workshop' if project.catalog_type == 'workshop' else 'fragenkatalog' %}
 {% include '_sidebar.html' %}
 
 <main class="main">

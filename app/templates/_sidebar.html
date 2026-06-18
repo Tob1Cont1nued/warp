@@ -50,17 +50,16 @@
       {# Fragenkatalog / Auswertung – je Katalogtyp #}
       {% set assessment_projects = projects | selectattr('catalog_type', 'equalto', 'assessment') | list %}
       {% set workshop_projects   = projects | selectattr('catalog_type', 'equalto', 'workshop')   | list %}
-      {% set active_cat = project.catalog_type if project else 'assessment' %}
 
       {% if assessment_projects %}
       {% set ap = assessment_projects[0] %}
-      {% set ap_href = '#' if (project and project.id == ap.id and active_nav == 'fragenkatalog' and active_cat == 'assessment') else url_for('questionnaire', pid=ap.id) %}
-      <a class="sidebar-nav-item {% if active_nav == 'fragenkatalog' and active_cat == 'assessment' %}active{% endif %}"
-         href="{{ ap_href }}" data-target="top">
+      <a class="sidebar-nav-item {% if active_nav == 'fragenkatalog' %}active{% endif %}"
+         href="{{ '#' if (project and project.id == ap.id and active_nav == 'fragenkatalog') else url_for('questionnaire', pid=ap.id) }}"
+         data-target="top">
         <span class="dot"></span>WARP Assessment
       </a>
-      <a class="sidebar-nav-item {% if active_nav == 'auswertung' and active_cat == 'assessment' %}active{% endif %}"
-         href="{% if project and active_cat == 'assessment' %}#auswertung-section{% else %}{{ url_for('questionnaire', pid=ap.id) }}#auswertung-section{% endif %}"
+      <a class="sidebar-nav-item {% if active_nav == 'auswertung' %}active{% endif %}"
+         href="{% if project and active_nav != 'workshop' %}#auswertung-section{% else %}{{ url_for('questionnaire', pid=ap.id) }}#auswertung-section{% endif %}"
          data-target="auswertung-section">
         <span class="dot"></span>Auswertung
       </a>
@@ -68,9 +67,9 @@
 
       {% if workshop_projects %}
       {% set wp = workshop_projects[0] %}
-      {% set wp_href = '#' if (project and project.id == wp.id and active_nav == 'fragenkatalog' and active_cat == 'workshop') else url_for('questionnaire', pid=wp.id) %}
-      <a class="sidebar-nav-item {% if active_nav == 'fragenkatalog' and active_cat == 'workshop' %}active{% endif %}"
-         href="{{ wp_href }}" data-target="top">
+      <a class="sidebar-nav-item {% if active_nav == 'workshop' %}active{% endif %}"
+         href="{{ '#' if (project and project.id == wp.id and active_nav == 'workshop') else url_for('questionnaire', pid=wp.id) }}"
+         data-target="top">
         <span class="dot"></span>Workshop
       </a>
       {% endif %}
@@ -119,9 +118,7 @@
     </div>
 
     {# ── KI-Vorausfüllen – nur für Assessment-Projekte ───────────────── #}
-    {% set ki_project = none %}
-    {% if project and project.catalog_type == 'assessment' %}{% set ki_project = project %}
-    {% elif not project and assessment_projects %}{% set ki_project = assessment_projects[0] %}{% endif %}
+    {% set ki_project = project if (project and active_nav != 'workshop') else (assessment_projects[0] if assessment_projects else none) %}
     {% if ki_project %}
     <div class="sidebar-section">
       <button class="sidebar-section-hd" onclick="sidebarToggle(this)" aria-expanded="true">
