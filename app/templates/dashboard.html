@@ -79,7 +79,13 @@
       {% for e in open_projects %}
       <div class="dash-project-row">
         <div class="dash-project-info">
-          <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="dash-project-name">{{ e.project.name }}</a>
+          <div style="display:flex;align-items:center;gap:8px">
+            <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="dash-project-name">{{ e.project.name }}</a>
+            <span style="font-size:.68rem;font-weight:700;padding:1px 7px;border-radius:999px;
+              {% if e.project.catalog_type == 'workshop' %}background:#fef3c7;color:#b45309{% else %}background:#ede9fe;color:#6d28d9{% endif %}">
+              {{ 'Workshop' if e.project.catalog_type == 'workshop' else 'Assessment' }}
+            </span>
+          </div>
           {% if e.project.owner %}<span class="dash-project-meta">{{ e.project.owner }}</span>{% endif %}
           <div class="dash-progress">
             <div class="dash-progress-bar">

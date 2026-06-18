@@ -157,14 +157,18 @@ def create_app() -> Flask:
             abort(403)
         return project
 
-    def _db_question_count() -> int:
+    def _db_question_count(catalog_type: str = 'assessment') -> int:
         return db.session.execute(
-            db.select(db.func.count()).select_from(Question)
+            db.select(db.func.count(Question.id))
+            .join(Category, Question.category_id == Category.id)
+            .where(Category.catalog_type == catalog_type)
         ).scalar() or 0
 
-    def _load_categories_from_db() -> List[Dict]:
+    def _load_categories_from_db(catalog_type: str = 'assessment') -> List[Dict]:
         cats = db.session.execute(
-            db.select(Category).order_by(Category.sort_order)
+            db.select(Category)
+            .where(Category.catalog_type == catalog_type)
+            .order_by(Category.sort_order)
         ).scalars().all()
         return [
             {
@@ -576,14 +580,20 @@ def create_app() -> Flask:
     def admin_questions():
         if not current_user.is_superuser:
             abort(403)
+        tab = request.args.get("tab", "assessment")
+        if tab not in ("assessment", "workshop"):
+            tab = "assessment"
         cats = db.session.execute(
-            db.select(Category).order_by(Category.sort_order)
+            db.select(Category)
+            .where(Category.catalog_type == tab)
+            .order_by(Category.sort_order)
         ).scalars().all()
         return render_template(
             "admin_questions.html",
             categories=cats,
             levels=WARP_LEVEL_ORDER,
-            total_questions=_db_question_count(),
+            total_questions=_db_question_count(tab),
+            active_tab=tab,
         )
 
     @app.route("/admin/question/new", methods=["POST"])
@@ -659,16 +669,20 @@ def create_app() -> Flask:
         parent = request.form.get("parent", "").strip()
         description = request.form.get("description", "").strip() or None
         if not cat_id or not title or not parent:
-            flash("ID, Titel und Stufe sind Pflichtfelder.", "error")
+            flash("ID, Titel und Stufe/Bereich sind Pflichtfelder.", "error")
             return redirect(url_for("admin_questions"))
         if db.session.get(Category, cat_id):
             flash(f"Kategorie-ID '{cat_id}' ist bereits vergeben.", "error")
             return redirect(url_for("admin_questions"))
-        if parent not in WARP_LEVEL_ORDER:
+        catalog_type = request.form.get("catalog_type", "assessment")
+        if catalog_type not in ("assessment", "workshop"):
+            catalog_type = "assessment"
+        if catalog_type == "assessment" and parent not in WARP_LEVEL_ORDER:
             flash("Ungültige WARP-Stufe.", "error")
-            return redirect(url_for("admin_questions"))
+            return redirect(url_for("admin_questions") + "?tab=assessment")
         max_sort = db.session.execute(
             db.select(db.func.max(Category.sort_order))
+            .where(Category.catalog_type == catalog_type)
         ).scalar()
         cat = Category(
             id=cat_id,
@@ -676,11 +690,12 @@ def create_app() -> Flask:
             parent=parent,
             description=description,
             sort_order=(max_sort or 0) + 1,
+            catalog_type=catalog_type,
         )
         db.session.add(cat)
         db.session.commit()
         flash(f"Kategorie '{title}' erfolgreich angelegt.", "success")
-        return redirect(url_for("admin_questions") + f"#{cat_id}")
+        return redirect(url_for("admin_questions") + f"?tab={catalog_type}#{cat_id}")
 
     @app.route("/admin/category/<cid>/edit", methods=["POST"])
     @login_required
@@ -710,6 +725,74 @@ def create_app() -> Flask:
             flash("Kategorie und alle zugehörigen Fragen gelöscht.", "success")
         return redirect(url_for("admin_questions"))
 
+    @app.route("/admin/workshop/import", methods=["POST"])
+    @login_required
+    def workshop_import():
+        if not current_user.is_superuser:
+            abort(403)
+        file = request.files.get("file")
+        if not file or not file.filename:
+            flash("Keine Datei ausgewählt.", "error")
+            return redirect(url_for("admin_questions") + "?tab=workshop")
+        import csv as _csv
+        import io as _io
+        rows = []
+        fname = file.filename.lower()
+        try:
+            if fname.endswith(".xlsx") or fname.endswith(".xls"):
+                import openpyxl
+                wb = openpyxl.load_workbook(file, read_only=True, data_only=True)
+                ws = wb.active
+                for row in list(ws.iter_rows(min_row=2, values_only=True)):
+                    rows.append([str(c).strip() if c is not None else "" for c in row])
+            else:
+                content = file.stream.read().decode("utf-8-sig")
+                reader = _csv.reader(_io.StringIO(content))
+                next(reader, None)
+                rows = [r for r in reader]
+        except Exception as exc:
+            flash(f"Datei konnte nicht gelesen werden: {exc}", "error")
+            return redirect(url_for("admin_questions") + "?tab=workshop")
+
+        cats_created: dict[str, str] = {}
+        questions_created = 0
+        for row in rows:
+            if not row or len(row) < 2:
+                continue
+            cat_name = str(row[0]).strip()
+            q_text = str(row[1]).strip()
+            q_hint = str(row[2]).strip() if len(row) > 2 and row[2] else None
+            if not cat_name or not q_text:
+                continue
+            if cat_name not in cats_created:
+                max_sort = db.session.execute(
+                    db.select(db.func.max(Category.sort_order))
+                    .where(Category.catalog_type == "workshop")
+                ).scalar() or 0
+                cat_id = f"ws-{uuid.uuid4().hex[:8]}"
+                cat = Category(
+                    id=cat_id, title=cat_name, parent="Workshop",
+                    sort_order=max_sort + 1, catalog_type="workshop",
+                )
+                db.session.add(cat)
+                db.session.flush()
+                cats_created[cat_name] = cat_id
+            cat_id = cats_created[cat_name]
+            max_sort_q = db.session.execute(
+                db.select(db.func.max(Question.sort_order))
+                .where(Question.category_id == cat_id)
+            ).scalar() or 0
+            q = Question(
+                id=f"{cat_id}-{uuid.uuid4().hex[:6]}",
+                category_id=cat_id, text=q_text, hint=q_hint,
+                sort_order=max_sort_q + 1,
+            )
+            db.session.add(q)
+            questions_created += 1
+        db.session.commit()
+        flash(f"{questions_created} Fragen in {len(cats_created)} Kategorien importiert.", "success")
+        return redirect(url_for("admin_questions") + "?tab=workshop")
+
     # ------------------------------------------------------------------
     # Project Routes
     # ------------------------------------------------------------------
@@ -722,10 +805,14 @@ def create_app() -> Flask:
             return redirect(url_for("inbox"))
         if request.method == "POST":
             name = request.form.get("name", "").strip() or "Neues Projekt"
+            catalog_type = request.form.get("catalog_type", "assessment")
+            if catalog_type not in ("assessment", "workshop"):
+                catalog_type = "assessment"
             project = Project(
                 user_id=current_user.id,
                 name=name,
                 date=dt.date.today().strftime("%Y-%m-%d"),
+                catalog_type=catalog_type,
             )
             db.session.add(project)
             db.session.commit()
@@ -737,6 +824,7 @@ def create_app() -> Flask:
     def questionnaire(pid: int):
         project = _get_project_or_403(pid)
         projects = current_user.projects
+        ct = project.catalog_type or 'assessment'
         generated_docs = {
             d.doc_type: d.generated_at
             for d in db.session.execute(
@@ -749,9 +837,9 @@ def create_app() -> Flask:
             projects=projects,
             saved_answers=project.answers_dict(),
             saved_notes=project.notes_dict(),
-            categories=_load_categories_from_db(),
+            categories=_load_categories_from_db(ct),
             answer_options=ANSWER_OPTIONS,
-            total_questions=_db_question_count(),
+            total_questions=_db_question_count(ct),
             today=dt.date.today().strftime("%Y-%m-%d"),
             generated_docs=generated_docs,
         )

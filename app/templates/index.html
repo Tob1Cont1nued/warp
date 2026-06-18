@@ -16,8 +16,13 @@
     </svg>
   </button>
   <div class="topbar-title">
-    <h1>Fragenkatalog</h1>
+    {% if project.catalog_type == 'workshop' %}
+    <h1>Workshop</h1>
+    <p>Fragenliste für den Workshop</p>
+    {% else %}
+    <h1>WARP Assessment</h1>
     <p>Reifegradanalyse Test &amp; Quality Engineering</p>
+    {% endif %}
   </div>
   <div class="progress-pill">
     <span class="progress-label">Beantwortet</span>

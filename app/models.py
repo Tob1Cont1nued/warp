@@ -47,6 +47,7 @@ class Project(db.Model):
     date = db.Column(db.String(20), nullable=True)
     created_at = db.Column(db.DateTime, default=dt.datetime.utcnow)
     is_complete = db.Column(db.Boolean, default=False, nullable=False)
+    catalog_type = db.Column(db.String(20), nullable=False, default='assessment')
 
     user = db.relationship("User", back_populates="projects")
     answers = db.relationship(
@@ -95,6 +96,7 @@ class Category(db.Model):
     parent = db.Column(db.String(80), nullable=False)
     description = db.Column(db.Text, nullable=True)
     sort_order = db.Column(db.Integer, nullable=False, default=0)
+    catalog_type = db.Column(db.String(20), nullable=False, default='assessment')
 
     questions = db.relationship(
         "Question", back_populates="category",

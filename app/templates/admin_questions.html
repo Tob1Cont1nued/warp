@@ -97,6 +97,15 @@
     .btn-xs-save:hover { background:#3516a8; }
     .btn-xs-cancel { background:var(--c-bg); color:var(--c-text-muted); border:1px solid var(--c-border); }
 
+    .aq-tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:2px solid var(--c-border); }
+    .aq-tab {
+      padding:10px 20px; font-size:.88rem; font-weight:600; color:var(--c-text-muted);
+      text-decoration:none; border-bottom:2px solid transparent; margin-bottom:-2px;
+      transition:color .15s, border-color .15s;
+    }
+    .aq-tab:hover { color:var(--ws-blue); }
+    .aq-tab.active { color:var(--ws-blue); border-bottom-color:var(--ws-blue); }
+
     .flash-list { list-style:none; margin:0 0 16px; padding:0; }
     .flash-success { background:#e6fff2; border:1px solid #b3f5d6; color:#1a7a45; border-radius:6px; padding:8px 14px; margin-bottom:6px; font-size:.88rem; }
     .flash-error   { background:#fff0f0; border:1px solid #ffb3b3; color:#cc0000; border-radius:6px; padding:8px 14px; margin-bottom:6px; font-size:.88rem; }
@@ -129,7 +138,7 @@
     </svg>
   </button>
   <div class="topbar-title">
-    <h1>Fragenkatalog</h1>
+    <h1>{% if active_tab == 'workshop' %}Workshop{% else %}WARP Assessment{% endif %}</h1>
     <p>Fragen und Kategorien bearbeiten</p>
   </div>
   <a class="topbar-bell" href="{{ url_for('inbox') }}" id="js-bell-link" title="Postkorb">
@@ -181,6 +190,14 @@
 
 <main class="main">
 
+  {# ── Tabs ──────────────────────────────────────────────────────────── #}
+  <div class="aq-tabs">
+    <a class="aq-tab {% if active_tab == 'assessment' %}active{% endif %}"
+       href="{{ url_for('admin_questions') }}?tab=assessment">WARP Assessment</a>
+    <a class="aq-tab {% if active_tab == 'workshop' %}active{% endif %}"
+       href="{{ url_for('admin_questions') }}?tab=workshop">Workshop</a>
+  </div>
+
   {# ── Flash-Meldungen ───────────────────────────────────────────────── #}
   {% with messages = get_flashed_messages(with_categories=true) %}
   {% if messages %}
@@ -203,24 +220,47 @@
         <strong>{{ total_questions }}</strong>
         <span>Fragen gesamt</span>
       </div>
+      {% if active_tab == 'assessment' %}
       <div class="aq-stat">
         <strong>{{ levels | length }}</strong>
         <span>WARP-Stufen</span>
       </div>
+      {% endif %}
+      {% if active_tab == 'workshop' %}
+      <div class="aq-stat" style="margin-left:auto">
+        <form method="POST" action="{{ url_for('workshop_import') }}" enctype="multipart/form-data"
+              style="display:flex;align-items:center;gap:8px">
+          <label style="font-size:.82rem;font-weight:600;color:var(--c-text-muted);cursor:pointer;display:flex;align-items:center;gap:6px">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M8 11V1M4 5l4-4 4 4"/><rect x="2" y="12" width="12" height="3" rx="1"/>
+            </svg>
+            CSV / Excel importieren
+            <input type="file" name="file" accept=".csv,.xlsx,.xls" style="display:none"
+                   onchange="this.closest('form').submit()">
+          </label>
+        </form>
+      </div>
+      {% endif %}
     </div>
   </section>
 
-  {# ── Kategorien je Stufe ───────────────────────────────────────────── #}
-  {% for level in levels %}
-  <p class="level-header">{{ level }}</p>
-
-  {% set level_cats = categories | selectattr("parent", "equalto", level) | list %}
-  {% if not level_cats %}
-  <p style="color:var(--c-text-muted);font-size:.88rem;margin-bottom:16px">
-    Keine Kategorien für diese Stufe.
-  </p>
+  {% if active_tab == 'workshop' and not categories %}
+  <div class="card" style="text-align:center;padding:32px;color:var(--c-text-muted)">
+    <p>Noch keine Workshop-Kategorien. Lege eine Kategorie an oder importiere Fragen per CSV/Excel.</p>
+    <p style="font-size:.82rem;margin-top:8px">
+      CSV-Format: <code>Kategorie, Frage, Hilfsfrage (optional)</code>
+    </p>
+  </div>
   {% endif %}
 
+  {# ── Kategorien ────────────────────────────────────────────────────── #}
+  {% if active_tab == 'assessment' %}
+  {% for level in levels %}
+  <p class="level-header">{{ level }}</p>
+  {% set level_cats = categories | selectattr("parent", "equalto", level) | list %}
+  {% if not level_cats %}
+  <p style="color:var(--c-text-muted);font-size:.88rem;margin-bottom:16px">Keine Kategorien für diese Stufe.</p>
+  {% endif %}
   {% for cat in level_cats %}
   <section class="card cat-card" id="{{ cat.id }}">
 
@@ -338,11 +378,90 @@
   </section>
   {% endfor %}
   {% endfor %}
+  {% else %}
+  {% for cat in categories %}
+  <section class="card cat-card" id="{{ cat.id }}">
+    <div class="cat-head">
+      <div class="cat-head-info">
+        <h3>{{ cat.title }}<span class="cat-id-badge">{{ cat.id }}</span></h3>
+        {% if cat.description %}<p>{{ cat.description }}</p>{% endif %}
+      </div>
+      <div class="cat-actions">
+        <button type="button" class="btn-xs btn-xs-edit"
+                onclick="togglePanel('cat-edit-{{ cat.id }}')">Bearbeiten</button>
+        <form method="POST" action="{{ url_for('admin_category_delete', cid=cat.id) }}"
+              data-confirm="Kategorie »{{ cat.title }}« und alle {{ cat.questions | length }} Fragen wirklich löschen?">
+          <button type="submit" class="btn-xs btn-xs-delete">Löschen</button>
+        </form>
+      </div>
+    </div>
+    <div id="cat-edit-{{ cat.id }}" class="edit-panel" style="display:none;margin-bottom:14px">
+      <form method="POST" action="{{ url_for('admin_category_edit', cid=cat.id) }}">
+        <div class="field"><label>Titel</label><input type="text" name="title" value="{{ cat.title }}" required /></div>
+        <div class="field"><label>Beschreibung</label><textarea name="description">{{ cat.description or '' }}</textarea></div>
+        <div class="row">
+          <button type="submit" class="btn-xs btn-xs-save">Speichern</button>
+          <button type="button" class="btn-xs btn-xs-cancel" onclick="togglePanel('cat-edit-{{ cat.id }}')">Abbrechen</button>
+        </div>
+      </form>
+    </div>
+    {% if cat.questions %}
+    <ul class="q-list">
+      {% for q in cat.questions %}
+      <li class="q-item">
+        <div class="q-item-header">
+          <span class="q-item-num">{{ loop.index }}</span>
+          <div class="q-item-body">
+            <p class="q-item-text">{{ q.text }}</p>
+            {% if q.hint %}<p class="q-item-hint">{{ q.hint }}</p>{% endif %}
+          </div>
+          <div class="q-item-actions">
+            <button type="button" class="btn-xs btn-xs-edit" onclick="togglePanel('q-edit-{{ q.id }}')">Bearbeiten</button>
+            <form method="POST" action="{{ url_for('admin_question_delete', qid=q.id) }}"
+                  data-confirm="Frage »{{ q.text[:60] }}…« wirklich löschen?">
+              <button type="submit" class="btn-xs btn-xs-delete">Löschen</button>
+            </form>
+          </div>
+        </div>
+        <div id="q-edit-{{ q.id }}" class="edit-panel" style="display:none;margin:0 0 10px 38px">
+          <form method="POST" action="{{ url_for('admin_question_edit', qid=q.id) }}">
+            <div class="field"><label>Fragetext</label><textarea name="text" required>{{ q.text }}</textarea></div>
+            <div class="field"><label>Hinweis</label><textarea name="hint">{{ q.hint or '' }}</textarea></div>
+            <div class="row">
+              <button type="submit" class="btn-xs btn-xs-save">Speichern</button>
+              <button type="button" class="btn-xs btn-xs-cancel" onclick="togglePanel('q-edit-{{ q.id }}')">Abbrechen</button>
+            </div>
+          </form>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p style="color:var(--c-text-muted);font-size:.85rem;margin:8px 0">Noch keine Fragen in dieser Kategorie.</p>
+    {% endif %}
+    <div class="add-q-section">
+      <button type="button" class="add-q-toggle" onclick="togglePanel('add-q-{{ cat.id }}')">+ Neue Frage hinzufügen</button>
+      <div id="add-q-{{ cat.id }}" class="edit-panel" style="display:none;margin-top:8px">
+        <form method="POST" action="{{ url_for('admin_question_new') }}">
+          <input type="hidden" name="category_id" value="{{ cat.id }}" />
+          <div class="field"><label>Fragetext</label><textarea name="text" required placeholder="Fragetext eingeben …"></textarea></div>
+          <div class="field"><label>Hinweis / Hilfsfrage</label><textarea name="hint" placeholder="z.B. Gibt es eine Risikoanalyse?"></textarea></div>
+          <div class="row">
+            <button type="submit" class="btn-xs btn-xs-save">Frage anlegen</button>
+            <button type="button" class="btn-xs btn-xs-cancel" onclick="togglePanel('add-q-{{ cat.id }}')">Abbrechen</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </section>
+  {% endfor %}
+  {% endif %}
 
   {# ── Neue Kategorie ────────────────────────────────────────────────── #}
   <section class="card add-cat-section">
     <h2 style="margin-top:0">Neue Kategorie anlegen</h2>
     <form method="POST" action="{{ url_for('admin_category_new') }}">
+      <input type="hidden" name="catalog_type" value="{{ active_tab }}" />
       <div class="field">
         <label>Kategorie-ID <span style="font-weight:400;color:var(--c-text-muted)">(eindeutig, z.B. "neue-kategorie")</span></label>
         <input type="text" name="id" required placeholder="z.B. test-automatisierung" pattern="[a-z0-9_\-]+" title="Nur Kleinbuchstaben, Zahlen, - und _" />
@@ -351,6 +470,7 @@
         <label>Titel</label>
         <input type="text" name="title" required placeholder="z.B. Testautomatisierung" />
       </div>
+      {% if active_tab == 'assessment' %}
       <div class="field">
         <label>WARP-Stufe</label>
         <select name="parent" required>
@@ -359,6 +479,12 @@
           {% endfor %}
         </select>
       </div>
+      {% else %}
+      <div class="field">
+        <label>Bereich / Thema</label>
+        <input type="text" name="parent" required placeholder="z.B. Agile Testing" />
+      </div>
+      {% endif %}
       <div class="field">
         <label>Beschreibung <span style="font-weight:400;color:var(--c-text-muted)">(optional)</span></label>
         <textarea name="description" placeholder="Kurze Beschreibung der Kategorie …"></textarea>
