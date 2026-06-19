@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IMPULSE & WARP – Digitale Projektgewinnung | Wavestone</title>
+<style>
+  :root {
+    --blue:      #451DC7;
+    --blue-deep: #250F6B;
+    --green:     #04F06A;
+    --white:     #FFFFFF;
+    --light:     #F5F4FF;
+    --muted:     #6B6B9A;
+    --border:    #E0DEFF;
+    --slide-w:   1280px;
+    --slide-h:   720px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Aptos', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #1a1a2e;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+  }
+
+  /* ── Controls ───────────────────────────────────────────────── */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 16px;
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+  }
+  .controls button {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: #fff;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: background .15s;
+  }
+  .controls button:hover { background: rgba(255,255,255,0.25); }
+  #slide-counter { font-weight: 600; color: #fff; }
+
+  /* ── Slide Wrapper ──────────────────────────────────────────── */
+  .deck {
+    width: min(var(--slide-w), 100vw);
+    aspect-ratio: 16 / 9;
+    position: relative;
+    overflow: hidden;
+    border-radius: 8px;
+    box-shadow: 0 32px 80px rgba(0,0,0,0.6);
+  }
+
+  /* ── Slides ─────────────────────────────────────────────────── */
+  .slide {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .35s ease;
+    font-size: clamp(12px, 1.5vw, 18px);
+  }
+  .slide.active {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  /* ── Common layout helpers ──────────────────────────────────── */
+  .slide-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 5% 6%;
+  }
+  .slide-tag {
+    font-size: .72em;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: .6em;
+  }
+  h1 { font-size: 2.8em; font-weight: 800; line-height: 1.1; }
+  h2 { font-size: 1.9em; font-weight: 700; line-height: 1.2; margin-bottom: .5em; }
+  h3 { font-size: 1.15em; font-weight: 700; margin-bottom: .3em; }
+  p  { font-size: .95em; line-height: 1.55; }
+  ul { list-style: none; }
+  ul li { padding: .25em 0; font-size: .95em; line-height: 1.5; }
+  ul li::before { content: "▸ "; color: var(--green); font-size: .8em; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 4%; flex: 1; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 3%; }
+  .card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 5% 6%;
+  }
+  .card-light {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 5% 6%;
+    color: #1a1a2e;
+  }
+  .badge {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: .7em;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+  }
+  .badge-green { background: var(--green); color: #000; }
+  .badge-blue  { background: var(--blue); color: #fff; }
+  .badge-light { background: rgba(255,255,255,0.15); color: #fff; }
+
+  .number-big {
+    font-size: 3.5em;
+    font-weight: 800;
+    color: var(--green);
+    line-height: 1;
+  }
+  .number-label {
+    font-size: .78em;
+    color: rgba(255,255,255,0.6);
+    margin-top: .2em;
+  }
+
+  /* ── Foot bar ───────────────────────────────────────────────── */
+  .slide-foot {
+    padding: 1.5% 6%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: .7em;
+    color: rgba(255,255,255,0.4);
+  }
+  .foot-brand { display: flex; align-items: center; gap: 6px; }
+  .foot-square {
+    width: 10px; height: 10px;
+    background: var(--green);
+    border-radius: 2px;
+  }
+  .foot-brand-name { font-weight: 700; color: rgba(255,255,255,0.6); }
+
+  /* ── SLIDE 1: Cover ─────────────────────────────────────────── */
+  #s1 {
+    background: linear-gradient(150deg, var(--blue-deep) 0%, var(--blue) 100%);
+    color: #fff;
+  }
+  #s1 .slide-inner { justify-content: center; }
+  #s1 h1 { color: #fff; }
+  #s1 .sub { font-size: 1.2em; color: rgba(255,255,255,0.65); margin-top: .8em; max-width: 60%; }
+  #s1 .meta { margin-top: 2.5em; font-size: .82em; color: rgba(255,255,255,0.5); }
+  #s1 .accent-bar {
+    width: 60px; height: 5px;
+    background: var(--green);
+    border-radius: 3px;
+    margin: 1em 0;
+  }
+  #s1 .corner-deco {
+    position: absolute;
+    right: 0; bottom: 0;
+    width: 35%;
+    opacity: .07;
+  }
+
+  /* ── SLIDE 2: Problem ───────────────────────────────────────── */
+  #s2 { background: #f9f8ff; color: #1a1a2e; }
+  #s2 h2 { color: var(--blue-deep); }
+  #s2 .slide-tag { color: var(--blue); }
+  #s2 .problem-card {
+    background: #fff;
+    border: 1.5px solid #e8e4ff;
+    border-radius: 10px;
+    padding: 4% 5%;
+  }
+  #s2 .step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 1em;
+  }
+  #s2 .step-num {
+    width: 28px; height: 28px;
+    background: #ede9ff;
+    color: var(--blue);
+    font-weight: 800;
+    font-size: .82em;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  #s2 .step-txt strong { display: block; font-size: .92em; color: #1a1a2e; }
+  #s2 .step-txt span { font-size: .8em; color: #6B6B9A; }
+  #s2 .pain {
+    background: #fff5f5;
+    border: 1px solid #ffcccc;
+    border-radius: 8px;
+    padding: 3% 4%;
+    margin-top: auto;
+  }
+  #s2 .pain-title { font-weight: 700; color: #c00; font-size: .88em; margin-bottom: .5em; }
+  #s2 .pain ul li::before { color: #e00; }
+  #s2 .pain ul li { font-size: .82em; color: #600; }
+  #s2 .slide-foot { border-top: 1px solid #e8e4ff; color: #aaa; }
+  #s2 .foot-square { background: var(--blue); }
+  #s2 .foot-brand-name { color: #888; }
+
+  /* ── SLIDE 3: Ansatz ────────────────────────────────────────── */
+  #s3 {
+    background: linear-gradient(150deg, var(--blue-deep) 0%, #2d1a8e 100%);
+    color: #fff;
+  }
+  #s3 .flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    flex: 1;
+    margin-top: 1.5em;
+  }
+  #s3 .flow-step {
+    flex: 1;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    padding: 5% 4%;
+    position: relative;
+  }
+  #s3 .flow-arrow {
+    display: flex;
+    align-items: center;
+    padding: 0 1%;
+    color: var(--green);
+    font-size: 1.5em;
+    flex-shrink: 0;
+  }
+  #s3 .flow-icon {
+    font-size: 1.8em;
+    margin-bottom: .4em;
+  }
+  #s3 .flow-title { font-weight: 700; font-size: .95em; margin-bottom: .4em; }
+  #s3 .flow-desc { font-size: .78em; color: rgba(255,255,255,0.65); line-height: 1.5; }
+  #s3 .flow-badge {
+    position: absolute;
+    top: -10px; right: 12px;
+  }
+
+  /* ── SLIDE 4: Kompetenz ─────────────────────────────────────── */
+  #s4 { background: #f9f8ff; color: #1a1a2e; }
+  #s4 h2 { color: var(--blue-deep); }
+  #s4 .slide-tag { color: var(--blue); }
+  #s4 .vs-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    gap: 3%;
+    align-items: center;
+    flex: 1;
+    margin-top: 1.5em;
+  }
+  #s4 .vs-box {
+    border-radius: 10px;
+    padding: 5% 6%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  #s4 .vs-box-old {
+    background: #fff;
+    border: 1.5px solid #f0e0e0;
+  }
+  #s4 .vs-box-new {
+    background: linear-gradient(135deg, var(--blue-deep), var(--blue));
+    color: #fff;
+  }
+  #s4 .vs-label {
+    font-size: .72em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: .8em;
+  }
+  #s4 .vs-label-old { color: #c00; }
+  #s4 .vs-label-new { color: var(--green); }
+  #s4 .vs-box-old ul li::before { color: #d00; content: "✗ "; }
+  #s4 .vs-box-new ul li::before { color: var(--green); }
+  #s4 .vs-separator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    color: var(--muted);
+    font-size: .8em;
+    font-weight: 700;
+  }
+  #s4 .vs-circle {
+    width: 40px; height: 40px;
+    background: var(--blue);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85em;
+    font-weight: 800;
+  }
+  #s4 .slide-foot { border-top: 1px solid #e8e4ff; color: #aaa; }
+  #s4 .foot-square { background: var(--blue); }
+  #s4 .foot-brand-name { color: #888; }
+
+  /* ── SLIDE 5: Geschwindigkeit ───────────────────────────────── */
+  #s5 {
+    background: linear-gradient(150deg, #1a1a2e 0%, var(--blue-deep) 100%);
+    color: #fff;
+  }
+  #s5 .speed-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4%;
+    flex: 1;
+    margin-top: 1.5em;
+  }
+  #s5 .speed-box {
+    border-radius: 12px;
+    padding: 5% 6%;
+    display: flex;
+    flex-direction: column;
+    gap: .6em;
+  }
+  #s5 .speed-box-old {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,100,100,0.3);
+  }
+  #s5 .speed-box-new {
+    background: rgba(4,240,106,0.08);
+    border: 1px solid rgba(4,240,106,0.3);
+  }
+  #s5 .speed-label {
+    font-size: .72em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+  }
+  #s5 .speed-label-old { color: rgba(255,120,120,0.9); }
+  #s5 .speed-label-new { color: var(--green); }
+  #s5 .timeline {
+    display: flex;
+    flex-direction: column;
+    gap: .4em;
+    margin-top: .5em;
+  }
+  #s5 .tl-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .82em;
+  }
+  #s5 .tl-bar {
+    height: 8px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+  #s5 .bar-red { background: rgba(255,100,100,0.6); }
+  #s5 .bar-green { background: var(--green); }
+  #s5 .tl-text { color: rgba(255,255,255,0.75); }
+  #s5 .tl-time { margin-left: auto; font-weight: 700; font-size: .88em; }
+  #s5 .tl-time-old { color: rgba(255,120,120,0.9); }
+  #s5 .tl-time-new { color: var(--green); }
+  #s5 .speed-kpi {
+    display: flex;
+    gap: 5%;
+    margin-top: 2em;
+  }
+  #s5 .kpi-box {
+    text-align: center;
+    flex: 1;
+    background: rgba(255,255,255,0.06);
+    border-radius: 8px;
+    padding: 3% 2%;
+  }
+
+  /* ── SLIDE 6: IMPULSE Features ──────────────────────────────── */
+  #s6 { background: #f9f8ff; color: #1a1a2e; }
+  #s6 h2 { color: var(--blue-deep); }
+  #s6 .slide-tag { color: var(--blue); }
+  #s6 .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2.5%;
+    margin-top: 1.5em;
+    flex: 1;
+  }
+  #s6 .feat-card {
+    background: #fff;
+    border: 1.5px solid #ede9ff;
+    border-radius: 10px;
+    padding: 5% 5%;
+    display: flex;
+    flex-direction: column;
+    gap: .4em;
+  }
+  #s6 .feat-icon {
+    font-size: 1.6em;
+    margin-bottom: .2em;
+  }
+  #s6 .feat-title { font-weight: 700; font-size: .88em; color: var(--blue-deep); }
+  #s6 .feat-desc { font-size: .78em; color: var(--muted); line-height: 1.5; }
+  #s6 .slide-foot { border-top: 1px solid #e8e4ff; color: #aaa; }
+  #s6 .foot-square { background: var(--blue); }
+  #s6 .foot-brand-name { color: #888; }
+
+  /* ── SLIDE 7: WARP Features ─────────────────────────────────── */
+  #s7 {
+    background: linear-gradient(150deg, var(--blue-deep) 0%, var(--blue) 100%);
+    color: #fff;
+  }
+  #s7 .feature-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 2.5%;
+    margin-top: 1.5em;
+    flex: 1;
+  }
+  #s7 .feat-card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.14);
+    border-radius: 10px;
+    padding: 5% 5%;
+    display: flex;
+    flex-direction: column;
+    gap: .4em;
+  }
+  #s7 .feat-icon { font-size: 1.6em; margin-bottom: .2em; }
+  #s7 .feat-title { font-weight: 700; font-size: .88em; }
+  #s7 .feat-desc { font-size: .78em; color: rgba(255,255,255,0.65); line-height: 1.5; }
+
+  /* ── SLIDE 8: Tech Stack ────────────────────────────────────── */
+  #s8 { background: #0d0d1a; color: #fff; }
+  #s8 .tech-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2.5%;
+    margin-top: 1.5em;
+    flex: 1;
+  }
+  #s8 .tech-layer {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 5% 5%;
+  }
+  #s8 .tech-layer-title {
+    font-size: .7em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--green);
+    margin-bottom: 1em;
+    padding-bottom: .5em;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  #s8 .tech-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: .6em;
+    font-size: .82em;
+    color: rgba(255,255,255,0.8);
+  }
+  #s8 .tech-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+  }
+  #s8 .tech-sub { font-size: .65em; color: rgba(255,255,255,0.4); display: block; }
+
+  /* ── SLIDE 9: Kundenvorteile ────────────────────────────────── */
+  #s9 { background: #f9f8ff; color: #1a1a2e; }
+  #s9 h2 { color: var(--blue-deep); }
+  #s9 .slide-tag { color: var(--blue); }
+  #s9 .benefit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3%;
+    margin-top: 1.5em;
+    flex: 1;
+  }
+  #s9 .benefit-card {
+    background: #fff;
+    border: 1.5px solid #ede9ff;
+    border-radius: 10px;
+    padding: 5% 5%;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  #s9 .benefit-num {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    color: #fff;
+    font-weight: 800;
+    font-size: .88em;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  #s9 .benefit-title { font-weight: 700; font-size: .9em; color: var(--blue-deep); margin-bottom: .3em; }
+  #s9 .benefit-desc { font-size: .8em; color: var(--muted); line-height: 1.5; }
+  #s9 .slide-foot { border-top: 1px solid #e8e4ff; color: #aaa; }
+  #s9 .foot-square { background: var(--blue); }
+  #s9 .foot-brand-name { color: #888; }
+
+  /* ── SLIDE 10: Demo / Ausblick ──────────────────────────────── */
+  #s10 {
+    background: linear-gradient(150deg, var(--blue-deep) 0%, #1a1a2e 100%);
+    color: #fff;
+  }
+  #s10 .demo-steps {
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    flex: 1;
+    margin-top: 1.5em;
+  }
+  #s10 .demo-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 3% 4%;
+  }
+  #s10 .demo-step-num {
+    width: 32px; height: 32px;
+    background: var(--green);
+    color: #000;
+    font-weight: 800;
+    font-size: .85em;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  #s10 .demo-step-title { font-weight: 700; font-size: .9em; }
+  #s10 .demo-step-desc { font-size: .8em; color: rgba(255,255,255,0.65); margin-top: .2em; }
+
+  /* ── SLIDE 11: Fazit ────────────────────────────────────────── */
+  #s11 {
+    background: linear-gradient(150deg, var(--blue-deep) 0%, var(--blue) 60%, #5a2fd0 100%);
+    color: #fff;
+  }
+  #s11 .slide-inner { justify-content: center; align-items: center; text-align: center; }
+  #s11 h2 { font-size: 2.2em; max-width: 70%; margin: 0 auto .6em; }
+  #s11 .tagline { font-size: 1em; color: rgba(255,255,255,0.7); max-width: 60%; margin: 0 auto 1.5em; line-height: 1.6; }
+  #s11 .kpis { display: flex; gap: 5%; justify-content: center; margin-top: 1.5em; }
+  #s11 .kpi-box { text-align: center; }
+  #s11 .kpi-num { font-size: 2.8em; font-weight: 800; color: var(--green); line-height: 1; }
+  #s11 .kpi-lbl { font-size: .75em; color: rgba(255,255,255,0.6); margin-top: .3em; }
+  #s11 .divider-line {
+    width: 1px;
+    background: rgba(255,255,255,0.2);
+    align-self: stretch;
+  }
+
+  /* ── Footer ─────────────────────────────────────────────────── */
+  .slide-foot {
+    padding: 1.5% 6%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    font-size: .65em;
+    color: rgba(255,255,255,0.35);
+  }
+
+  /* ── Print ──────────────────────────────────────────────────── */
+  @media print {
+    body { background: #fff; padding: 0; }
+    .controls { display: none; }
+    .deck { box-shadow: none; width: 100%; }
+    .slide { position: relative; opacity: 1; pointer-events: all; page-break-after: always; }
+  }
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button onclick="prev()">◀ Zurück</button>
+  <span id="slide-counter">1 / 11</span>
+  <button onclick="next()">Weiter ▶</button>
+  <span style="margin-left:8px;color:rgba(255,255,255,0.4)">(← → oder Leertaste)</span>
+</div>
+
+<div class="deck">
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 1 – Cover
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide active" id="s1">
+    <div class="slide-inner">
+      <div class="slide-tag">Wavestone – Interne Präsentation</div>
+      <h1>IMPULSE &amp; WARP</h1>
+      <div class="accent-bar"></div>
+      <p class="sub">Wie digitale Tools die Projektgewinnung beschleunigen –<br>von der ersten Anfrage zum Assessment in Minuten.</p>
+      <p class="meta">Test &amp; Quality Engineering · 2026</p>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand">
+        <div class="foot-square"></div>
+        <span class="foot-brand-name">wavestone</span>
+      </div>
+      <span>Vertraulich – nur für interne Verwendung</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 2 – Das Problem mit traditionellen Prozessen
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s2">
+    <div class="slide-inner">
+      <div class="slide-tag">Ausgangslage</div>
+      <h2>Traditionelle Projektgewinnung ist langsam und anonym</h2>
+      <div class="two-col" style="margin-top:1.5em;align-items:start">
+        <div>
+          <div class="problem-card">
+            <div style="font-weight:700;font-size:.9em;color:#250F6B;margin-bottom:1em">Typischer RFP-/Ausschreibungsprozess</div>
+            <div class="step">
+              <div class="step-num">1</div>
+              <div class="step-txt"><strong>Ausschreibung veröffentlicht</strong><span>Kunde definiert Anforderungen (oft wochenlang)</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">2</div>
+              <div class="step-txt"><strong>Angebotserstellung</strong><span>Profile, Referenzen, Texte – aufwendig für alle Seiten</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">3</div>
+              <div class="step-txt"><strong>Evaluierung &amp; Vergabe</strong><span>Wochen bis Monate – oft nur auf Basis von Unterlagen</span></div>
+            </div>
+            <div class="step">
+              <div class="step-num">4</div>
+              <div class="step-txt"><strong>Kick-Off</strong><span>Erst jetzt lernt man sich wirklich kennen</span></div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:1em">
+          <div class="pain">
+            <div class="pain-title">🚨 Kernprobleme für Wavestone</div>
+            <ul>
+              <li>Kompetenz nur durch Text behauptbar – nicht erlebbar</li>
+              <li>Kein Differenzierungsmerkmal im Angebot</li>
+              <li>Langer Zeitraum ohne echten Kundenkontakt</li>
+              <li>Hoher interner Aufwand für Angebotserstellung</li>
+              <li>Vertrauen entsteht zu spät – nach der Vergabe</li>
+            </ul>
+          </div>
+          <div style="background:#f0eeff;border-radius:8px;padding:4% 5%">
+            <div style="font-weight:700;font-size:.88em;color:#250F6B;margin-bottom:.5em">Die entscheidende Frage:</div>
+            <p style="font-size:.82em;color:#451DC7;font-style:italic;line-height:1.5">
+              „Wie zeigen wir unsere Expertise, bevor wir überhaupt beauftragt werden?"
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 3 – Die Lösung: Prozessüberblick
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s3">
+    <div class="slide-inner">
+      <div class="slide-tag">Die Lösung</div>
+      <h2>Vom ersten Kontakt zum Assessment in einem Schritt</h2>
+      <div class="flow">
+        <div class="flow-step">
+          <div class="flow-badge"><span class="badge badge-green">EXTERN</span></div>
+          <div class="flow-icon">📋</div>
+          <div class="flow-title">IMPULSE</div>
+          <div class="flow-desc">
+            Der Kunde beantwortet auf einer externen Seite 10–15 Fragen zum aktuellen Test-Reifegrad.
+            Keine Registrierung, kein Aufwand – dauert &lt; 5 Minuten.
+            <br><br>
+            Sofortige Empfehlung welches Wavestone-Angebot passt.
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-badge"><span class="badge badge-blue">INTERN</span></div>
+          <div class="flow-icon">📥</div>
+          <div class="flow-title">Postkorb</div>
+          <div class="flow-desc">
+            WARP empfängt die Ergebnisse automatisch.
+            Admin sieht Reifegrad, Scores und Kontaktdaten in Echtzeit.
+            <br><br>
+            Ein Klick: Projekt anlegen und dem richtigen Berater zuweisen.
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-badge"><span class="badge badge-light">ASSESSMENT</span></div>
+          <div class="flow-icon">📊</div>
+          <div class="flow-title">WARP Assessment</div>
+          <div class="flow-desc">
+            Berater führt vollständige Reifegradanalyse durch.
+            KI generiert Dokumente (Teststrategie, Konzepte) auf Knopfdruck.
+            <br><br>
+            Das erste Meeting liefert dem Kunden sofort konkreten Mehrwert.
+          </div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="flow-step">
+          <div class="flow-badge"><span class="badge badge-green">ERGEBNIS</span></div>
+          <div class="flow-icon">🤝</div>
+          <div class="flow-title">Beauftragung</div>
+          <div class="flow-desc">
+            Kunde erlebt Wavestone-Kompetenz direkt – nicht als Versprechen, sondern als Ergebnis.
+            <br><br>
+            Vertrauen entsteht vor der Beauftragung.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 4 – Kompetenz zeigen statt behaupten
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s4">
+    <div class="slide-inner">
+      <div class="slide-tag">Kernargument</div>
+      <h2>Kompetenz zeigen – nicht behaupten</h2>
+      <div class="vs-grid">
+        <div class="vs-box vs-box-old">
+          <div class="vs-label vs-label-old">✗ Bisher – RFP &amp; Ausschreibung</div>
+          <ul>
+            <li>Berater-Profile und CVs als Qualitätsbeweis</li>
+            <li>Referenzprojekte aus der Vergangenheit</li>
+            <li>Texte, die Kompetenz <em>beschreiben</em></li>
+            <li>Vertrauen entsteht erst im Projekt</li>
+            <li>Alle Berater bieten das Gleiche an</li>
+            <li>Kein messbarer Mehrwert vor Vertragsschluss</li>
+          </ul>
+          <div style="margin-top:auto;padding-top:1em;font-size:.78em;color:#c00;font-weight:600">
+            → Der Kunde muss uns vertrauen, ohne uns zu kennen
+          </div>
+        </div>
+        <div class="vs-separator">
+          <div class="vs-circle">VS</div>
+        </div>
+        <div class="vs-box vs-box-new">
+          <div class="vs-label vs-label-new">✓ Heute – IMPULSE &amp; WARP</div>
+          <ul>
+            <li>Analyse des Kunden-Reifegrads im Erstgespräch</li>
+            <li>Konkrete Handlungsempfehlungen sofort verfügbar</li>
+            <li>KI-generierte Dokumente als Mehrwert-Lieferung</li>
+            <li>Vertrauen entsteht <strong>vor</strong> der Beauftragung</li>
+            <li>Klares Alleinstellungsmerkmal im Wettbewerb</li>
+            <li>Messbarer Output im ersten Meeting</li>
+          </ul>
+          <div style="margin-top:auto;padding-top:1em;font-size:.78em;color:var(--green);font-weight:600">
+            → Der Kunde erlebt Kompetenz, bevor er entscheidet
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 5 – Geschwindigkeit
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s5">
+    <div class="slide-inner">
+      <div class="slide-tag">Prozesseffizienz</div>
+      <h2>Von Monaten auf Stunden</h2>
+      <div class="speed-grid">
+        <div class="speed-box speed-box-old">
+          <div class="speed-label speed-label-old">TRADITIONELLER PROZESS</div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-bar bar-red" style="width:90px"></div>
+              <span class="tl-text">Ausschreibungsvorbereitung</span>
+              <span class="tl-time tl-time-old">4–8 Wochen</span>
+            </div>
+            <div class="tl-item">
+              <div class="tl-bar bar-red" style="width:75px"></div>
+              <span class="tl-text">Angebotserstellung</span>
+              <span class="tl-time tl-time-old">2–4 Wochen</span>
+            </div>
+            <div class="tl-item">
+              <div class="tl-bar bar-red" style="width:110px"></div>
+              <span class="tl-text">Evaluierung &amp; Vergabe</span>
+              <span class="tl-time tl-time-old">4–12 Wochen</span>
+            </div>
+            <div class="tl-item">
+              <div class="tl-bar bar-red" style="width:30px"></div>
+              <span class="tl-text">Kick-Off</span>
+              <span class="tl-time tl-time-old">1–2 Wochen</span>
+            </div>
+          </div>
+          <div style="margin-top:1.2em;padding-top:1em;border-top:1px solid rgba(255,100,100,0.2)">
+            <span class="number-big" style="font-size:2.5em;color:rgba(255,120,120,0.9)">3–6</span>
+            <span class="number-label">Monate bis zum ersten echten Kontakt</span>
+          </div>
+        </div>
+        <div class="speed-box speed-box-new">
+          <div class="speed-label speed-label-new">WARP-PROZESS</div>
+          <div class="timeline">
+            <div class="tl-item">
+              <div class="tl-bar bar-green" style="width:20px"></div>
+              <span class="tl-text">IMPULSE Self-Assessment</span>
+              <span class="tl-time tl-time-new">&lt; 5 Min.</span>
+            </div>
+            <div class="tl-item">
+              <div class="tl-bar bar-green" style="width:8px"></div>
+              <span class="tl-text">Automatische Auswertung</span>
+              <span class="tl-time tl-time-new">sofort</span>
+            </div>
+            <div class="tl-item">
+              <div class="tl-bar bar-green" style="width:12px"></div>
+              <span class="tl-text">Admin erstellt Projekt</span>
+              <span class="tl-time tl-time-new">1 Klick</span>
+            </div>
+            <div class="tl-item">
+              <div class="tl-bar bar-green" style="width:25px"></div>
+              <span class="tl-text">Erstgespräch mit Ergebnissen</span>
+              <span class="tl-time tl-time-new">1–2 Tage</span>
+            </div>
+          </div>
+          <div style="margin-top:1.2em;padding-top:1em;border-top:1px solid rgba(4,240,106,0.2)">
+            <span class="number-big" style="font-size:2.5em">2</span>
+            <span class="number-label">Tage vom ersten Kontakt zum Assessment</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 6 – IMPULSE Funktionsumfang
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s6">
+    <div class="slide-inner">
+      <div class="slide-tag">IMPULSE – Externes Self-Assessment-Tool</div>
+      <h2>Was IMPULSE leistet</h2>
+      <div class="feature-grid">
+        <div class="feat-card">
+          <div class="feat-icon">📝</div>
+          <div class="feat-title">Geführtes Self-Assessment</div>
+          <div class="feat-desc">Kunde beantwortet 10–15 gezielte Fragen zur Testpraxis in &lt; 5 Minuten. Keine Registrierung erforderlich.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">🎯</div>
+          <div class="feat-title">Sofortige Empfehlung</div>
+          <div class="feat-desc">Algorithmusbasierte Auswertung liefert direkt eine Empfehlung welches Wavestone-Angebot am besten passt.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📊</div>
+          <div class="feat-title">Reifegrad-Scoring</div>
+          <div class="feat-desc">Scores je Dimension (Testplanung, Automatisierung, etc.) werden berechnet und visualisiert.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📬</div>
+          <div class="feat-title">Automatischer Webhook</div>
+          <div class="feat-desc">Ergebnisse werden automatisch an den WARP-Postkorb übertragen – kein manueller Schritt nötig.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📞</div>
+          <div class="feat-title">Kontaktpräferenz</div>
+          <div class="feat-desc">Kunde gibt an wie er kontaktiert werden möchte (E-Mail, Telefon). Telefonnummer wird optional abgefragt.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">🔒</div>
+          <div class="feat-title">Datenschutz by Design</div>
+          <div class="feat-desc">Minimale Dateneingabe. Keine Profilbildung. Nur die für das Assessment nötigen Informationen.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 7 – WARP Funktionsumfang
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s7">
+    <div class="slide-inner">
+      <div class="slide-tag">WARP – Wavestone Assessment Risk Planner</div>
+      <h2>Was WARP leistet</h2>
+      <div class="feature-grid">
+        <div class="feat-card">
+          <div class="feat-icon">📥</div>
+          <div class="feat-title">Postkorb / Inbox</div>
+          <div class="feat-desc">Eingehende IMPULSE-Anfragen zentral verwalten, zuweisen und priorisieren. Statusverfolgung (Neu → In Bearbeitung → Erledigt).</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📋</div>
+          <div class="feat-title">Reifegradanalyse</div>
+          <div class="feat-desc">Strukturierter Fragenkatalog mit 60+ Fragen über alle WARP-Stufen. Automatische Berechnung des Reifegrads je Kategorie.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">🤖</div>
+          <div class="feat-title">KI-Dokumentengenerierung</div>
+          <div class="feat-desc">Auf Knopfdruck: Teststrategie, Mastertestkonzept, Stufentestkonzept – individuell auf Basis der Assessment-Antworten.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">📊</div>
+          <div class="feat-title">Auswertung &amp; Report</div>
+          <div class="feat-desc">Interaktive Auswertung mit Balkendiagrammen je Stufe. PDF-Report mit Wavestone-Branding auf Knopfdruck.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">👥</div>
+          <div class="feat-title">Benutzerverwaltung</div>
+          <div class="feat-desc">Rollen: Benutzer, Admin, Superuser. Projekte können Beratern zugewiesen werden. Dashboard mit Projektübersicht.</div>
+        </div>
+        <div class="feat-card">
+          <div class="feat-icon">🏗️</div>
+          <div class="feat-title">Workshop-Katalog</div>
+          <div class="feat-desc">Neben dem Assessment-Katalog können Workshop-Fragen verwaltet und per CSV/Excel importiert werden.</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 8 – Tech Stack
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s8">
+    <div class="slide-inner">
+      <div class="slide-tag">Technologie</div>
+      <h2 style="color:#fff">Tech Stack</h2>
+      <div class="tech-grid">
+        <div class="tech-layer">
+          <div class="tech-layer-title">Backend</div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Python 3.12<span class="tech-sub">Hauptsprache</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Flask 3.0<span class="tech-sub">Web-Framework</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>SQLAlchemy 3.1<span class="tech-sub">ORM / DB-Abstraction</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Flask-Login<span class="tech-sub">Authentifizierung</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Gunicorn<span class="tech-sub">WSGI-Server</span></div></div>
+        </div>
+        <div class="tech-layer">
+          <div class="tech-layer-title">Datenbank &amp; Hosting</div>
+          <div class="tech-item"><div class="tech-dot"></div><div>PostgreSQL 16<span class="tech-sub">Hauptdatenbank</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Supabase<span class="tech-sub">Managed DB (Cloud)</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Render.com<span class="tech-sub">App-Hosting (PaaS)</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>GitHub<span class="tech-sub">CI/CD via Git-Push</span></div></div>
+        </div>
+        <div class="tech-layer">
+          <div class="tech-layer-title">KI &amp; Dokumente</div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Anthropic Claude API<span class="tech-sub">claude-sonnet-4-6</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>python-docx<span class="tech-sub">.docx-Generierung</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>WeasyPrint<span class="tech-sub">HTML → PDF</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>openpyxl<span class="tech-sub">Excel-Import</span></div></div>
+        </div>
+        <div class="tech-layer">
+          <div class="tech-layer-title">Frontend &amp; Testing</div>
+          <div class="tech-item"><div class="tech-dot"></div><div>HTML5 / CSS3<span class="tech-sub">Vanilla, kein Framework</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>JavaScript (ES6+)<span class="tech-sub">Keine Abhängigkeiten</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Jinja2<span class="tech-sub">Server-Side Templating</span></div></div>
+          <div class="tech-item"><div class="tech-dot"></div><div>Playwright<span class="tech-sub">E2E-Tests</span></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 9 – Vorteile für den Kunden
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s9">
+    <div class="slide-inner">
+      <div class="slide-tag">Kundenperspektive</div>
+      <h2>Was der Kunde gewinnt</h2>
+      <div class="benefit-grid">
+        <div class="benefit-card">
+          <div class="benefit-num">1</div>
+          <div>
+            <div class="benefit-title">Sofortige Orientierung</div>
+            <div class="benefit-desc">In 5 Minuten ein klares Bild des eigenen Test-Reifegrads – ohne langes Briefing oder Vorbereitungsaufwand. Das IMPULSE-Assessment liefert eine erste ehrliche Standortbestimmung.</div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-num">2</div>
+          <div>
+            <div class="benefit-title">Kompetenz erleben, nicht lesen</div>
+            <div class="benefit-desc">Im ersten Meeting bekommt der Kunde bereits strukturierte Handlungsempfehlungen und KI-generierte Dokumente – konkreter Mehrwert vor dem Vertragsabschluss.</div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-num">3</div>
+          <div>
+            <div class="benefit-title">Kein Ausschreibungsaufwand</div>
+            <div class="benefit-desc">Keine aufwendige Anforderungsdokumentation, keine formale Ausschreibung nötig. Der Einstieg ist so niedrig wie möglich – ein kurzes Online-Formular.</div>
+          </div>
+        </div>
+        <div class="benefit-card">
+          <div class="benefit-num">4</div>
+          <div>
+            <div class="benefit-title">Passgenaue Empfehlung</div>
+            <div class="benefit-desc">Die Ergebnisse werden nicht als generisches Angebot präsentiert, sondern als individuelle Analyse. Der Kunde sieht, dass Wavestone seinen konkreten Stand versteht.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 10 – Live-Demo Ablauf
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s10">
+    <div class="slide-inner">
+      <div class="slide-tag">Demo</div>
+      <h2>Live-Demo: Von IMPULSE zu WARP</h2>
+      <div class="demo-steps">
+        <div class="demo-step">
+          <div class="demo-step-num">1</div>
+          <div>
+            <div class="demo-step-title">IMPULSE Self-Assessment aufrufen</div>
+            <div class="demo-step-desc">Öffentliche URL → Reifegrad-Fragen beantworten → Empfehlung sofort sichtbar → Kontaktdaten eingeben</div>
+          </div>
+        </div>
+        <div class="demo-step">
+          <div class="demo-step-num">2</div>
+          <div>
+            <div class="demo-step-title">Eingang im WARP-Postkorb</div>
+            <div class="demo-step-desc">Admin-Login → Postkorb → neue Anfrage mit Scores, Reifegrad-Badge und Kontaktdaten → Projekt in einem Klick anlegen &amp; Berater zuweisen</div>
+          </div>
+        </div>
+        <div class="demo-step">
+          <div class="demo-step-num">3</div>
+          <div>
+            <div class="demo-step-title">Assessment durchführen</div>
+            <div class="demo-step-desc">Berater öffnet Projekt → Fragenkatalog mit 60+ Fragen → Antworten speichern → Auswertung mit Balkendiagrammen ansehen</div>
+          </div>
+        </div>
+        <div class="demo-step">
+          <div class="demo-step-num">4</div>
+          <div>
+            <div class="demo-step-title">KI-Dokumente auf Knopfdruck</div>
+            <div class="demo-step-desc">Sidebar → KI-Vorausfüllen → Teststrategie generieren → sofortiger .docx-Download mit individuellen Inhalten basierend auf den Assessment-Antworten</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 11 – Fazit
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s11">
+    <div class="slide-inner">
+      <h2>Kompetenz als Türöffner –<br>nicht als Versprechen</h2>
+      <p class="tagline">
+        IMPULSE und WARP ermöglichen es Wavestone, im ersten Kontakt echten Mehrwert zu liefern.
+        Kunden entscheiden auf Basis von Ergebnissen – nicht von Versprechen.
+      </p>
+      <div class="kpis">
+        <div class="kpi-box">
+          <div class="kpi-num">&lt; 5</div>
+          <div class="kpi-lbl">Minuten für das<br>Self-Assessment</div>
+        </div>
+        <div class="divider-line"></div>
+        <div class="kpi-box">
+          <div class="kpi-num">1</div>
+          <div class="kpi-lbl">Klick von der<br>Anfrage zum Projekt</div>
+        </div>
+        <div class="divider-line"></div>
+        <div class="kpi-box">
+          <div class="kpi-num">×90</div>
+          <div class="kpi-lbl">Schneller als<br>klassische Ausschreibung</div>
+        </div>
+        <div class="divider-line"></div>
+        <div class="kpi-box">
+          <div class="kpi-num">0</div>
+          <div class="kpi-lbl">Aufwand für den<br>Kunden (kein Login)</div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+</div><!-- /deck -->
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  let cur = 0;
+  const counter = document.getElementById('slide-counter');
+
+  function show(n) {
+    slides[cur].classList.remove('active');
+    cur = Math.max(0, Math.min(n, slides.length - 1));
+    slides[cur].classList.add('active');
+    counter.textContent = `${cur + 1} / ${slides.length}`;
+  }
+
+  function next() { show(cur + 1); }
+  function prev() { show(cur - 1); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); next(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); prev(); }
+  });
+</script>
+</body>
+</html>
