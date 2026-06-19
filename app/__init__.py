@@ -1360,10 +1360,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
     # ------------------------------------------------------------------
 
     @app.route("/coverage-matrix")
-    @login_required
     def coverage_matrix():
-        if not current_user.is_admin:
-            abort(403)
         from .data.questions import CATEGORIES as PY_CATS, ANSWER_OPTIONS
 
         # E2E-Testfälle (Playwright)

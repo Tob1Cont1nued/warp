@@ -90,7 +90,7 @@ class TestAdminRouten:
         r = superuser_client.get("/admin/questions")
         assert r.status_code == 200
 
-    def test_tc_api_09_coverage_matrix_fuer_admin(self, admin_client):
-        r = admin_client.get("/coverage-matrix")
+    def test_tc_api_09_coverage_matrix_oeffentlich(self, client):
+        r = client.get("/coverage-matrix")
         assert r.status_code == 200
         assert b"Abdeckung" in r.data or b"coverage" in r.data.lower() or b"Testfall" in r.data
