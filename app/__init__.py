@@ -1356,6 +1356,18 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         return redirect(url_for("inbox"))
 
     # ------------------------------------------------------------------
+    # Security Headers
+    # ------------------------------------------------------------------
+
+    @app.after_request
+    def set_security_headers(response):
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+    # ------------------------------------------------------------------
     # Coverage Matrix
     # ------------------------------------------------------------------
 
@@ -1427,7 +1439,18 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             {"id": "TC-API-06", "area": "Postkorb", "type": "Unit", "desc": "GET /inbox Admin → 200"},
             {"id": "TC-API-07", "area": "Postkorb", "type": "Unit", "desc": "GET /inbox normaler User → 403"},
             {"id": "TC-API-08", "area": "Postkorb", "type": "Unit", "desc": "GET /admin/questions Superuser → 200"},
-            {"id": "TC-API-09", "area": "Postkorb", "type": "Unit", "desc": "GET /coverage-matrix Admin → 200"},
+            {"id": "TC-API-09", "area": "Postkorb",  "type": "Unit", "desc": "GET /coverage-matrix oeffentlich → 200"},
+            {"id": "TC-SEC-01", "area": "Security",  "type": "Unit", "desc": "SQL-Injection im Login → kein Auth-Bypass"},
+            {"id": "TC-SEC-02", "area": "Security",  "type": "Unit", "desc": "XSS im Projektnamen → HTML-escaped"},
+            {"id": "TC-SEC-03", "area": "Security",  "type": "Unit", "desc": "POST ohne Session → Redirect zu /login"},
+            {"id": "TC-SEC-04", "area": "Security",  "type": "Unit", "desc": "Flask-Login initialisiert + session_protection aktiv"},
+            {"id": "TC-SEC-05", "area": "Security",  "type": "Unit", "desc": "Path-Traversal via Static-URL → blockiert"},
+            {"id": "TC-SEC-06", "area": "Security",  "type": "Unit", "desc": "10x Fehlanmeldung → kein HTTP 500"},
+            {"id": "TC-SEC-07", "area": "Security",  "type": "Unit", "desc": "Cross-User Projektzugriff → 403"},
+            {"id": "TC-SEC-08", "area": "Security",  "type": "Unit", "desc": "Sicherheits-Header vorhanden (X-Frame-Options etc.)"},
+            {"id": "TC-SEC-09", "area": "Security",  "type": "Unit", "desc": "API-Key nicht in Response-Body sichtbar"},
+            {"id": "TC-SEC-10", "area": "Security",  "type": "Unit", "desc": "Alle geschuetzten Routen → Redirect /login"},
+            {"id": "TC-SEC-11", "area": "Security",  "type": "Unit", "desc": "Admin-Routen fuer normalen User → 403"},
         ]
 
         # Fragenkatalog-Statistik
