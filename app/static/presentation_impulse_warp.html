@@ -563,18 +563,161 @@
   #s10 .demo-step-desc { font-size: .8em; color: rgba(255,255,255,0.65); margin-top: .2em; }
 
   /* ── SLIDE 11: Fazit ────────────────────────────────────────── */
-  #s11 {
+  /* ── SLIDE 11: Entstehung ──────────────────────────────────── */
+  #s11 { background: #f9f8ff; color: #1a1a2e; }
+  #s11 h2 { color: var(--blue-deep); }
+  #s11 .slide-tag { color: var(--blue); }
+  #s11 .origin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4%;
+    flex: 1;
+    margin-top: 1.5em;
+    align-items: start;
+  }
+  #s11 .origin-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: .8em;
+  }
+  #s11 .ot-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    background: #fff;
+    border: 1.5px solid #ede9ff;
+    border-radius: 10px;
+    padding: 4% 5%;
+  }
+  #s11 .ot-icon { font-size: 1.4em; flex-shrink: 0; }
+  #s11 .ot-title { font-weight: 700; font-size: .88em; color: var(--blue-deep); margin-bottom: .2em; }
+  #s11 .ot-desc { font-size: .78em; color: var(--muted); line-height: 1.5; }
+  #s11 .origin-quote {
+    background: linear-gradient(135deg, var(--blue-deep), var(--blue));
+    color: #fff;
+    border-radius: 12px;
+    padding: 8% 7%;
+    display: flex;
+    flex-direction: column;
+    gap: 1em;
+    height: 100%;
+  }
+  #s11 .origin-quote blockquote {
+    font-size: .95em;
+    font-style: italic;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.9);
+    border-left: 3px solid var(--green);
+    padding-left: 1em;
+  }
+  #s11 .origin-stack {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: auto;
+  }
+  #s11 .origin-tag {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 6px;
+    padding: 3px 10px;
+    font-size: .72em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+  }
+  #s11 .slide-foot { border-top: 1px solid #e8e4ff; color: #aaa; }
+  #s11 .foot-square { background: var(--blue); }
+  #s11 .foot-brand-name { color: #888; }
+
+  /* ── SLIDE 12: Nutzungsmodell ───────────────────────────────── */
+  #s12 {
+    background: linear-gradient(150deg, #0d0d1a 0%, var(--blue-deep) 100%);
+    color: #fff;
+  }
+  #s12 .model-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4%;
+    flex: 1;
+    margin-top: 1.5em;
+  }
+  #s12 .model-box {
+    border-radius: 12px;
+    padding: 6% 6%;
+    display: flex;
+    flex-direction: column;
+    gap: .7em;
+  }
+  #s12 .model-box-gets {
+    background: rgba(4,240,106,0.08);
+    border: 1.5px solid rgba(4,240,106,0.25);
+  }
+  #s12 .model-box-keeps {
+    background: rgba(255,255,255,0.06);
+    border: 1.5px solid rgba(255,255,255,0.12);
+  }
+  #s12 .model-label {
+    font-size: .72em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    margin-bottom: .3em;
+  }
+  #s12 .model-label-gets { color: var(--green); }
+  #s12 .model-label-keeps { color: rgba(255,255,255,0.6); }
+  #s12 .model-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: .85em;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.85);
+  }
+  #s12 .model-dot-green {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  #s12 .model-dot-muted {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.35);
+    flex-shrink: 0;
+    margin-top: 5px;
+  }
+  #s12 .model-hosting {
+    margin-top: 1.5em;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 4% 5%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3%;
+  }
+  #s12 .host-option {
+    display: flex;
+    flex-direction: column;
+    gap: .3em;
+  }
+  #s12 .host-title { font-size: .8em; font-weight: 700; color: var(--green); }
+  #s12 .host-desc { font-size: .75em; color: rgba(255,255,255,0.6); line-height: 1.5; }
+
+  /* ── SLIDE 13: Fazit (ehemals s11) ─────────────────────────── */
+  #s13 {
     background: linear-gradient(150deg, var(--blue-deep) 0%, var(--blue) 60%, #5a2fd0 100%);
     color: #fff;
   }
-  #s11 .slide-inner { justify-content: center; align-items: center; text-align: center; }
-  #s11 h2 { font-size: 2.2em; max-width: 70%; margin: 0 auto .6em; }
-  #s11 .tagline { font-size: 1em; color: rgba(255,255,255,0.7); max-width: 60%; margin: 0 auto 1.5em; line-height: 1.6; }
-  #s11 .kpis { display: flex; gap: 5%; justify-content: center; margin-top: 1.5em; }
-  #s11 .kpi-box { text-align: center; }
-  #s11 .kpi-num { font-size: 2.8em; font-weight: 800; color: var(--green); line-height: 1; }
-  #s11 .kpi-lbl { font-size: .75em; color: rgba(255,255,255,0.6); margin-top: .3em; }
-  #s11 .divider-line {
+  #s13 .slide-inner { justify-content: center; align-items: center; text-align: center; }
+  #s13 h2 { font-size: 2.2em; max-width: 70%; margin: 0 auto .6em; }
+  #s13 .tagline { font-size: 1em; color: rgba(255,255,255,0.7); max-width: 60%; margin: 0 auto 1.5em; line-height: 1.6; }
+  #s13 .kpis { display: flex; gap: 5%; justify-content: center; margin-top: 1.5em; }
+  #s13 .kpi-box { text-align: center; }
+  #s13 .kpi-num { font-size: 2.8em; font-weight: 800; color: var(--green); line-height: 1; }
+  #s13 .kpi-lbl { font-size: .75em; color: rgba(255,255,255,0.6); margin-top: .3em; }
+  #s13 .divider-line {
     width: 1px;
     background: rgba(255,255,255,0.2);
     align-self: stretch;
@@ -1095,9 +1238,109 @@
   </div>
 
   <!-- ══════════════════════════════════════════════════════════════
-       SLIDE 11 – Fazit
+       SLIDE 11 – Entstehungsgeschichte
   ══════════════════════════════════════════════════════════════ -->
   <div class="slide" id="s11">
+    <div class="slide-inner">
+      <div class="slide-tag">Entstehungsgeschichte</div>
+      <h2>Entstanden aus eigener Initiative –<br>kein Auftrag, kein Budget</h2>
+      <div class="origin-grid">
+        <div class="origin-timeline">
+          <div class="ot-item">
+            <div class="ot-icon">💡</div>
+            <div>
+              <div class="ot-title">Idee aus der Projektpraxis</div>
+              <div class="ot-desc">Das Problem war greifbar: Kunden konnten Kompetenz vor der Beauftragung nicht erleben. IMPULSE & WARP entstanden als Antwort darauf – in der Freizeit, aus eigener Überzeugung.</div>
+            </div>
+          </div>
+          <div class="ot-item">
+            <div class="ot-icon">🔒</div>
+            <div>
+              <div class="ot-title">Privates GitHub-Repository</div>
+              <div class="ot-desc">Der gesamte Code liegt in einem privaten Repository. Keine Wavestone-Ressourcen, keine Firmengeräte, kein internes Budget wurden verwendet.</div>
+            </div>
+          </div>
+          <div class="ot-item">
+            <div class="ot-icon">🛠️</div>
+            <div>
+              <div class="ot-title">Vollständig selbst entwickelt</div>
+              <div class="ot-desc">Von der Datenbankstruktur über die KI-Integration bis zur UI – alles in Eigenregie. Kein Outsourcing, kein Framework-Team, keine Agentur.</div>
+            </div>
+          </div>
+        </div>
+        <div class="origin-quote">
+          <blockquote>
+            „Ich wollte zeigen, dass Wavestone nicht nur über digitale Tools spricht –
+            sondern sie auch baut. IMPULSE und WARP sind der Beweis."
+          </blockquote>
+          <div style="font-size:.78em;color:rgba(255,255,255,0.55);margin-top:.5em">Tobias Konken · Test &amp; Quality Engineering</div>
+          <div style="margin-top:auto">
+            <div style="font-size:.72em;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:.6em">Eingesetzter Stack (Privatprojekt)</div>
+            <div class="origin-stack">
+              <span class="origin-tag">Python / Flask</span>
+              <span class="origin-tag">PostgreSQL</span>
+              <span class="origin-tag">Claude API</span>
+              <span class="origin-tag">Render.com</span>
+              <span class="origin-tag">GitHub (privat)</span>
+              <span class="origin-tag">HTML / CSS / JS</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 12 – Nutzungsmodell & IP
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s12">
+    <div class="slide-inner">
+      <div class="slide-tag">Nutzungsmodell &amp; Eigentümerschaft</div>
+      <h2>Wavestone nutzt – Tobias besitzt</h2>
+      <div class="model-grid">
+        <div class="model-box model-box-gets">
+          <div class="model-label model-label-gets">✓ Was Wavestone bekommt</div>
+          <div class="model-item"><div class="model-dot-green"></div><div><strong>Kostenfreie Nutzung</strong> – keine Lizenzgebühren, kein monatliches SaaS-Entgelt</div></div>
+          <div class="model-item"><div class="model-dot-green"></div><div><strong>Vollständiger Funktionsumfang</strong> – IMPULSE, WARP Assessment, Workshop, KI-Dokumente, Dashboard</div></div>
+          <div class="model-item"><div class="model-dot-green"></div><div><strong>Feature Requests</strong> – Anforderungen können eingebracht und nach Möglichkeit umgesetzt werden</div></div>
+          <div class="model-item"><div class="model-dot-green"></div><div><strong>Support auf Best-Effort-Basis</strong> – kein SLA, aber direkter Ansprechpartner</div></div>
+          <div class="model-hosting">
+            <div class="host-option">
+              <div class="host-title">Option A – Hosted</div>
+              <div class="host-desc">Tool läuft auf meiner Infrastruktur. Wavestone-Zugang über Login. Kein Code-Transfer nötig.</div>
+            </div>
+            <div class="host-option">
+              <div class="host-title">Option B – Self-Hosted</div>
+              <div class="host-desc">Code-Transfer nach schriftlicher Vereinbarung. Wavestone betreibt eigene Instanz auf eigener Infrastruktur.</div>
+            </div>
+          </div>
+        </div>
+        <div class="model-box model-box-keeps">
+          <div class="model-label model-label-keeps">◈ Was beim Autor bleibt</div>
+          <div class="model-item"><div class="model-dot-muted"></div><div><strong>Copyright &amp; IP</strong> – der gesamte Quellcode bleibt mein geistiges Eigentum</div></div>
+          <div class="model-item"><div class="model-dot-muted"></div><div><strong>Roadmap-Kontrolle</strong> – Entscheidungen über Weiterentwicklung und Architektur liegen bei mir</div></div>
+          <div class="model-item"><div class="model-dot-muted"></div><div><strong>Keine Exklusivität</strong> – das Tool kann künftig auch für andere Zwecke oder Partner eingesetzt werden</div></div>
+          <div class="model-item"><div class="model-dot-muted"></div><div><strong>Keine Weitergabepflicht</strong> – ohne Vereinbarung kein Zugang zum Repository</div></div>
+          <div style="margin-top:auto;padding-top:1em;border-top:1px solid rgba(255,255,255,0.1);font-size:.78em;color:rgba(255,255,255,0.5)">
+            Eine schriftliche Nutzungsvereinbarung (einfache Lizenz) ist empfehlenswert – auf Wunsch kann ich einen Entwurf erstellen.
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="slide-foot">
+      <div class="foot-brand"><div class="foot-square"></div><span class="foot-brand-name">wavestone</span></div>
+      <span>IMPULSE &amp; WARP – Interne Präsentation 2026</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════
+       SLIDE 13 – Fazit
+  ══════════════════════════════════════════════════════════════ -->
+  <div class="slide" id="s13">
     <div class="slide-inner">
       <h2>Kompetenz als Türöffner –<br>nicht als Versprechen</h2>
       <p class="tagline">
