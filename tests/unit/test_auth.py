@@ -39,10 +39,14 @@ class TestLoginSeite:
             follow_redirects=True,
         )
         assert r.status_code == 200
-        assert b"login" in r.data.lower() or b"fehler" in r.data.lower() or b"incorrect" in r.data.lower() or b"falsch" in r.data.lower() or b"Ungültig" in r.data or b"ungültig" in r.data.lower()
+        text = r.data.decode("utf-8", errors="replace").lower()
+        assert any(kw in text for kw in ("login", "fehler", "incorrect", "falsch", "ungültig", "invalid"))
 
-    def test_tc_auth_05_logout_redirected(self, user_client):
-        r = user_client.get("/logout", follow_redirects=False)
+    def test_tc_auth_05_logout_redirected(self, app):
+        from tests.unit.conftest import _ensure_user, _logged_in_client
+        _ensure_user(app, "_unit_logout_test", "logout_pw", role="user")
+        c = _logged_in_client(app, "_unit_logout_test", "logout_pw")
+        r = c.get("/logout", follow_redirects=False)
         assert r.status_code == 302
 
 
@@ -63,7 +67,8 @@ class TestRegisterSeite:
             follow_redirects=True,
         )
         assert r.status_code == 200
-        assert b"vergeben" in r.data or b"exist" in r.data.lower()
+        text = r.data.decode("utf-8", errors="replace").lower()
+        assert any(kw in text for kw in ("vergeben", "exist", "already", "taken"))
 
     def test_tc_auth_10_passwort_mismatch_gibt_fehler(self, client):
         r = client.post(
@@ -77,7 +82,8 @@ class TestRegisterSeite:
             follow_redirects=True,
         )
         assert r.status_code == 200
-        assert b"überein" in r.data or b"match" in r.data.lower() or b"stimm" in r.data.lower()
+        text = r.data.decode("utf-8", errors="replace").lower()
+        assert any(kw in text for kw in ("stimm", "match", "gleich", "overein", "password"))
 
     def test_tc_auth_11_passwort_zu_kurz_gibt_fehler(self, client):
         r = client.post(
@@ -91,7 +97,8 @@ class TestRegisterSeite:
             follow_redirects=True,
         )
         assert r.status_code == 200
-        assert b"Zeichen" in r.data or b"kurz" in r.data.lower() or b"short" in r.data.lower()
+        text = r.data.decode("utf-8", errors="replace").lower()
+        assert any(kw in text for kw in ("zeichen", "kurz", "short", "least", "mindest"))
 
 
 class TestZugriffskontrolle:

@@ -18,11 +18,11 @@ import os
 import pytest
 
 
-API_KEY = os.environ.get("IMPULSE_API_KEY", "warp-impulse-secret")
+API_KEY = os.environ.get("WARP_INBOX_API_KEY", "test-api-key-123")
 
 SAMPLE_PAYLOAD = {
-    "name": "API Test GmbH",
-    "email": "api@test.de",
+    "userName": "API Test GmbH",
+    "userEmail": "api@test.de",
     "recommendation": "WARP Assessment empfohlen",
     "scores": {"Teststrategie": 7, "Automatisierung": 4},
     "rationale": "Mittlerer Reifegrad festgestellt.",

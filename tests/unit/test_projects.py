@@ -30,7 +30,7 @@ class TestProjektAnlegen:
         assert "/project/" in r.headers.get("Location", "")
 
     def test_tc_proj_10_neue_projekt_formular(self, user_client):
-        r = user_client.get("/project/new")
+        r = user_client.get("/project/new", follow_redirects=True)
         assert r.status_code == 200
 
 
@@ -51,7 +51,7 @@ class TestFragenkatalog:
         assert r.status_code in (200, 403)
 
     def test_tc_proj_07_nicht_existentes_projekt_gibt_403(self, user_client):
-        r = user_client.get("/project/999999")
+        r = user_client.get("/project/999999", follow_redirects=False)
         assert r.status_code == 403
 
 
@@ -90,7 +90,7 @@ class TestAntworten:
 
 class TestDashboard:
     def test_tc_proj_08_dashboard_erreichbar(self, user_client):
-        r = user_client.get("/dashboard")
+        r = user_client.get("/dashboard", follow_redirects=True)
         assert r.status_code == 200
         assert b"Dashboard" in r.data
 

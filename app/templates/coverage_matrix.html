@@ -218,7 +218,7 @@
   <div class="cov-section card" style="padding:20px">
     <div class="cov-section-title">
       Fragenkatalog-Abdeckung – WARP Assessment
-      <span class="cov-badge badge-cat">{{ total_questions }} Fragen · {{ catalog.values() | sum(attribute='length') }} Kategorien</span>
+      <span class="cov-badge badge-cat">{{ total_questions }} Fragen · {{ catalog.values() | map('length') | sum }} Kategorien</span>
     </div>
     <p style="font-size:.82rem;color:var(--c-text-muted);margin-bottom:16px">
       Der Katalog deckt alle vier WARP-Reifegradstufen ab. Mit <strong>★ Neu</strong> markierte Fragen wurden zur
