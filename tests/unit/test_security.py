@@ -61,20 +61,22 @@ class TestXSS:
 
 
 class TestCSRF:
-    def test_tc_sec_03_unauthenticated_post_wird_abgelehnt(self, app):
-        """POST auf geschuetzte Routen ohne Session wird nicht verarbeitet (Redirect)."""
-        with app.test_client() as c:
-            r = c.post(
-                "/project/new",
-                data={"name": "csrf-test", "catalog_type": "assessment"},
-                follow_redirects=False,
-            )
-            assert r.status_code == 302, (
-                f"Unauthentifizierter POST nicht blockiert: Status {r.status_code}"
-            )
-            assert "login" in r.headers.get("Location", "").lower(), (
-                "Redirect geht nicht zu /login"
-            )
+    def test_tc_sec_03_csrf_extension_registriert(self, app):
+        """Flask-WTF CSRFProtect ist registriert und sichert POST-Anfragen ab."""
+        assert "csrf" in app.extensions, (
+            f"CSRF-Extension nicht registriert. Extensions: {list(app.extensions.keys())}"
+        )
+
+    def test_tc_sec_03b_csrf_blockiert_post_ohne_token(self, app):
+        """POST ohne CSRF-Token wird bei aktiviertem Schutz mit 400 abgelehnt."""
+        app.config["WTF_CSRF_ENABLED"] = True
+        try:
+            with app.test_client() as c:
+                r = c.post("/login", data={"username": "admin", "password": "warp2024"})
+                assert r.status_code != 302, "Login ohne CSRF-Token erfolgreich – Schutz unwirksam!"
+                assert r.status_code == 400
+        finally:
+            app.config["WTF_CSRF_ENABLED"] = False
 
 
 class TestSessionFixation:
@@ -139,9 +141,9 @@ class TestSecurityHeaders:
         assert r.headers.get("X-Content-Type-Options") == "nosniff", (
             "X-Content-Type-Options: nosniff fehlt (MIME-Sniffing-Schutz)"
         )
-        assert r.headers.get("X-XSS-Protection") is not None, (
-            "X-XSS-Protection Header fehlt"
-        )
+        csp = r.headers.get("Content-Security-Policy", "")
+        assert "default-src" in csp, "Content-Security-Policy Header fehlt"
+        assert "frame-ancestors" in csp, "CSP frame-ancestors (Clickjacking) fehlt"
 
 
 class TestAPIKeyLeak:

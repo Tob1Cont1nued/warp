@@ -11,6 +11,7 @@ import pytest
 os.environ["SECRET_KEY"]         = "unit-test-secret"
 os.environ["ANTHROPIC_API_KEY"]  = "dummy-key-for-tests"
 os.environ["WARP_INBOX_API_KEY"] = "test-api-key-123"
+os.environ["RATELIMIT_ENABLED"]  = "false"
 
 from app import create_app
 from app.models import db, User
@@ -31,6 +32,7 @@ def app():
         TESTING=True,
         SQLALCHEMY_DATABASE_URI=db_url,
         WTF_CSRF_ENABLED=False,
+        RATELIMIT_ENABLED=False,
     )
     yield application
 

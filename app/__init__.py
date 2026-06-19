@@ -50,11 +50,17 @@ from flask import (
 from flask_login import (
     LoginManager, login_required, login_user, logout_user, current_user,
 )
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
 from .models import db, User, Project, Answer, Category, Question, InboxMessage, GeneratedDocument
 from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER
 
 ROOT = Path(__file__).parent.parent
+
+csrf = CSRFProtect()
+limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 
 # ---------------------------------------------------------------------------
@@ -106,6 +112,20 @@ def create_app() -> Flask:
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     db.init_app(app)
+
+    # Session & Cookie Security
+    from datetime import timedelta
+    is_production = bool(os.environ.get("RENDER"))
+    app.config.setdefault("WTF_CSRF_ENABLED", True)
+    app.config["SESSION_COOKIE_HTTPONLY"] = True
+    app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
+    app.config["SESSION_COOKIE_SECURE"] = is_production
+    app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(hours=8)
+    app.config["RATELIMIT_ENABLED"] = os.environ.get("RATELIMIT_ENABLED", "true").lower() != "false"
+    app.config.setdefault("RATELIMIT_STORAGE_URI", "memory://")
+
+    csrf.init_app(app)
+    limiter.init_app(app)
 
     login_manager = LoginManager()
     login_manager.init_app(app)
@@ -377,6 +397,7 @@ def create_app() -> Flask:
         return render_template("register.html", error=error)
 
     @app.route("/login", methods=["GET", "POST"])
+    @limiter.limit("20 per minute")
     def login():
         if current_user.is_authenticated:
             return redirect(url_for("index"))
@@ -1175,6 +1196,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
     # ------------------------------------------------------------------
 
     @app.route("/api/inbox", methods=["POST"])
+    @csrf.exempt
     def api_inbox_receive():
         api_key = os.environ.get("WARP_INBOX_API_KEY", "")
         if api_key:
@@ -1363,8 +1385,16 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
     def set_security_headers(response):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline' fonts.googleapis.com; "
+            "font-src 'self' fonts.gstatic.com data:; "
+            "img-src 'self' data:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'none';"
+        )
         return response
 
     # ------------------------------------------------------------------
@@ -1442,7 +1472,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             {"id": "TC-API-09", "area": "Postkorb",  "type": "Unit", "desc": "GET /coverage-matrix oeffentlich → 200"},
             {"id": "TC-SEC-01", "area": "Security",  "type": "Unit", "desc": "SQL-Injection im Login → kein Auth-Bypass"},
             {"id": "TC-SEC-02", "area": "Security",  "type": "Unit", "desc": "XSS im Projektnamen → HTML-escaped"},
-            {"id": "TC-SEC-03", "area": "Security",  "type": "Unit", "desc": "POST ohne Session → Redirect zu /login"},
+            {"id": "TC-SEC-03", "area": "Security",  "type": "Unit", "desc": "CSRF-Extension registriert + POST ohne Token → 400"},
             {"id": "TC-SEC-04", "area": "Security",  "type": "Unit", "desc": "Flask-Login initialisiert + session_protection aktiv"},
             {"id": "TC-SEC-05", "area": "Security",  "type": "Unit", "desc": "Path-Traversal via Static-URL → blockiert"},
             {"id": "TC-SEC-06", "area": "Security",  "type": "Unit", "desc": "10x Fehlanmeldung → kein HTTP 500"},
