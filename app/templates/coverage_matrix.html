@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>WARP · Testfallabdeckung</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}"/>
+  <style>
+    .cov-header { margin-bottom: 24px; }
+    .cov-header h1 { font-size: 1.5rem; font-weight: 800; color: var(--c-text); margin: 0 0 4px; }
+    .cov-header p { color: var(--c-text-muted); font-size: .88rem; }
+
+    /* KPI Bar */
+    .cov-kpis { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .cov-kpi {
+      background: #fff;
+      border: 1.5px solid var(--c-border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      min-width: 140px;
+      flex: 1;
+    }
+    .cov-kpi-val { font-size: 2rem; font-weight: 800; color: #451DC7; line-height: 1; }
+    .cov-kpi-lbl { font-size: .75rem; color: var(--c-text-muted); margin-top: 4px; }
+
+    /* Section headers */
+    .cov-section { margin-bottom: 28px; }
+    .cov-section-title {
+      font-size: 1rem; font-weight: 700; color: var(--c-text);
+      padding-bottom: 8px; border-bottom: 2px solid #451DC7;
+      margin-bottom: 12px; display: flex; align-items: center; gap: 8px;
+    }
+    .cov-badge {
+      font-size: .68rem; font-weight: 700; padding: 2px 8px;
+      border-radius: 999px; letter-spacing: .05em;
+    }
+    .badge-e2e  { background: #ede9ff; color: #451DC7; }
+    .badge-unit { background: #d1fae5; color: #065f46; }
+    .badge-cat  { background: #fef3c7; color: #92400e; }
+
+    /* Test-Tabellen */
+    .cov-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
+    .cov-table th {
+      background: #f5f4ff; color: #250F6B;
+      font-weight: 700; text-align: left;
+      padding: 8px 12px; border-bottom: 2px solid #e0deff;
+      white-space: nowrap;
+    }
+    .cov-table td {
+      padding: 7px 12px; border-bottom: 1px solid #f3f3f3;
+      vertical-align: top;
+    }
+    .cov-table tr:last-child td { border-bottom: none; }
+    .cov-table tr:hover td { background: #faf9ff; }
+    .tc-id {
+      font-family: monospace; font-size: .78rem;
+      color: #451DC7; font-weight: 700; white-space: nowrap;
+    }
+    .tc-area {
+      display: inline-block; padding: 1px 7px;
+      border-radius: 999px; font-size: .7rem; font-weight: 600;
+      background: #f0f0ff; color: #451DC7; white-space: nowrap;
+    }
+
+    /* Katalog-Matrix */
+    .cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px; }
+    .cat-card {
+      background: #fff; border: 1.5px solid var(--c-border);
+      border-radius: 10px; padding: 14px 16px;
+    }
+    .cat-card-level {
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; margin-bottom: 4px;
+    }
+    .cat-card-title { font-weight: 700; font-size: .88rem; color: var(--c-text); margin-bottom: 8px; }
+    .cat-bar-wrap { display: flex; align-items: center; gap: 8px; }
+    .cat-bar {
+      flex: 1; height: 8px; background: #f3f3f3;
+      border-radius: 4px; overflow: hidden;
+    }
+    .cat-bar-fill { height: 100%; border-radius: 4px; background: #04F06A; }
+    .cat-bar-fill.new-highlight { background: #451DC7; }
+    .cat-count { font-size: .75rem; font-weight: 700; color: var(--c-text-muted); white-space: nowrap; }
+    .cat-new-badge {
+      display: inline-block; margin-top: 6px;
+      font-size: .65rem; font-weight: 700;
+      padding: 1px 7px; border-radius: 999px;
+      background: #ede9ff; color: #451DC7;
+    }
+
+    /* Level colors */
+    .level-2 { color: #059669; }
+    .level-3 { color: #2563eb; }
+    .level-4 { color: #d97706; }
+    .level-5 { color: #dc2626; }
+
+    .level-header {
+      font-size: .88rem; font-weight: 700;
+      padding: 8px 12px; border-radius: 8px;
+      margin: 16px 0 8px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .level-header-2 { background: #d1fae5; color: #065f46; }
+    .level-header-3 { background: #dbeafe; color: #1e40af; }
+    .level-header-4 { background: #fef3c7; color: #92400e; }
+    .level-header-5 { background: #fee2e2; color: #991b1b; }
+
+    .run-cmd {
+      background: #0d0d1a; color: #04F06A;
+      font-family: monospace; font-size: .82rem;
+      padding: 12px 16px; border-radius: 8px; margin-top: 8px;
+      overflow-x: auto; white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>Testfallabdeckung</h1>
+    <p>Nachweis – Unit-Tests, E2E-Tests und Katalogabdeckung</p>
+  </div>
+</header>
+
+{% set active_nav = 'administration' %}
+{% include '_sidebar.html' %}
+
+<main class="main">
+
+  <div class="cov-header">
+    <h1>Gesamtnachweis Testfallabdeckung</h1>
+    <p>Stand: automatisch generiert · alle Testfälle werden via pytest (Unit) und Playwright (E2E) ausgeführt</p>
+  </div>
+
+  {# ── KPIs ──────────────────────────────────────────────────────────────── #}
+  <div class="cov-kpis">
+    <div class="cov-kpi">
+      <div class="cov-kpi-val">{{ total_e2e + total_unit }}</div>
+      <div class="cov-kpi-lbl">Testfälle gesamt</div>
+    </div>
+    <div class="cov-kpi">
+      <div class="cov-kpi-val">{{ total_e2e }}</div>
+      <div class="cov-kpi-lbl">E2E-Tests (Playwright)</div>
+    </div>
+    <div class="cov-kpi">
+      <div class="cov-kpi-val">{{ total_unit }}</div>
+      <div class="cov-kpi-lbl">Unit-Tests (pytest)</div>
+    </div>
+    <div class="cov-kpi">
+      <div class="cov-kpi-val">{{ total_questions }}</div>
+      <div class="cov-kpi-lbl">Assessmentfragen im Katalog</div>
+    </div>
+    <div class="cov-kpi">
+      <div class="cov-kpi-val">{{ catalog | length }}</div>
+      <div class="cov-kpi-lbl">WARP-Stufen abgedeckt</div>
+    </div>
+  </div>
+
+  {# ── E2E-Tests ─────────────────────────────────────────────────────────── #}
+  <div class="cov-section card" style="padding:20px">
+    <div class="cov-section-title">
+      E2E-Tests – Playwright (Browser-basiert)
+      <span class="cov-badge badge-e2e">{{ total_e2e }} Testfälle</span>
+    </div>
+    <table class="cov-table">
+      <thead>
+        <tr>
+          <th style="width:120px">ID</th>
+          <th style="width:140px">Bereich</th>
+          <th>Beschreibung</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in e2e_tests %}
+        <tr>
+          <td><span class="tc-id">{{ t.id }}</span></td>
+          <td><span class="tc-area">{{ t.area }}</span></td>
+          <td>{{ t.desc }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="run-cmd">pytest tests/ -v --tb=short</div>
+  </div>
+
+  {# ── Unit-Tests ────────────────────────────────────────────────────────── #}
+  <div class="cov-section card" style="padding:20px">
+    <div class="cov-section-title">
+      Unit-Tests – Flask Test Client (kein Browser)
+      <span class="cov-badge badge-unit">{{ total_unit }} Testfälle</span>
+    </div>
+    <table class="cov-table">
+      <thead>
+        <tr>
+          <th style="width:120px">ID</th>
+          <th style="width:140px">Bereich</th>
+          <th>Beschreibung</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for t in unit_tests %}
+        <tr>
+          <td><span class="tc-id">{{ t.id }}</span></td>
+          <td><span class="tc-area">{{ t.area }}</span></td>
+          <td>{{ t.desc }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="run-cmd">pytest tests/unit/ --cov=app --cov-report=html --cov-report=term-missing</div>
+  </div>
+
+  {# ── Katalogabdeckung ──────────────────────────────────────────────────── #}
+  <div class="cov-section card" style="padding:20px">
+    <div class="cov-section-title">
+      Fragenkatalog-Abdeckung – WARP Assessment
+      <span class="cov-badge badge-cat">{{ total_questions }} Fragen · {{ catalog.values() | sum(attribute='length') }} Kategorien</span>
+    </div>
+    <p style="font-size:.82rem;color:var(--c-text-muted);margin-bottom:16px">
+      Der Katalog deckt alle vier WARP-Reifegradstufen ab. Mit <strong>★ Neu</strong> markierte Fragen wurden zur
+      Lückenschließung ergänzt und sind nicht Teil des ursprünglichen TPI-Next-Katalogs.
+    </p>
+
+    {% set level_classes = {
+      'Stufe 2 - Managed':     ('level-header-2', 'level-2'),
+      'Stufe 3 - Defined':     ('level-header-3', 'level-3'),
+      'Stufe 4 - Measured':    ('level-header-4', 'level-4'),
+      'Stufe 5 - Optimization':('level-header-5', 'level-5'),
+    } %}
+    {% set max_q = namespace(val=1) %}
+    {% for level, cats in catalog.items() %}
+      {% for cat in cats %}
+        {% if cat.total > max_q.val %}{% set max_q.val = cat.total %}{% endif %}
+      {% endfor %}
+    {% endfor %}
+
+    {% for level, cats in catalog.items() %}
+    {% set cls = level_classes.get(level, ('', '')) %}
+    <div class="level-header {{ cls[0] }}">
+      <span>{{ level }}</span>
+      <span style="font-weight:400;font-size:.8rem">
+        {{ cats | sum(attribute='total') }} Fragen in {{ cats | length }} Kategorien
+      </span>
+    </div>
+    <div class="cat-grid" style="margin-bottom:4px">
+      {% for cat in cats %}
+      <div class="cat-card">
+        <div class="cat-card-level {{ cls[1] }}">{{ level }}</div>
+        <div class="cat-card-title">{{ cat.title }}</div>
+        <div class="cat-bar-wrap">
+          <div class="cat-bar">
+            <div class="cat-bar-fill" style="width:{{ (cat.total / max_q.val * 100) | round | int }}%"></div>
+          </div>
+          <span class="cat-count">{{ cat.total }} Fragen</span>
+        </div>
+        {% if cat.new > 0 %}
+        <span class="cat-new-badge">★ {{ cat.new }} Neu (Ergänzung)</span>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endfor %}
+  </div>
+
+  {# ── Routen-Abdeckungsübersicht ─────────────────────────────────────────── #}
+  <div class="cov-section card" style="padding:20px">
+    <div class="cov-section-title">Route-Abdeckung</div>
+    <table class="cov-table">
+      <thead>
+        <tr><th>Route</th><th>Methode</th><th>Funktion</th><th>Getestet</th></tr>
+      </thead>
+      <tbody>
+        {% for route in [
+          ('/login',                   'GET+POST', 'Anmeldung',                      True),
+          ('/register',                'GET+POST', 'Registrierung',                  True),
+          ('/logout',                  'GET',      'Abmeldung',                      True),
+          ('/dashboard',               'GET',      'Projekt-Dashboard',              True),
+          ('/project/new',             'GET+POST', 'Neues Projekt anlegen',          True),
+          ('/project/<id>',            'GET',      'Fragenkatalog anzeigen',         True),
+          ('/project/<id>/answer',     'POST',     'Antwort speichern (AJAX)',       True),
+          ('/project/<id>/info',       'POST',     'Projektinfos speichern (AJAX)',  True),
+          ('/project/<id>/complete',   'POST',     'Projekt als fertig markieren',   True),
+          ('/project/<id>/delete',     'POST',     'Projekt löschen',               False),
+          ('/project/<id>/report/html','POST',     'HTML-Report generieren',         True),
+          ('/project/<id>/report',     'POST',     'PDF-Report herunterladen',      False),
+          ('/project/<id>/autofill',   'POST',     'Testmodus: zufällig befüllen',  False),
+          ('/generate/<id>/<type>',    'POST',     'KI-Dokument generieren',        False),
+          ('/download/<id>/<type>',    'GET',      'Generiertes Dokument laden',    False),
+          ('/inbox',                   'GET',      'Admin-Postkorb',                 True),
+          ('/api/inbox',               'POST',     'IMPULSE-Webhook',                True),
+          ('/api/inbox/count',         'GET',      'Postkorb-Badge-Count',           True),
+          ('/admin',                   'GET',      'Benutzerverwaltung',             True),
+          ('/admin/questions',         'GET',      'Fragenkatalog-Verwaltung',       True),
+          ('/coverage-matrix',         'GET',      'Testfallabdeckung',              True),
+        ] %}
+        <tr>
+          <td><code style="font-size:.78rem">{{ route[0] }}</code></td>
+          <td><code style="font-size:.75rem;color:#6B6B9A">{{ route[1] }}</code></td>
+          <td style="font-size:.82rem">{{ route[2] }}</td>
+          <td>
+            {% if route[3] %}
+            <span style="color:#059669;font-weight:700;font-size:.8rem">✓ Ja</span>
+            {% else %}
+            <span style="color:#d97706;font-size:.8rem">– geplant</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</main>
+</body>
+</html>

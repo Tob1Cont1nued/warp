@@ -1355,6 +1355,111 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             db.session.commit()
         return redirect(url_for("inbox"))
 
+    # ------------------------------------------------------------------
+    # Coverage Matrix
+    # ------------------------------------------------------------------
+
+    @app.route("/coverage-matrix")
+    @login_required
+    def coverage_matrix():
+        if not current_user.is_admin:
+            abort(403)
+        from .data.questions import CATEGORIES as PY_CATS, ANSWER_OPTIONS
+
+        # E2E-Testfälle (Playwright)
+        e2e_tests = [
+            # Login
+            {"id": "TC-LOGIN-P1", "area": "Login", "type": "E2E", "desc": "Alle UI-Elemente der Login-Seite sind sichtbar"},
+            {"id": "TC-LOGIN-P2", "area": "Login", "type": "E2E", "desc": "Admin-Login leitet auf /admin weiter"},
+            {"id": "TC-LOGIN-P3", "area": "Login", "type": "E2E", "desc": "User-Login leitet auf /project/... weiter"},
+            {"id": "TC-LOGIN-N1", "area": "Login", "type": "E2E", "desc": "Falsches Passwort → Fehlermeldung"},
+            {"id": "TC-LOGIN-N2", "area": "Login", "type": "E2E", "desc": "Nicht existenter Benutzer → Fehlermeldung"},
+            {"id": "TC-LOGIN-N3", "area": "Login", "type": "E2E", "desc": "Gesperrter Benutzer → spezifische Meldung"},
+            # Register
+            {"id": "TC-REG-P1", "area": "Registrierung", "type": "E2E", "desc": "Alle UI-Elemente der Registrierungsseite sichtbar"},
+            {"id": "TC-REG-P2", "area": "Registrierung", "type": "E2E", "desc": "Neuer Benutzer wird angelegt und auf Projekt weitergeleitet"},
+            {"id": "TC-REG-P3", "area": "Registrierung", "type": "E2E", "desc": "Link 'Bereits registriert?' navigiert zu /login"},
+            {"id": "TC-REG-N1", "area": "Registrierung", "type": "E2E", "desc": "Doppelter Benutzername → Fehlermeldung"},
+            {"id": "TC-REG-N2", "area": "Registrierung", "type": "E2E", "desc": "Passwörter stimmen nicht überein → Fehler"},
+            {"id": "TC-REG-N3", "area": "Registrierung", "type": "E2E", "desc": "Passwort kürzer als 6 Zeichen → Fehler"},
+            # Admin
+            {"id": "TC-ADMIN-P1", "area": "Administration", "type": "E2E", "desc": "Alle UI-Elemente der Admin-Seite sichtbar"},
+            {"id": "TC-ADMIN-P2", "area": "Administration", "type": "E2E", "desc": "Admin kann neuen Benutzer anlegen"},
+            {"id": "TC-ADMIN-P3", "area": "Administration", "type": "E2E", "desc": "Admin kann Benutzer sperren – Badge erscheint"},
+            {"id": "TC-ADMIN-N1", "area": "Administration", "type": "E2E", "desc": "Normaler Benutzer kann /admin nicht aufrufen (403)"},
+            {"id": "TC-ADMIN-N2", "area": "Administration", "type": "E2E", "desc": "Nicht eingeloggter Benutzer wird zu /login umgeleitet"},
+            {"id": "TC-ADMIN-N3", "area": "Administration", "type": "E2E", "desc": "Admin kann kein neues Projekt anlegen"},
+            # Questionnaire
+            {"id": "TC-QUEST-P1", "area": "Fragenkatalog", "type": "E2E", "desc": "Alle UI-Elemente des Fragenkatalogs sichtbar"},
+            {"id": "TC-QUEST-P2", "area": "Fragenkatalog", "type": "E2E", "desc": "Antwort wird gespeichert (AJAX) und bleibt nach Reload"},
+            {"id": "TC-QUEST-P3", "area": "Fragenkatalog", "type": "E2E", "desc": "Download-Buttons für Vorlagen vorhanden und verlinkt"},
+            {"id": "TC-QUEST-N1", "area": "Fragenkatalog", "type": "E2E", "desc": "Nicht eingeloggter Benutzer wird zu /login umgeleitet"},
+            {"id": "TC-QUEST-N2", "area": "Fragenkatalog", "type": "E2E", "desc": "Fremdes Projekt liefert 403"},
+            {"id": "TC-QUEST-N3", "area": "Fragenkatalog", "type": "E2E", "desc": "Nicht existierende Projekt-ID liefert 403"},
+        ]
+
+        # Unit-Testfälle (Flask Test Client)
+        unit_tests = [
+            {"id": "TC-AUTH-01", "area": "Auth", "type": "Unit", "desc": "GET /login → HTTP 200"},
+            {"id": "TC-AUTH-02", "area": "Auth", "type": "Unit", "desc": "GET /register → HTTP 200"},
+            {"id": "TC-AUTH-03", "area": "Auth", "type": "Unit", "desc": "POST /login gültig → Redirect 302"},
+            {"id": "TC-AUTH-04", "area": "Auth", "type": "Unit", "desc": "POST /login ungültig → Fehlermeldung"},
+            {"id": "TC-AUTH-05", "area": "Auth", "type": "Unit", "desc": "GET /logout → Redirect"},
+            {"id": "TC-AUTH-06", "area": "Auth", "type": "Unit", "desc": "GET /dashboard ohne Login → Redirect /login"},
+            {"id": "TC-AUTH-07", "area": "Auth", "type": "Unit", "desc": "GET /admin ohne Login → Redirect /login"},
+            {"id": "TC-AUTH-08", "area": "Auth", "type": "Unit", "desc": "GET /admin als normaler User → 403"},
+            {"id": "TC-AUTH-09", "area": "Auth", "type": "Unit", "desc": "POST /register doppelter Username → Fehler"},
+            {"id": "TC-AUTH-10", "area": "Auth", "type": "Unit", "desc": "POST /register Passwörter stimmen nicht überein"},
+            {"id": "TC-AUTH-11", "area": "Auth", "type": "Unit", "desc": "POST /register Passwort zu kurz → Fehler"},
+            {"id": "TC-PROJ-01", "area": "Projekte", "type": "Unit", "desc": "POST /project/new → Projekt angelegt, Redirect"},
+            {"id": "TC-PROJ-02", "area": "Projekte", "type": "Unit", "desc": "GET /project/<id> → Fragenkatalog 200"},
+            {"id": "TC-PROJ-03", "area": "Projekte", "type": "Unit", "desc": "POST /project/<id>/answer → Antwort gespeichert"},
+            {"id": "TC-PROJ-04", "area": "Projekte", "type": "Unit", "desc": "POST /project/<id>/answer erneut → Upsert"},
+            {"id": "TC-PROJ-05", "area": "Projekte", "type": "Unit", "desc": "POST /project/<id>/info → Infos aktualisiert"},
+            {"id": "TC-PROJ-06", "area": "Projekte", "type": "Unit", "desc": "GET fremdes Projekt → 403"},
+            {"id": "TC-PROJ-07", "area": "Projekte", "type": "Unit", "desc": "GET /project/999999 → 403"},
+            {"id": "TC-PROJ-08", "area": "Projekte", "type": "Unit", "desc": "GET /dashboard eingeloggt → 200"},
+            {"id": "TC-PROJ-09", "area": "Projekte", "type": "Unit", "desc": "POST /project/<id>/report/html → HTML-Report 200"},
+            {"id": "TC-PROJ-10", "area": "Projekte", "type": "Unit", "desc": "GET /project/new → Formular 200"},
+            {"id": "TC-PROJ-11", "area": "Projekte", "type": "Unit", "desc": "POST /project/<id>/complete → Status gewechselt"},
+            {"id": "TC-API-01", "area": "API/Webhook", "type": "Unit", "desc": "POST /api/inbox gültiger Key → 201"},
+            {"id": "TC-API-02", "area": "API/Webhook", "type": "Unit", "desc": "POST /api/inbox falscher Key → 401"},
+            {"id": "TC-API-03", "area": "API/Webhook", "type": "Unit", "desc": "POST /api/inbox fehlendes Feld → 400"},
+            {"id": "TC-API-04", "area": "API/Webhook", "type": "Unit", "desc": "GET /api/inbox/count Admin → JSON count"},
+            {"id": "TC-API-05", "area": "API/Webhook", "type": "Unit", "desc": "GET /api/inbox/count anonym → 302"},
+            {"id": "TC-API-06", "area": "Postkorb", "type": "Unit", "desc": "GET /inbox Admin → 200"},
+            {"id": "TC-API-07", "area": "Postkorb", "type": "Unit", "desc": "GET /inbox normaler User → 403"},
+            {"id": "TC-API-08", "area": "Postkorb", "type": "Unit", "desc": "GET /admin/questions Superuser → 200"},
+            {"id": "TC-API-09", "area": "Postkorb", "type": "Unit", "desc": "GET /coverage-matrix Admin → 200"},
+        ]
+
+        # Fragenkatalog-Statistik
+        catalog = {}
+        for cat in PY_CATS:
+            level = cat["parent"]
+            if level not in catalog:
+                catalog[level] = []
+            catalog[level].append({
+                "id": cat["id"],
+                "title": cat["title"],
+                "total": len(cat["questions"]),
+                "new": sum(1 for q in cat["questions"] if q.get("new")),
+            })
+
+        total_questions = sum(len(c["questions"]) for c in PY_CATS)
+        total_e2e = len(e2e_tests)
+        total_unit = len(unit_tests)
+
+        return render_template(
+            "coverage_matrix.html",
+            e2e_tests=e2e_tests,
+            unit_tests=unit_tests,
+            catalog=catalog,
+            total_questions=total_questions,
+            total_e2e=total_e2e,
+            total_unit=total_unit,
+        )
+
     return app
 
 
