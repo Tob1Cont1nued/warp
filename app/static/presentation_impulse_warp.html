@@ -715,7 +715,7 @@
   #s13 .tagline { font-size: 1em; color: rgba(255,255,255,0.7); max-width: 60%; margin: 0 auto 1.5em; line-height: 1.6; }
   #s13 .kpis { display: flex; gap: 5%; justify-content: center; margin-top: 1.5em; width: 100%; flex-wrap: nowrap; }
   #s13 .kpi-box { text-align: center; }
-  #s13 .kpi-num { font-size: 2.8em; font-weight: 800; color: var(--green); line-height: 1; }
+  #s13 .kpi-num { font-size: 2.8em; font-weight: 800; color: var(--green); line-height: 1; white-space: nowrap; }
   #s13 .kpi-lbl { font-size: .75em; color: rgba(255,255,255,0.6); margin-top: .3em; }
   #s13 .divider-line {
     width: 1px;
@@ -1269,21 +1269,27 @@
           </div>
         </div>
         <div class="origin-quote">
-          <blockquote>
-            „Ich wollte zeigen, dass Wavestone nicht nur über digitale Tools spricht –
-            sondern sie auch baut. IMPULSE und WARP sind der Beweis."
-          </blockquote>
-          <div style="font-size:.78em;color:rgba(255,255,255,0.55);margin-top:.5em">Tobias Konken · Test &amp; Quality Engineering</div>
-          <div style="margin-top:auto">
-            <div style="font-size:.72em;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:.6em">Eingesetzter Stack (Privatprojekt)</div>
-            <div class="origin-stack">
-              <span class="origin-tag">Python / Flask</span>
-              <span class="origin-tag">PostgreSQL</span>
-              <span class="origin-tag">Claude API</span>
-              <span class="origin-tag">Render.com</span>
-              <span class="origin-tag">GitHub (privat)</span>
-              <span class="origin-tag">HTML / CSS / JS</span>
+          <div style="font-size:.72em;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--green);margin-bottom:.8em">Private Kostenübersicht (monatlich)</div>
+          <div style="display:flex;flex-direction:column;gap:.6em">
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.82em;padding-bottom:.5em;border-bottom:1px solid rgba(255,255,255,0.1)">
+              <div><div style="font-weight:600;color:#fff">Anthropic Claude API</div><div style="font-size:.85em;color:rgba(255,255,255,0.5)">KI-Dokumentengenerierung (claude-sonnet-4-6)</div></div>
+              <div style="font-weight:700;color:var(--green);white-space:nowrap;margin-left:1em">variabel</div>
             </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.82em;padding-bottom:.5em;border-bottom:1px solid rgba(255,255,255,0.1)">
+              <div><div style="font-weight:600;color:#fff">Render.com Hosting</div><div style="font-size:.85em;color:rgba(255,255,255,0.5)">App-Server + PostgreSQL-Datenbank</div></div>
+              <div style="font-weight:700;color:var(--green);white-space:nowrap;margin-left:1em">~&nbsp;20&nbsp;€/Mo.</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.82em;padding-bottom:.5em;border-bottom:1px solid rgba(255,255,255,0.1)">
+              <div><div style="font-weight:600;color:#fff">Supabase</div><div style="font-size:.85em;color:rgba(255,255,255,0.5)">Managed PostgreSQL (aktuell Free Tier)</div></div>
+              <div style="font-weight:700;color:var(--green);white-space:nowrap;margin-left:1em">0&nbsp;€</div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:.82em">
+              <div><div style="font-weight:600;color:#fff">GitHub (privat)</div><div style="font-size:.85em;color:rgba(255,255,255,0.5)">Versionsverwaltung &amp; CI/CD</div></div>
+              <div style="font-weight:700;color:var(--green);white-space:nowrap;margin-left:1em">0&nbsp;€</div>
+            </div>
+          </div>
+          <div style="margin-top:auto;padding-top:1em;border-top:1px solid rgba(255,255,255,0.1);font-size:.75em;color:rgba(255,255,255,0.45)">
+            Alle Kosten werden privat getragen. Kein Wavestone-Budget involviert.
           </div>
         </div>
       </div>
