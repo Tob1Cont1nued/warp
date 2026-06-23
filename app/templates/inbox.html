@@ -255,6 +255,7 @@
             </a>
             {% else %}
             <form method="POST" action="{{ url_for('inbox_create_project', mid=msg.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn"
                 style="padding:7px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;background:rgba(69,29,199,0.08);border-color:rgba(69,29,199,0.3);color:#451DC7">
                 <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
@@ -266,6 +267,7 @@
             {% endif %}
             {% if msg.status == 'neu' %}
             <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Mir zuweisen</button>
             </form>
             {% endif %}
@@ -273,6 +275,7 @@
             {% set other_users = admins | list %}
             {% if other_users %}
             <form method="POST" action="{{ url_for('inbox_assign', mid=msg.id) }}" style="display:flex;gap:4px;align-items:center">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <select name="assignee_id" style="height:33px;padding:0 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.82rem;max-width:160px">
                 <optgroup label="Admins / Superuser">
                   {% for a in other_users if a.is_admin %}
@@ -290,14 +293,17 @@
             {% endif %}
             {% if msg.status == 'in_bearbeitung' %}
             <form method="POST" action="{{ url_for('inbox_done', mid=msg.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem;background:#16a34a;border-color:#16a34a">Erledigt</button>
             </form>
             <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Freigeben</button>
             </form>
             {% endif %}
             {% if msg.status == 'erledigt' %}
             <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Wieder öffnen</button>
             </form>
             {% endif %}
@@ -374,7 +380,9 @@
     <form id="del-{{ msg.id }}" method="POST"
           action="{{ url_for('inbox_delete', mid=msg.id) }}"
           data-confirm="Nachricht von »{{ msg.user_name }}« wirklich löschen?"
-          style="display:none"></form>
+          style="display:none">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+    </form>
   </div>
   {% endmacro %}
 

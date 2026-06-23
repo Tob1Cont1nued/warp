@@ -98,6 +98,7 @@
         <div class="dash-project-actions">
           <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="btn" style="font-size:.8rem;padding:5px 12px">Öffnen</a>
           <form method="POST" action="{{ url_for('toggle_project_complete', pid=e.project.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn" style="font-size:.8rem;padding:5px 12px;color:#059669;border-color:#a7f3d0;background:#f0fdf4" title="Als abgeschlossen markieren">&#10003; Abschließen</button>
           </form>
         </div>
@@ -132,6 +133,7 @@
         <div class="dash-project-actions">
           <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="btn" style="font-size:.8rem;padding:5px 12px">Öffnen</a>
           <form method="POST" action="{{ url_for('toggle_project_complete', pid=e.project.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn" style="font-size:.8rem;padding:5px 12px;color:#6b7280;border-color:#d1d5db" title="Als offen markieren">&#8635; Wiederöffnen</button>
           </form>
         </div>

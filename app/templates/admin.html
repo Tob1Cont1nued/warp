@@ -94,6 +94,7 @@
     <div class="login-error" style="margin-bottom:12px">{{ error }}</div>
     {% endif %}
     <form method="POST" action="{{ url_for('admin_user_new') }}" class="admin-new-user-form">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <div class="field">
         <label for="username">Benutzername</label>
         <input type="text" id="username" name="username" required placeholder="z.B. max.muster" />
@@ -144,6 +145,7 @@
       </div>
       <div class="admin-user-actions">
         <form method="POST" action="{{ url_for('admin_user_set_role', uid=user.id) }}" style="display:flex;gap:4px;align-items:center">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <select name="role" style="padding:5px 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.8rem">
             <option value="user" {% if user.role == 'user' %}selected{% endif %}>Benutzer</option>
             <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
@@ -152,12 +154,14 @@
           <button type="submit" class="btn-admin-action" style="white-space:nowrap">Rolle setzen</button>
         </form>
         <form method="POST" action="{{ url_for('admin_user_toggle_lock', uid=user.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <button type="submit" class="btn-admin-action {% if user.is_locked %}btn-admin-unlock{% else %}btn-admin-lock{% endif %}">
             {% if user.is_locked %}Entsperren{% else %}Sperren{% endif %}
           </button>
         </form>
         <form method="POST" action="{{ url_for('admin_user_delete', uid=user.id) }}"
               data-confirm="Benutzer »{{ user.display_name or user.username }}« und alle seine Projekte wirklich löschen?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <button type="submit" class="btn-admin-action btn-admin-delete-user">Löschen</button>
         </form>
       </div>
@@ -184,6 +188,7 @@
           <td class="admin-col-action">
             <form method="POST" action="{{ url_for('delete_project', pid=project.id) }}"
                   data-confirm="Soll das Projekt »{{ project.name }}« wirklich gelöscht werden?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn-admin-delete">Löschen</button>
             </form>
           </td>

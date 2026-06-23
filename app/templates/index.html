@@ -43,6 +43,7 @@
     </svg>
     <span><strong>Testmodus</strong> – Antworten zufällig befüllen</span>
     <form method="POST" action="{{ url_for('autofill_project', pid=project.id) }}" style="margin-left:auto">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <button type="submit" style="padding:5px 14px;font-size:.82rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px">
         <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
           <path d="M13.5 2.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1h1.8A5 5 0 1 0 13 9a.5.5 0 0 1 1 .09A6 6 0 1 1 12.3 4H13a.5.5 0 0 1 .5-.5z"/>
@@ -135,9 +136,11 @@
     </div>
     <div class="submit-actions">
       <form method="POST" action="{{ url_for('project_report_html', pid=project.id) }}" target="_blank">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <button type="submit" class="btn btn-secondary">Vorschau (HTML)</button>
       </form>
       <form method="POST" action="{{ url_for('project_report_pdf', pid=project.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <button type="submit" class="btn btn-primary">PDF herunterladen</button>
       </form>
     </div>

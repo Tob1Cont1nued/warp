@@ -230,6 +230,7 @@
       <div class="aq-stat" style="margin-left:auto">
         <form method="POST" action="{{ url_for('workshop_import') }}" enctype="multipart/form-data"
               style="display:flex;align-items:center;gap:8px">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <label style="font-size:.82rem;font-weight:600;color:var(--c-text-muted);cursor:pointer;display:flex;align-items:center;gap:6px">
             <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
               <path d="M8 11V1M4 5l4-4 4 4"/><rect x="2" y="12" width="12" height="3" rx="1"/>
@@ -280,6 +281,7 @@
                 onclick="togglePanel('cat-edit-{{ cat.id }}')">Bearbeiten</button>
         <form method="POST" action="{{ url_for('admin_category_delete', cid=cat.id) }}"
               data-confirm="Kategorie »{{ cat.title }}« und alle {{ cat.questions | length }} Fragen wirklich löschen?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <button type="submit" class="btn-xs btn-xs-delete">Löschen</button>
         </form>
       </div>
@@ -288,6 +290,7 @@
     {# Kategorie-Editformular #}
     <div id="cat-edit-{{ cat.id }}" class="edit-panel" style="display:none;margin-bottom:14px">
       <form method="POST" action="{{ url_for('admin_category_edit', cid=cat.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="field">
           <label>Titel</label>
           <input type="text" name="title" value="{{ cat.title }}" required />
@@ -322,6 +325,7 @@
                     onclick="togglePanel('q-edit-{{ q.id }}')">Bearbeiten</button>
             <form method="POST" action="{{ url_for('admin_question_delete', qid=q.id) }}"
                   data-confirm="Frage »{{ q.text[:60] }}…« wirklich löschen?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn-xs btn-xs-delete">Löschen</button>
             </form>
           </div>
@@ -329,6 +333,7 @@
         {# Frage-Editformular #}
         <div id="q-edit-{{ q.id }}" class="edit-panel" style="display:none;margin:0 0 10px 38px">
           <form method="POST" action="{{ url_for('admin_question_edit', qid=q.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <div class="field">
               <label>Fragetext</label>
               <textarea name="text" required>{{ q.text }}</textarea>
@@ -357,6 +362,7 @@
               onclick="togglePanel('add-q-{{ cat.id }}')">+ Neue Frage hinzufügen</button>
       <div id="add-q-{{ cat.id }}" class="edit-panel" style="display:none;margin-top:8px">
         <form method="POST" action="{{ url_for('admin_question_new') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <input type="hidden" name="category_id" value="{{ cat.id }}" />
           <div class="field">
             <label>Fragetext</label>
@@ -391,12 +397,14 @@
                 onclick="togglePanel('cat-edit-{{ cat.id }}')">Bearbeiten</button>
         <form method="POST" action="{{ url_for('admin_category_delete', cid=cat.id) }}"
               data-confirm="Kategorie »{{ cat.title }}« und alle {{ cat.questions | length }} Fragen wirklich löschen?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <button type="submit" class="btn-xs btn-xs-delete">Löschen</button>
         </form>
       </div>
     </div>
     <div id="cat-edit-{{ cat.id }}" class="edit-panel" style="display:none;margin-bottom:14px">
       <form method="POST" action="{{ url_for('admin_category_edit', cid=cat.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <div class="field"><label>Titel</label><input type="text" name="title" value="{{ cat.title }}" required /></div>
         <div class="field"><label>Beschreibung</label><textarea name="description">{{ cat.description or '' }}</textarea></div>
         <div class="row">
@@ -419,12 +427,14 @@
             <button type="button" class="btn-xs btn-xs-edit" onclick="togglePanel('q-edit-{{ q.id }}')">Bearbeiten</button>
             <form method="POST" action="{{ url_for('admin_question_delete', qid=q.id) }}"
                   data-confirm="Frage »{{ q.text[:60] }}…« wirklich löschen?">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
               <button type="submit" class="btn-xs btn-xs-delete">Löschen</button>
             </form>
           </div>
         </div>
         <div id="q-edit-{{ q.id }}" class="edit-panel" style="display:none;margin:0 0 10px 38px">
           <form method="POST" action="{{ url_for('admin_question_edit', qid=q.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <div class="field"><label>Fragetext</label><textarea name="text" required>{{ q.text }}</textarea></div>
             <div class="field"><label>Hinweis</label><textarea name="hint">{{ q.hint or '' }}</textarea></div>
             <div class="row">
@@ -443,6 +453,7 @@
       <button type="button" class="add-q-toggle" onclick="togglePanel('add-q-{{ cat.id }}')">+ Neue Frage hinzufügen</button>
       <div id="add-q-{{ cat.id }}" class="edit-panel" style="display:none;margin-top:8px">
         <form method="POST" action="{{ url_for('admin_question_new') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
           <input type="hidden" name="category_id" value="{{ cat.id }}" />
           <div class="field"><label>Fragetext</label><textarea name="text" required placeholder="Fragetext eingeben …"></textarea></div>
           <div class="field"><label>Hinweis / Hilfsfrage</label><textarea name="hint" placeholder="z.B. Gibt es eine Risikoanalyse?"></textarea></div>
@@ -461,6 +472,7 @@
   <section class="card add-cat-section">
     <h2 style="margin-top:0">Neue Kategorie anlegen</h2>
     <form method="POST" action="{{ url_for('admin_category_new') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <input type="hidden" name="catalog_type" value="{{ active_tab }}" />
       <div class="field">
         <label>Kategorie-ID <span style="font-weight:400;color:var(--c-text-muted)">(eindeutig, z.B. "neue-kategorie")</span></label>
