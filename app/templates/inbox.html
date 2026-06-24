@@ -39,36 +39,60 @@
     }
     .inbox-section-header::after { content: ""; flex: 1; height: 1px; background: var(--c-border); }
 
+    /* ── Card base ─────────────────────────────────────────────────────── */
     .inbox-card {
       margin-bottom: 10px; border-left: 3px solid transparent;
-      overflow: hidden;
+      overflow: hidden; padding-bottom: 0;
     }
     .inbox-card--neu { border-left-color: #e11d48; }
     .inbox-card--in_bearbeitung { border-left-color: #f59e0b; }
-    .inbox-card--erledigt { border-left-color: #22c55e; opacity: .8; }
+    .inbox-card--erledigt { border-left-color: #22c55e; opacity: .85; }
 
-    .inbox-head { display: flex; align-items: flex-start; gap: 16px; flex-wrap: wrap; }
+    /* ── Card header: info block + cluster ─────────────────────────────── */
+    .inbox-head { display: flex; align-items: flex-start; gap: 12px; }
     .inbox-head-info { flex: 1; min-width: 0; }
-    .inbox-sender-name { font-weight: 600; font-size: .95rem; margin: 0 0 2px; }
+    .inbox-sender-name { font-weight: 700; font-size: 1rem; margin: 0 0 2px; color: var(--c-text); }
     .inbox-sender-email { font-size: .82rem; color: var(--c-text-muted); margin: 0 0 8px; }
+    .inbox-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center; }
     .inbox-rec {
-      display: inline-block; font-size: .82rem; font-weight: 600;
+      display: inline-flex; align-items: center;
+      font-size: .78rem; font-weight: 600;
       background: var(--ws-blue-soft); color: var(--ws-blue);
-      border-radius: 6px; padding: 3px 10px; margin-bottom: 6px;
+      border-radius: 999px; padding: 3px 10px;
     }
-    .inbox-meta { font-size: .78rem; color: var(--c-text-faint); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; }
+    .inbox-meta {
+      font-size: .78rem; color: var(--c-text-faint);
+      display: flex; align-items: center; gap: 5px; flex-wrap: wrap;
+    }
+    .inbox-meta-sep { color: var(--c-border); }
 
+    /* Status badge + delete icon stacked top-right */
+    .inbox-head-cluster {
+      display: flex; flex-direction: column;
+      align-items: flex-end; gap: 8px; flex-shrink: 0;
+    }
     .status-badge {
       display: inline-flex; align-items: center;
       font-size: .68rem; font-weight: 700; border-radius: 999px;
-      padding: 2px 8px; text-transform: uppercase; letter-spacing: .05em;
+      padding: 3px 10px; text-transform: uppercase; letter-spacing: .05em;
+      white-space: nowrap;
     }
-    .status-neu { background: #fee2e2; color: #b91c1c; }
+    .status-neu            { background: #fee2e2; color: #b91c1c; }
     .status-in_bearbeitung { background: #fef3c7; color: #b45309; }
-    .status-erledigt { background: #dcfce7; color: #15803d; }
+    .status-erledigt       { background: #dcfce7; color: #15803d; }
 
-    .inbox-actions { display: flex; gap: 6px; flex-wrap: wrap; flex-shrink: 0; align-items: flex-start; padding-top: 2px; }
+    /* Desktop delete button (in cluster) */
+    .btn-icon-delete {
+      width: 30px; height: 30px; padding: 0;
+      display: inline-flex; align-items: center; justify-content: center;
+      background: transparent; border: 1.5px solid #fca5a5;
+      border-radius: 7px; cursor: pointer; color: #dc2626; flex-shrink: 0;
+      transition: background .15s, border-color .15s;
+    }
+    .btn-icon-delete:hover { background: #fee2e2; border-color: #f87171; }
+    @media (max-width: 640px) { .btn-icon-delete { display: none !important; } }
 
+    /* ── Expandable detail ──────────────────────────────────────────────── */
     .inbox-detail { padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--c-border-soft); }
     .inbox-rationale { font-size: .875rem; color: var(--c-text-muted); line-height: 1.6; margin-bottom: 12px; }
     .scores-legend { font-size:.75rem; color:var(--c-text-muted); margin:0 0 8px; }
@@ -84,47 +108,65 @@
       border-radius: 999px; padding: 3px 10px; color: #0369a1;
     }
 
-    .inbox-contact {
-      font-size: .82rem; color: var(--c-text-muted); margin: 4px 0 6px;
-    }
+    /* ── Maturity badges ────────────────────────────────────────────────── */
     .maturity-badge {
       display: inline-flex; align-items: center; gap: 4px;
-      font-size: .72rem; font-weight: 700; border-radius: 999px;
-      padding: 2px 10px; letter-spacing: .03em;
+      font-size: .72rem; font-weight: 600; border-radius: 999px;
+      padding: 3px 10px; letter-spacing: .02em;
     }
-    .maturity-gut         { background: #dcfce7; color: #15803d; }
-    .maturity-ausbaufaehig{ background: #fef3c7; color: #b45309; }
-    .maturity-minimal     { background: #fee2e2; color: #b91c1c; }
+    .maturity-gut          { background: #dcfce7; color: #15803d; }
+    .maturity-ausbaufaehig { background: #fef3c7; color: #b45309; }
+    .maturity-minimal      { background: #fee2e2; color: #b91c1c; }
 
-    .inbox-empty {
-      text-align: center; color: var(--c-text-muted); padding: 56px 24px;
+    /* ── Action bar at bottom of card ──────────────────────────────────── */
+    .inbox-action-bar {
+      display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+      padding: 10px 0 2px; margin-top: 14px;
+      border-top: 1px solid var(--c-border-soft);
     }
-    .inbox-empty svg { opacity: .25; margin-bottom: 14px; }
-
-    /* ── Toggle arrow button (replaces "Details") ─────────────────────── */
-    .btn-toggle {
-      width: 34px; height: 34px; padding: 0;
+    /* Generic action bar button */
+    .iab-btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 5px 12px; font-size: .8rem; font-weight: 500;
+      border: 1px solid var(--c-border); border-radius: 7px;
+      background: #fff; color: var(--c-text);
+      cursor: pointer; white-space: nowrap; text-decoration: none;
+      transition: background .15s, border-color .15s;
+      line-height: 1.4;
+    }
+    .iab-btn:hover { background: var(--c-bg); border-color: #aaa; }
+    /* Primary: brand blue tint */
+    .iab-btn--primary {
+      background: var(--ws-blue-soft); border-color: rgba(69,29,199,.35);
+      color: var(--ws-blue); font-weight: 600;
+    }
+    .iab-btn--primary:hover { background: rgba(69,29,199,.15); }
+    /* Success: green tint */
+    .iab-btn--success {
+      background: #f0fdf4; border-color: #a7f3d0; color: #059669; font-weight: 600;
+    }
+    .iab-btn--success:hover { background: #dcfce7; }
+    /* Assign form inline */
+    .iab-assign-form { display: flex; gap: 4px; align-items: center; }
+    .iab-select {
+      height: 30px; padding: 0 8px;
+      border: 1px solid var(--c-border); border-radius: 7px;
+      font-size: .8rem; background: #fff; color: var(--c-text);
+      max-width: 140px;
+    }
+    /* Expand toggle pushed to right end */
+    .iab-toggle {
+      margin-left: auto; width: 30px; height: 30px; padding: 0;
       display: inline-flex; align-items: center; justify-content: center;
-      background: transparent; border: none;
-      border-radius: 8px; cursor: pointer; color: var(--c-text-muted);
-      flex-shrink: 0; transition: background .15s;
+      background: transparent; border: 1px solid var(--c-border);
+      border-radius: 7px; cursor: pointer; color: var(--c-text-muted);
+      transition: background .15s;
     }
-    .btn-toggle:hover { background: var(--c-bg); }
-    .btn-toggle .toggle-icon { display: block; transition: transform .2s; }
-    .btn-toggle.open .toggle-icon { transform: rotate(180deg); }
+    .iab-toggle:hover { background: var(--c-bg); }
+    .iab-toggle .toggle-icon { display: block; transition: transform .2s; }
+    .iab-toggle.open .toggle-icon { transform: rotate(180deg); }
 
-    /* ── Desktop trash icon ────────────────────────────────────────────── */
-    .btn-icon-delete {
-      width: 34px; height: 34px; padding: 0;
-      display: inline-flex; align-items: center; justify-content: center;
-      background: transparent; border: 1.5px solid #fca5a5;
-      border-radius: 8px; cursor: pointer; color: #dc2626; flex-shrink: 0;
-      transition: background .15s, border-color .15s; line-height: 1;
-    }
-    .btn-icon-delete:hover { background: #fee2e2; border-color: #f87171; }
-    @media (max-width: 640px) { .btn-icon-delete { display: none !important; } }
-
-    /* ── Mobile swipe-to-delete ────────────────────────────────────────── */
+    /* ── Mobile swipe-to-delete ─────────────────────────────────────────── */
     .swipe-wrap { display: flex; }
     .swipe-main { flex: 0 0 100%; min-width: 0; }
     .swipe-del-btn {
@@ -134,11 +176,9 @@
     }
     @media (min-width: 641px) { .swipe-del-btn { display: none !important; } }
 
-    /* ── Toggle footer row ─────────────────────────────────────────────── */
-    .card-footer-toggle {
-      display: flex; justify-content: flex-end;
-      margin-top: 6px; padding-top: 4px;
-    }
+    /* ── Empty state ────────────────────────────────────────────────────── */
+    .inbox-empty { text-align: center; color: var(--c-text-muted); padding: 56px 24px; }
+    .inbox-empty svg { opacity: .25; margin-bottom: 14px; }
   </style>
 </head>
 <body>
@@ -203,116 +243,50 @@
   {% macro msg_card(msg) %}
   <div class="card inbox-card inbox-card--{{ msg.status }}">
     <div class="swipe-wrap">
-      {# ── Main card content (slides left on mobile swipe) ── #}
       <div class="swipe-main">
+
+        {# ── Info-Block + Status-Cluster ─────────────────────────────── #}
         <div class="inbox-head">
           <div class="inbox-head-info">
             <p class="inbox-sender-name">{{ msg.user_name }}</p>
             <p class="inbox-sender-email">{{ msg.user_email }}</p>
-            <span class="inbox-rec">{{ msg.recommendation }}</span>
-            {% if msg.maturity %}
-            <span class="maturity-badge maturity-{{ msg.maturity }}" style="margin-left:6px">
-              {%- if msg.maturity == 'gut' -%}😊 Gut aufgestellt
-              {%- elif msg.maturity == 'ausbaufaehig' -%}😐 Ausbaufähig
-              {%- else -%}😕 Handlungsbedarf
-              {%- endif -%}
-            </span>
-            {% endif %}
-            {% if msg.contact_pref %}
-            <div class="inbox-contact">
-              {%- if msg.contact_pref == 'email' -%}
-                ✉️ Kontakt per <strong>E-Mail</strong>
-              {%- elif msg.contact_pref == 'telefon' -%}
-                📞 Kontakt per <strong>Telefon</strong>{% if msg.contact_phone %}: <strong>{{ msg.contact_phone }}</strong>{% endif %}
-              {%- else -%}
-                ✉️📞 Kontakt per <strong>E-Mail &amp; Telefon</strong>{% if msg.contact_phone %} &mdash; {{ msg.contact_phone }}{% endif %}
-              {%- endif -%}
-            </div>
-            {% endif %}
-            <div class="inbox-meta">
-              <span class="status-badge status-{{ msg.status }}">
-                {%- if msg.status == 'neu' -%}Neu
-                {%- elif msg.status == 'in_bearbeitung' -%}In Bearbeitung
-                {%- else -%}Erledigt
+            <div class="inbox-tags">
+              <span class="inbox-rec">{{ msg.recommendation }}</span>
+              {% if msg.maturity %}
+              <span class="maturity-badge maturity-{{ msg.maturity }}">
+                {%- if msg.maturity == 'gut' -%}😊 Gut aufgestellt
+                {%- elif msg.maturity == 'ausbaufaehig' -%}😐 Ausbaufähig
+                {%- else -%}😕 Handlungsbedarf
                 {%- endif -%}
               </span>
-              {% if msg.status == 'in_bearbeitung' and msg.claimed_by %}
-              <span>&rarr; {{ msg.claimed_by.display_name or msg.claimed_by.username }}</span>
+              {% endif %}
+            </div>
+            <div class="inbox-meta">
+              {% if msg.contact_pref %}
+              <span>
+                {%- if msg.contact_pref == 'email' -%}✉️ E-Mail
+                {%- elif msg.contact_pref == 'telefon' -%}📞 Telefon{% if msg.contact_phone %} {{ msg.contact_phone }}{% endif %}
+                {%- else -%}✉️📞 E-Mail &amp; Telefon{% if msg.contact_phone %} · {{ msg.contact_phone }}{% endif %}
+                {%- endif -%}
+              </span>
+              <span class="inbox-meta-sep">·</span>
               {% endif %}
               <span>{{ msg.received_at.strftime('%d.%m.%Y, %H:%M') }} Uhr</span>
+              {% if msg.status == 'in_bearbeitung' and msg.claimed_by %}
+              <span class="inbox-meta-sep">·</span>
+              <span>&rarr; {{ msg.claimed_by.display_name or msg.claimed_by.username }}</span>
+              {% endif %}
             </div>
           </div>
-          <div class="inbox-actions">
-            {# ── Projekt anlegen oder öffnen ── #}
-            {% if msg.project_id %}
-            <a href="{{ url_for('questionnaire', pid=msg.project_id) }}"
-               class="btn"
-               style="padding:7px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;background:rgba(69,29,199,0.08);border-color:rgba(69,29,199,0.3);color:#451DC7;text-decoration:none">
-              <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
-                <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 8h6M5 11h4"/>
-              </svg>
-              Projekt öffnen
-            </a>
-            {% else %}
-            <form method="POST" action="{{ url_for('inbox_create_project', mid=msg.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="btn"
-                style="padding:7px 14px;font-size:.85rem;display:flex;align-items:center;gap:6px;background:rgba(69,29,199,0.08);border-color:rgba(69,29,199,0.3);color:#451DC7">
-                <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
-                  <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M8 6v6M5 9h6"/>
-                </svg>
-                Projekt anlegen
-              </button>
-            </form>
-            {% endif %}
-            {% if msg.status == 'neu' %}
-            <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem">Mir zuweisen</button>
-            </form>
-            {% endif %}
-            {# Zuweisen-Dropdown immer anzeigen (auch bei in_bearbeitung) damit Projekt umgehängt werden kann #}
-            {% set other_users = admins | list %}
-            {% if other_users %}
-            <form method="POST" action="{{ url_for('inbox_assign', mid=msg.id) }}" style="display:flex;gap:4px;align-items:center">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <select name="assignee_id" style="height:33px;padding:0 8px;border:1px solid var(--c-border);border-radius:6px;font-size:.82rem;max-width:160px">
-                <optgroup label="Admins / Superuser">
-                  {% for a in other_users if a.is_admin %}
-                  <option value="{{ a.id }}" {% if msg.claimed_by_id == a.id %}selected{% endif %}>{{ a.display_name or a.username }}</option>
-                  {% endfor %}
-                </optgroup>
-                <optgroup label="Benutzer">
-                  {% for a in other_users if not a.is_admin %}
-                  <option value="{{ a.id }}" {% if msg.claimed_by_id == a.id %}selected{% endif %}>{{ a.display_name or a.username }}</option>
-                  {% endfor %}
-                </optgroup>
-              </select>
-              <button type="submit" class="btn" style="padding:7px 12px;font-size:.82rem;white-space:nowrap">Zuweisen</button>
-            </form>
-            {% endif %}
-            {% if msg.status == 'in_bearbeitung' %}
-            <form method="POST" action="{{ url_for('inbox_done', mid=msg.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="btn btn-primary" style="padding:7px 16px;font-size:.85rem;background:#16a34a;border-color:#16a34a">Erledigt</button>
-            </form>
-            <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Freigeben</button>
-            </form>
-            {% endif %}
-            {% if msg.status == 'erledigt' %}
-            <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="btn" style="padding:7px 16px;font-size:.85rem">Wieder öffnen</button>
-            </form>
-            {% endif %}
-
-            {# Desktop trash icon – hidden on mobile #}
-            <button type="submit" form="del-{{ msg.id }}"
-                    class="btn-icon-delete" title="Löschen">
-              <svg viewBox="0 0 24 24" width="16" height="16" fill="none"
-                   stroke="currentColor" stroke-width="2">
+          <div class="inbox-head-cluster">
+            <span class="status-badge status-{{ msg.status }}">
+              {%- if msg.status == 'neu' -%}Neu
+              {%- elif msg.status == 'in_bearbeitung' -%}In Bearbeitung
+              {%- else -%}Erledigt
+              {%- endif -%}
+            </span>
+            <button type="submit" form="del-{{ msg.id }}" class="btn-icon-delete" title="Löschen">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="3 6 5 6 21 6"/>
                 <path d="M19 6l-1 14H6L5 6"/>
                 <path d="M10 11v6M14 11v6"/>
@@ -322,6 +296,7 @@
           </div>
         </div>
 
+        {# ── Expandable detail ───────────────────────────────────────── #}
         <div class="inbox-detail" style="display:none">
           {% if msg.rationale %}
           <p class="inbox-rationale"><strong>Begründung:</strong> {{ msg.rationale }}</p>
@@ -333,8 +308,7 @@
           <div class="score-row">
             <span class="score-label" title="{{ key }}">{{ key }}</span>
             <div class="score-track">
-              <div class="score-fill"
-                   style="width:{{ [((val / 12) * 100) | round | int, 100] | min }}%"></div>
+              <div class="score-fill" style="width:{{ [((val / 12) * 100) | round | int, 100] | min }}%"></div>
             </div>
             <span class="score-val">{{ val }}/12</span>
           </div>
@@ -352,22 +326,90 @@
           {% endif %}
         </div>
 
-        {# Arrow toggle – bottom-right corner #}
-        <div class="card-footer-toggle">
-          <button type="button" class="btn-toggle" title="Details aufklappen"
+        {# ── Aktionsleiste ───────────────────────────────────────────── #}
+        <div class="inbox-action-bar">
+
+          {# Projekt anlegen / öffnen #}
+          {% if msg.project_id %}
+          <a href="{{ url_for('questionnaire', pid=msg.project_id) }}" class="iab-btn">
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 8h6M5 11h4"/>
+            </svg>
+            Projekt öffnen
+          </a>
+          {% else %}
+          <form method="POST" action="{{ url_for('inbox_create_project', mid=msg.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="iab-btn">
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="2" y="3" width="12" height="11" rx="2"/><path d="M8 6v6M5 9h6"/>
+              </svg>
+              Projekt anlegen
+            </button>
+          </form>
+          {% endif %}
+
+          {# Status-Aktionen #}
+          {% if msg.status == 'neu' %}
+          <form method="POST" action="{{ url_for('inbox_claim', mid=msg.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="iab-btn iab-btn--primary">Mir zuweisen</button>
+          </form>
+          {% endif %}
+          {% if msg.status == 'in_bearbeitung' %}
+          <form method="POST" action="{{ url_for('inbox_done', mid=msg.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="iab-btn iab-btn--success">✓ Erledigt</button>
+          </form>
+          <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="iab-btn">Freigeben</button>
+          </form>
+          {% endif %}
+          {% if msg.status == 'erledigt' %}
+          <form method="POST" action="{{ url_for('inbox_release', mid=msg.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="iab-btn">Wieder öffnen</button>
+          </form>
+          {% endif %}
+
+          {# Zuweisen-Dropdown #}
+          {% set other_users = admins | list %}
+          {% if other_users %}
+          <form method="POST" action="{{ url_for('inbox_assign', mid=msg.id) }}" class="iab-assign-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <select name="assignee_id" class="iab-select">
+              <optgroup label="Admins / Superuser">
+                {% for a in other_users if a.is_admin %}
+                <option value="{{ a.id }}" {% if msg.claimed_by_id == a.id %}selected{% endif %}>{{ a.display_name or a.username }}</option>
+                {% endfor %}
+              </optgroup>
+              <optgroup label="Benutzer">
+                {% for a in other_users if not a.is_admin %}
+                <option value="{{ a.id }}" {% if msg.claimed_by_id == a.id %}selected{% endif %}>{{ a.display_name or a.username }}</option>
+                {% endfor %}
+              </optgroup>
+            </select>
+            <button type="submit" class="iab-btn">Zuweisen</button>
+          </form>
+          {% endif %}
+
+          {# Detail-Toggle (rechts) #}
+          <button type="button" class="iab-toggle" title="Details aufklappen"
                   onclick="toggleDetail(this)">
-            <svg class="toggle-icon" viewBox="0 0 24 24" width="18" height="18"
+            <svg class="toggle-icon" viewBox="0 0 24 24" width="16" height="16"
                  fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </button>
-        </div>
+
+        </div>{# /inbox-action-bar #}
+
       </div>{# /swipe-main #}
 
-      {# Mobile swipe-delete panel – hidden on desktop #}
+      {# Mobile swipe-delete #}
       <button type="submit" form="del-{{ msg.id }}" class="swipe-del-btn" title="Löschen">
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none"
-             stroke="currentColor" stroke-width="2">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2">
           <polyline points="3 6 5 6 21 6"/>
           <path d="M19 6l-1 14H6L5 6"/>
           <path d="M10 11v6M14 11v6"/>
@@ -376,7 +418,6 @@
       </button>
     </div>{# /swipe-wrap #}
 
-    {# Hidden form – both buttons (desktop icon + mobile swipe) reference it via form="del-..." #}
     <form id="del-{{ msg.id }}" method="POST"
           action="{{ url_for('inbox_delete', mid=msg.id) }}"
           data-confirm="Nachricht von »{{ msg.user_name }}« wirklich löschen?"
@@ -430,6 +471,7 @@
     detail.style.display = open ? 'none' : 'block';
     btn.classList.toggle('open', !open);
     btn.title = open ? 'Details aufklappen' : 'Details zuklappen';
+    btn.querySelector('.toggle-icon').style.transform = open ? '' : 'rotate(180deg)';
   }
 
   /* ── Delete confirm modal ────────────────────────────────────────────── */
