@@ -913,10 +913,24 @@ def create_app() -> Flask:
     @login_required
     def delete_project(pid: int):
         project = _get_project_or_403(pid)
+        owner_id = project.user_id
+        # Null out InboxMessage.project_id before delete (nullable FK, no cascade configured)
+        db.session.execute(
+            db.update(InboxMessage)
+            .where(InboxMessage.project_id == pid)
+            .values(project_id=None)
+        )
+        # Delete generated documents (no cascade on Project side)
+        db.session.execute(
+            db.delete(GeneratedDocument)
+            .where(GeneratedDocument.project_id == pid)
+        )
         db.session.delete(project)
         db.session.commit()
         if current_user.is_admin and not current_user.is_superuser:
             return redirect(url_for("inbox"))
+        if current_user.is_superuser and owner_id != current_user.id:
+            return redirect(url_for("admin_overview"))
         remaining = current_user.projects
         if remaining:
             return redirect(url_for("questionnaire", pid=remaining[0].id))
