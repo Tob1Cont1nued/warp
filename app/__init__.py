@@ -578,6 +578,23 @@ def create_app() -> Flask:
         user = db.session.get(User, uid)
         if not user:
             abort(404)
+        project_ids = [p.id for p in user.projects]
+        if project_ids:
+            db.session.execute(
+                db.update(InboxMessage)
+                .where(InboxMessage.project_id.in_(project_ids))
+                .values(project_id=None)
+            )
+            db.session.execute(
+                db.delete(GeneratedDocument)
+                .where(GeneratedDocument.project_id.in_(project_ids))
+            )
+        # Also null out InboxMessage.claimed_by_id references
+        db.session.execute(
+            db.update(InboxMessage)
+            .where(InboxMessage.claimed_by_id == uid)
+            .values(claimed_by_id=None)
+        )
         db.session.delete(user)
         db.session.commit()
         return redirect(url_for("admin_overview"))
