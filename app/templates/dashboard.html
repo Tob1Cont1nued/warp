@@ -149,10 +149,11 @@
     <h2 style="margin:0 0 16px">Gesamtübersicht – alle Benutzer</h2>
     {% for entry in all_users_data %}
     <div class="dash-user-block">
-      <div class="dash-user-header">
+      <button class="dash-user-header dash-user-toggle" aria-expanded="false"
+              onclick="toggleUser(this)" type="button">
         <div style="display:flex;align-items:center;gap:10px">
           <span class="dash-user-avatar">{{ (entry.user.display_name or entry.user.username)[:1].upper() }}</span>
-          <div>
+          <div style="text-align:left">
             <div class="dash-user-name">{{ entry.user.display_name or entry.user.username }}</div>
             <div class="dash-user-role">
               {% if entry.user.is_superuser %}Superuser{% elif entry.user.is_admin %}Admin{% else %}Benutzer{% endif %}
@@ -160,36 +161,54 @@
             </div>
           </div>
         </div>
-        <div style="display:flex;gap:8px;font-size:.78rem;color:var(--c-text-muted)">
-          <span><strong style="color:#451DC7">{{ entry.open_count }}</strong> offen</span>
-          <span><strong style="color:#059669">{{ entry.done_count }}</strong> fertig</span>
-        </div>
-      </div>
-      {% if entry.projects %}
-      <div class="dash-user-projects">
-        {% for e in entry.projects %}
-        <div class="dash-user-project-row">
-          <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="dash-project-name" style="font-size:.85rem">{{ e.project.name }}</a>
-          <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
-            {% if e.project.is_complete %}
-            <span style="font-size:.75rem;color:#059669;font-weight:600">&#10003; Fertig</span>
-            {% else %}
-            <span style="font-size:.75rem;color:var(--c-text-muted)">{{ e.pct }}%</span>
-            <div style="width:80px;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden">
-              <div style="width:{{ e.pct }}%;height:100%;background:{% if e.pct==100 %}#04F06A{% elif e.pct>=50 %}#5BC5DD{% else %}#F2A73B{% endif %};border-radius:3px"></div>
-            </div>
-            {% endif %}
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="display:flex;gap:8px;font-size:.78rem;color:var(--c-text-muted)">
+            <span><strong style="color:#451DC7">{{ entry.open_count }}</strong> offen</span>
+            <span><strong style="color:#059669">{{ entry.done_count }}</strong> fertig</span>
           </div>
+          <svg class="dash-user-chevron" viewBox="0 0 16 16" width="14" height="14"
+               fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0;color:var(--c-text-muted)">
+            <path d="M4 6l4 4 4-4"/>
+          </svg>
         </div>
-        {% endfor %}
+      </button>
+      <div class="dash-user-body" style="display:none">
+        {% if entry.projects %}
+        <div class="dash-user-projects">
+          {% for e in entry.projects %}
+          <div class="dash-user-project-row">
+            <a href="{{ url_for('questionnaire', pid=e.project.id) }}" class="dash-project-name" style="font-size:.85rem">{{ e.project.name }}</a>
+            <div style="display:flex;align-items:center;gap:10px;margin-left:auto">
+              {% if e.project.is_complete %}
+              <span style="font-size:.75rem;color:#059669;font-weight:600">&#10003; Fertig</span>
+              {% else %}
+              <span style="font-size:.75rem;color:var(--c-text-muted)">{{ e.pct }}%</span>
+              <div style="width:80px;height:5px;background:#f3f4f6;border-radius:3px;overflow:hidden">
+                <div style="width:{{ e.pct }}%;height:100%;background:{% if e.pct==100 %}#04F06A{% elif e.pct>=50 %}#5BC5DD{% else %}#F2A73B{% endif %};border-radius:3px"></div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p style="font-size:.82rem;color:var(--c-text-muted);margin:0;padding:10px 16px">Keine Projekte</p>
+        {% endif %}
       </div>
-      {% else %}
-      <p style="font-size:.82rem;color:var(--c-text-muted);margin:6px 0 0 0;padding:0 4px">Keine Projekte</p>
-      {% endif %}
     </div>
     {% endfor %}
   </div>
   {% endif %}
+
+<script>
+function toggleUser(btn) {
+  var body = btn.nextElementSibling;
+  var open = btn.getAttribute('aria-expanded') === 'true';
+  btn.setAttribute('aria-expanded', !open);
+  body.style.display = open ? 'none' : 'block';
+  btn.querySelector('.dash-user-chevron').style.transform = open ? '' : 'rotate(180deg)';
+}
+</script>
 
 </main>
 </body>

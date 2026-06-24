@@ -1200,6 +1200,16 @@ button { cursor: pointer; }
   background: #f9fafb;
   border-bottom: 1px solid var(--c-border-soft);
 }
+.dash-user-toggle {
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.dash-user-toggle:hover { background: #f1f3f5; }
+.dash-user-chevron { transition: transform 0.2s; }
 .dash-user-avatar {
   width: 34px;
   height: 34px;
