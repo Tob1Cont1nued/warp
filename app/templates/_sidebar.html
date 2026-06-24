@@ -261,18 +261,9 @@ document.querySelectorAll('.sidebar-gen-form').forEach(form => {
   setInterval(refreshBadge, 60000);
 })();
 {% endif %}
-<script>
+// ── CSRF-Token für fetch-Requests ────────────────────────────────────
 (function () {
   var _csrf = "{{ csrf_token() }}";
-  document.addEventListener("DOMContentLoaded", function () {
-    document.querySelectorAll("form").forEach(function (f) {
-      if (!f.querySelector('[name="csrf_token"]')) {
-        var i = document.createElement("input");
-        i.type = "hidden"; i.name = "csrf_token"; i.value = _csrf;
-        f.appendChild(i);
-      }
-    });
-  });
   var _origFetch = window.fetch;
   window.fetch = function (url, opts) {
     opts = Object.assign({}, opts);
@@ -283,5 +274,4 @@ document.querySelectorAll('.sidebar-gen-form').forEach(form => {
     return _origFetch.call(window, url, opts);
   };
 })();
-</script>
 </script>
