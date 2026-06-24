@@ -1,7 +1,7 @@
 {#
   Gemeinsame Sidebar-Partial.
   Erwartet im aufrufenden Template:
-    active_nav  – 'fragenkatalog' | 'auswertung' | 'postkorb' | 'administration'
+    active_nav  – 'dashboard' | 'fragenkatalog' | 'auswertung' | 'postkorb' | 'vorlagen' | 'administration'
     projects    – Liste der Projekte des eingeloggten Users
     project     – aktuelles Projekt (optional; nur auf Fragenkatalog-Seite)
     neu_count   – Postkorb-Badge (optional, default 0)
@@ -48,6 +48,12 @@
          href="{{ url_for('dashboard') }}">
         <span class="dot"></span>Dashboard
       </a>
+
+      <a class="sidebar-nav-item {% if active_nav == 'vorlagen' %}active{% endif %}"
+         href="{{ url_for('vorlagen') }}">
+        <span class="dot"></span>Vorlagen
+      </a>
+
       {% if current_user.is_admin %}
       <div class="sidebar-nav-divider"></div>
       <a class="sidebar-nav-item {% if active_nav == 'postkorb' %}active{% endif %}"
@@ -60,35 +66,6 @@
       </a>
       {% endif %}
     </nav>
-
-    {# ── Vorlagen (einklappbar) ────────────────────────────────────── #}
-    <div class="sidebar-section">
-      <button class="sidebar-section-hd" onclick="sidebarToggle(this)" aria-expanded="false">
-        <span class="sidebar-downloads-label" style="margin:0">Vorlagen</span>
-        <svg class="sidebar-chevron" viewBox="0 0 16 16" width="12" height="12" fill="none"
-             stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
-      </button>
-      <div class="sidebar-section-body">
-        <a class="sidebar-download-btn"
-           href="{{ url_for('static', filename='docs/WARP_Mastertestkonzept.docx') }}" download>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
-          </svg>Mastertestkonzept
-        </a>
-        <a class="sidebar-download-btn"
-           href="{{ url_for('static', filename='docs/WARP_Teststrategie.docx') }}" download>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
-          </svg>Teststrategie
-        </a>
-        <a class="sidebar-download-btn"
-           href="{{ url_for('static', filename='docs/WARP_Stufentestkonzept.docx') }}" download>
-          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-            <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
-          </svg>Teststufenkonzept
-        </a>
-      </div>
-    </div>
 
   </div>{# /sidebar-scroll #}
 
@@ -124,47 +101,36 @@
 <script>
 // ── Sidebar-Drawer (mobile) ──────────────────────────────────────────
 (function () {
-  const sb = document.getElementById("js-sidebar");
-  const bd = document.getElementById("js-backdrop");
-  const bt = document.getElementById("js-burger");
+  var sb = document.getElementById("js-sidebar");
+  var bd = document.getElementById("js-backdrop");
+  var bt = document.getElementById("js-burger");
   if (!bt) return;
   function closeSidebar() { sb.classList.remove("open"); bd.classList.remove("open"); }
-  bt.addEventListener("click", () => {
-    const open = !sb.classList.contains("open");
+  bt.addEventListener("click", function () {
+    var open = !sb.classList.contains("open");
     sb.classList.toggle("open", open);
     bd.classList.toggle("open", open);
   });
   bd.addEventListener("click", closeSidebar);
-  sb.querySelectorAll("a").forEach(a => a.addEventListener("click", closeSidebar));
+  sb.querySelectorAll("a").forEach(function (a) { a.addEventListener("click", closeSidebar); });
 })();
-
-// ── Einklappbare Abschnitte ──────────────────────────────────────────
-function sidebarToggle(btn) {
-  const body = btn.nextElementSibling;
-  const open = btn.getAttribute('aria-expanded') === 'true';
-  btn.setAttribute('aria-expanded', !open);
-  body.style.maxHeight = open ? '0' : body.scrollHeight + 'px';
-  btn.querySelector('.sidebar-chevron').style.transform = open ? 'rotate(-90deg)' : '';
-}
-document.querySelectorAll('.sidebar-section-body').forEach(b => {
-  b.style.maxHeight = b.scrollHeight + 'px';
-});
 
 // ── Postkorb-Badge per AJAX aktuell halten ───────────────────────────
 {% if current_user.is_admin %}
 (function () {
   function refreshBadge() {
-    fetch('/api/inbox/count').then(r => r.json()).then(d => {
-      const b = document.getElementById('js-sidebar-badge');
+    fetch('/api/inbox/count').then(function (r) { return r.json(); }).then(function (d) {
+      var b = document.getElementById('js-sidebar-badge');
       if (!b) return;
       b.textContent = d.count;
       b.style.display = d.count > 0 ? 'inline-flex' : 'none';
-    }).catch(() => {});
+    }).catch(function () {});
   }
   refreshBadge();
   setInterval(refreshBadge, 60000);
 })();
 {% endif %}
+
 // ── CSRF-Token für fetch-Requests ────────────────────────────────────
 (function () {
   var _csrf = "{{ csrf_token() }}";

@@ -1226,6 +1226,121 @@ button { cursor: pointer; }
 .dash-user-project-row:last-child { border-bottom: none; }
 
 /* =================================================================
+   TAB-NAVIGATION (Projektseite)
+   ================================================================= */
+.tab-bar {
+  display: flex;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 2px solid var(--c-border);
+  margin: 0 -14px 20px;
+  padding: 0 14px;
+  -webkit-overflow-scrolling: touch;
+}
+.tab-bar::-webkit-scrollbar { display: none; }
+.tab-btn {
+  flex-shrink: 0;
+  padding: 10px 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--c-text-muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.tab-btn.active { color: var(--ws-blue); border-bottom-color: var(--ws-blue); }
+.tab-count {
+  background: #f0f0f0;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 9px;
+  padding: 1px 6px;
+  margin-left: 4px;
+}
+.tab-count.complete { background: var(--ws-green); color: #000; }
+.tab-panel { display: none; }
+.tab-panel.active { display: block; }
+
+/* =================================================================
+   AUSWERTUNG – Fortschrittsbalken
+   ================================================================= */
+.ausw-prog-wrap {
+  background: #f3f4f6;
+  border-radius: 6px;
+  height: 8px;
+  overflow: hidden;
+}
+.ausw-prog-fill {
+  background: var(--ws-blue);
+  height: 100%;
+  transition: width .4s;
+  border-radius: 6px;
+}
+
+/* =================================================================
+   DOK-LISTE – KI-Dokumente
+   ================================================================= */
+.dok-list { display: flex; flex-direction: column; gap: 14px; }
+.dok-item {
+  background: #fff;
+  border: 1px solid var(--c-border-soft);
+  border-radius: 10px;
+  padding: 18px;
+}
+.dok-title { font-weight: 700; font-size: .92rem; }
+.dok-desc  { color: var(--c-text-muted); font-size: .82rem; margin-top: 3px; }
+.dok-btn-gen {
+  background: var(--ws-blue);
+  color: #fff;
+  border: none;
+}
+.dok-btn-gen:hover { background: var(--ws-blue-deep); }
+.dok-btn-dl {
+  background: var(--ws-blue-soft);
+  color: var(--ws-blue);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+.dok-btn-dl:hover { background: #ddd6fc; }
+.dok-btn-regen {
+  flex: 0 0 36px;
+  width: 36px;
+  background: #f3f4f6;
+  border: 1px solid var(--c-border);
+  color: var(--c-text-muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.dok-btn-regen:hover { background: #e5e7eb; }
+
+/* Projekt-Select auf Vorlagen-Seite */
+.vorlagen-select {
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: .88rem;
+  width: 100%;
+  max-width: 420px;
+  background: #fff;
+  color: var(--c-text);
+}
+
+@media (min-width: 720px) {
+  .tab-bar  { margin: 0 -20px 20px; }
+  .tab-btn  { padding: 10px 18px; font-size: 15px; }
+  .dok-list { flex-direction: row; }
+  .dok-item { flex: 1; }
+}
+@media (min-width: 1024px) {
+  .tab-bar { margin: 0 -32px 20px; }
+}
+
+/* =================================================================
    PRINT
    ================================================================= */
 @media print {

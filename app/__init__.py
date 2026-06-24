@@ -1192,6 +1192,50 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         )
 
     # ------------------------------------------------------------------
+    # Vorlagen-Seite
+    # ------------------------------------------------------------------
+
+    @app.route("/vorlagen")
+    @login_required
+    def vorlagen():
+        assessment_projects = [p for p in current_user.projects if p.catalog_type == 'assessment']
+        total_questions = _db_question_count('assessment')
+
+        projects_data = []
+        for p in assessment_projects:
+            answered = sum(1 for a in p.answers if a.answer_id)
+            pct = round(answered / total_questions * 100) if total_questions else 0
+            gen_docs = {
+                d.doc_type: d.generated_at.strftime('%d.%m.%Y')
+                for d in db.session.execute(
+                    db.select(GeneratedDocument).where(GeneratedDocument.project_id == p.id)
+                ).scalars().all()
+            }
+            projects_data.append({
+                'project': p,
+                'answered': answered,
+                'total': total_questions,
+                'pct': pct,
+                'is_100': total_questions > 0 and answered >= total_questions,
+                'generated_docs': gen_docs,
+            })
+
+        neu_count = 0
+        if current_user.is_admin:
+            neu_count = db.session.execute(
+                db.select(db.func.count()).select_from(InboxMessage).where(
+                    InboxMessage.status == 'neu'
+                )
+            ).scalar() or 0
+
+        return render_template(
+            'vorlagen.html',
+            projects=current_user.projects,
+            projects_data=projects_data,
+            neu_count=neu_count,
+        )
+
+    # ------------------------------------------------------------------
     # Inbox – Webhook + Admin-Postkorb
     # ------------------------------------------------------------------
 

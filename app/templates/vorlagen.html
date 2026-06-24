@@ -1,0 +1,227 @@
+{# WARP – Vorlagen #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Vorlagen</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>Vorlagen</h1>
+    <p>Generische und KI-vorausgefüllte Dokumente</p>
+  </div>
+</header>
+
+{% set active_nav = 'vorlagen' %}
+{% include '_sidebar.html' %}
+
+<main class="main">
+
+  {# ── Erklärung ─────────────────────────────────────────────────────── #}
+  <div class="card" style="margin-bottom:16px">
+    <h2 style="margin:0 0 10px">Vorlagen &amp; Dokumente</h2>
+    <p style="color:var(--c-text-muted);margin:0;line-height:1.65;font-size:.9rem">
+      Es gibt zwei Arten von Dokumenten:
+      <strong>Generische Vorlagen</strong> stehen immer zum Download bereit und können manuell befüllt werden.
+      <strong>KI-vorausgefüllte Dokumente</strong> werden automatisch aus Ihren WARP-Assessment-Antworten erstellt
+      – dafür muss ein Projekt vollständig (100 %) beantwortet sein.
+    </p>
+  </div>
+
+  {# ── Generische Vorlagen ───────────────────────────────────────────── #}
+  <div class="card" style="margin-bottom:16px">
+    <h2 style="margin:0 0 6px">Generische Vorlagen</h2>
+    <p style="color:var(--c-text-muted);margin:0 0 16px;font-size:.85rem">Leere Vorlagen – jederzeit abrufbar, ohne Projektbezug.</p>
+    <div class="dok-list">
+
+      {% for filename, label, desc in [
+        ('WARP_Mastertestkonzept.docx', 'Mastertestkonzept', 'Übergreifendes Testkonzept für das gesamte Projekt'),
+        ('WARP_Teststrategie.docx',     'Teststrategie',     'Strategische Ausrichtung und Testansatz'),
+        ('WARP_Stufentestkonzept.docx', 'Stufentestkonzept', 'Detailliertes Konzept je Teststufe')
+      ] %}
+      <div class="dok-item">
+        <div class="dok-title">{{ label }}</div>
+        <div class="dok-desc" style="color:var(--c-text-muted);font-size:.82rem;margin:4px 0 12px">{{ desc }}</div>
+        <a class="btn dok-btn-dl"
+           href="{{ url_for('static', filename='docs/' + filename) }}" download>
+          <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" style="margin-right:5px;vertical-align:middle">
+            <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
+          </svg>Vorlage herunterladen
+        </a>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
+
+  {# ── KI-vorausgefüllte Dokumente ───────────────────────────────────── #}
+  <div class="card">
+    <h2 style="margin:0 0 6px">KI-vorausgefüllte Dokumente</h2>
+    <p style="color:var(--c-text-muted);margin:0 0 18px;font-size:.85rem">
+      Wählen Sie ein Assessment-Projekt aus. Alle Fragen müssen beantwortet sein (100 %), um die KI-Generierung freizuschalten.
+    </p>
+
+    {% if projects_data %}
+
+    <div style="margin-bottom:20px">
+      <label for="js-proj-select" style="font-size:.85rem;font-weight:600;display:block;margin-bottom:6px">
+        Assessment-Projekt
+      </label>
+      <select id="js-proj-select" class="vorlagen-select">
+        <option value="">– Projekt wählen –</option>
+        {% for e in projects_data %}
+        <option value="{{ e.project.id }}">{{ e.project.name }} ({{ e.pct }}%)</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    {# Per-Project panels – toggled by JS #}
+    {% for e in projects_data %}
+    <div class="js-proj-state" data-pid="{{ e.project.id }}" style="display:none">
+
+      {% if e.is_100 %}
+      {# ── Freigeschaltet ──────────────────────────────────────── #}
+      <div style="background:#f0fdf4;border:1px solid #a7f3d0;border-radius:8px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#059669" stroke-width="2">
+          <path d="M3 8l3.5 3.5L13 4"/>
+        </svg>
+        <span style="font-size:.85rem;color:#059669;font-weight:600">
+          Alle {{ e.total }} Fragen beantwortet – KI-Dokumente können generiert werden.
+        </span>
+      </div>
+      <div class="dok-list">
+
+        {% for doc_type, label, desc in [
+          ('mastertestkonzept', 'Mastertestkonzept', 'Übergreifendes Testkonzept für das gesamte Projekt'),
+          ('teststrategie',     'Teststrategie',     'Strategische Ausrichtung und Testansatz'),
+          ('stufentestkonzept', 'Stufentestkonzept', 'Detailliertes Konzept je Teststufe')
+        ] %}
+        {% set gen_date = e.generated_docs.get(doc_type) %}
+        <div class="dok-item">
+          <div class="dok-title">{{ label }}</div>
+          <div class="dok-desc" style="color:var(--c-text-muted);font-size:.82rem;margin:4px 0 0">{{ desc }}</div>
+          {% if gen_date %}
+          <div style="font-size:.72rem;color:var(--c-text-muted);margin:3px 0 10px">Zuletzt generiert: {{ gen_date }}</div>
+          {% else %}
+          <div style="margin-bottom:12px"></div>
+          {% endif %}
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+            {% if gen_date %}
+            <a class="btn dok-btn-dl"
+               href="{{ url_for('download_generated_document', pid=e.project.id, doc_type=doc_type) }}">
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor" style="margin-right:5px;vertical-align:middle">
+                <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
+              </svg>Herunterladen
+            </a>
+            <form class="dok-gen-form" method="POST"
+                  action="{{ url_for('generate_document', pid=e.project.id, doc_type=doc_type) }}" style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn dok-btn-regen" title="Neu generieren">
+                <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M13 2v4h-4M3 14v-4h4M13 6A6 6 0 1 1 3 10"/>
+                </svg>
+              </button>
+            </form>
+            {% else %}
+            <form class="dok-gen-form" method="POST"
+                  action="{{ url_for('generate_document', pid=e.project.id, doc_type=doc_type) }}" style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <button type="submit" class="btn dok-btn-gen">
+                <span class="dok-gen-label">
+                  <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" style="margin-right:4px;vertical-align:middle">
+                    <path d="M8 1v14M1 8h14"/>
+                  </svg>Mit KI generieren
+                </span>
+                <span class="dok-gen-spinner" style="display:none">Wird generiert…</span>
+              </button>
+            </form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+
+      </div>
+
+      {% else %}
+      {# ── Gesperrt ────────────────────────────────────────────── #}
+      <div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:16px 18px">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="#b45309" stroke-width="1.8">
+            <rect x="4" y="7" width="8" height="7" rx="1.5"/>
+            <path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/>
+          </svg>
+          <span style="font-size:.88rem;font-weight:600;color:#b45309">
+            Noch {{ e.total - e.answered }} Fragen offen – KI-Dokumente noch nicht verfügbar
+          </span>
+        </div>
+        <div class="ausw-prog-wrap" style="margin-bottom:6px">
+          <div class="ausw-prog-fill" style="width:{{ e.pct }}%"></div>
+        </div>
+        <div style="font-size:.78rem;color:var(--c-text-muted);margin-bottom:14px">
+          {{ e.answered }} / {{ e.total }} Fragen beantwortet ({{ e.pct }}%)
+        </div>
+        <a href="{{ url_for('questionnaire', pid=e.project.id) }}"
+           class="btn btn-primary" style="font-size:.82rem;padding:6px 14px">
+          Zum Fragenkatalog &rarr;
+        </a>
+      </div>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+
+    {% else %}
+    <div style="background:#f9fafb;border-radius:8px;padding:28px;text-align:center;color:var(--c-text-muted)">
+      <p style="margin:0 0 12px;font-size:.9rem">Noch keine Assessment-Projekte vorhanden.</p>
+      <a href="{{ url_for('new_project') }}" class="btn btn-primary" style="font-size:.82rem">
+        + Neues Projekt anlegen
+      </a>
+    </div>
+    {% endif %}
+
+  </div>
+
+</main>
+
+<script>
+(function () {
+  var sel = document.getElementById('js-proj-select');
+  if (!sel) return;
+
+  function showProject(pid) {
+    document.querySelectorAll('.js-proj-state').forEach(function (el) {
+      el.style.display = el.dataset.pid === String(pid) ? 'block' : 'none';
+    });
+  }
+
+  sel.addEventListener('change', function () { showProject(this.value); });
+
+  // Auto-select when only one project exists
+  if (sel.options.length === 2) {
+    sel.selectedIndex = 1;
+    showProject(sel.options[1].value);
+  }
+})();
+
+// Spinner during KI generation
+document.querySelectorAll('.dok-gen-form').forEach(function (form) {
+  form.addEventListener('submit', function () {
+    var label   = form.querySelector('.dok-gen-label');
+    var spinner = form.querySelector('.dok-gen-spinner');
+    if (label)   label.style.display   = 'none';
+    if (spinner) spinner.style.display = 'inline';
+    form.classList.add('loading');
+  });
+});
+</script>
+</body>
+</html>
