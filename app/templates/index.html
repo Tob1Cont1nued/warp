@@ -1,4 +1,4 @@
-{# WARP Tool - Fragenkatalog #}
+{# WARP Tool - Fragenkatalog mit Tab-Navigation #}
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -16,13 +16,8 @@
     </svg>
   </button>
   <div class="topbar-title">
-    {% if project.catalog_type == 'workshop' %}
-    <h1>Workshop</h1>
-    <p>Fragenliste für den Workshop</p>
-    {% else %}
-    <h1>WARP Assessment</h1>
-    <p>Reifegradanalyse Test &amp; Quality Engineering</p>
-    {% endif %}
+    <h1>{{ project.name }}</h1>
+    <p>{% if project.catalog_type == 'workshop' %}Workshop{% else %}WARP Assessment{% endif %}</p>
   </div>
   <div class="progress-pill">
     <span class="progress-label">Beantwortet</span>
@@ -36,115 +31,274 @@
 
 <main class="main">
 
-  {# ── DEV-ONLY: Zufällig befüllen ─────────────────────────────────── #}
-  <div style="margin-bottom:12px;padding:10px 14px;background:#fffbeb;border:1.5px dashed #f59e0b;border-radius:8px;display:flex;align-items:center;gap:12px;font-size:.82rem;color:#92400e">
-    <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="#f59e0b" stroke-width="1.8" style="flex-shrink:0">
-      <path d="M8 2L2 14h12L8 2z"/><path d="M8 7v3M8 11.5v.5"/>
-    </svg>
-    <span><strong>Testmodus</strong> – Antworten zufällig befüllen</span>
-    <form method="POST" action="{{ url_for('autofill_project', pid=project.id) }}" style="margin-left:auto">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-      <button type="submit" style="padding:5px 14px;font-size:.82rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px">
-        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
-          <path d="M13.5 2.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1h1.8A5 5 0 1 0 13 9a.5.5 0 0 1 1 .09A6 6 0 1 1 12.3 4H13a.5.5 0 0 1 .5-.5z"/>
-        </svg>
-        Zufällig befüllen
+  {# ── Tab-Navigation ───────────────────────────────────────────────── #}
+  <div class="tab-bar" role="tablist">
+    <button class="tab-btn active" data-tab="fragen" role="tab" aria-selected="true">
+      <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="2" y="2" width="12" height="12" rx="2"/>
+        <path d="M5 5h6M5 8h6M5 11h3"/>
+      </svg>
+      Fragenkatalog
+      <span class="tab-count" id="js-tab-count">0&nbsp;/&nbsp;{{ total_questions }}</span>
+    </button>
+    <button class="tab-btn" data-tab="auswertung" role="tab" aria-selected="false">
+      <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+        <rect x="1" y="1" width="14" height="14" rx="2"/>
+        <path d="M3 11l3-4 3 2 3-5 3 3"/>
+      </svg>
+      Auswertung
+    </button>
+    {% if project.catalog_type != 'workshop' %}
+    <button class="tab-btn" data-tab="dokumente" role="tab" aria-selected="false">
+      <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M4 2h6l4 4v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/>
+        <path d="M10 2v4h4"/>
+      </svg>
+      KI-Dokumente
+    </button>
+    {% endif %}
+  </div>
+
+  {# ═══════════════════════════════════════════════════════════════════
+     TAB 1 – FRAGENKATALOG
+     ══════════════════════════════════════════════════════════════════ #}
+  <div class="tab-panel active" id="tab-fragen">
+
+    {# DEV: Zufällig befüllen #}
+    <div style="margin-bottom:12px;padding:10px 14px;background:#fffbeb;border:1.5px dashed #f59e0b;border-radius:8px;display:flex;align-items:center;gap:12px;font-size:.82rem;color:#92400e">
+      <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="#f59e0b" stroke-width="1.8" style="flex-shrink:0">
+        <path d="M8 2L2 14h12L8 2z"/><path d="M8 7v3M8 11.5v.5"/>
+      </svg>
+      <span><strong>Testmodus</strong> – Antworten zufällig befüllen</span>
+      <form method="POST" action="{{ url_for('autofill_project', pid=project.id) }}" style="margin-left:auto">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+        <button type="submit" style="padding:5px 14px;font-size:.82rem;background:#f59e0b;color:#fff;border:none;border-radius:6px;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:6px">
+          <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor">
+            <path d="M13.5 2.5a.5.5 0 0 1 .5.5v3a.5.5 0 0 1-.5.5h-3a.5.5 0 0 1 0-1h1.8A5 5 0 1 0 13 9a.5.5 0 0 1 1 .09A6 6 0 1 1 12.3 4H13a.5.5 0 0 1 .5-.5z"/>
+          </svg>
+          Zufällig befüllen
+        </button>
+      </form>
+    </div>
+
+    <div class="card project-card">
+      <h2>Projektinformationen</h2>
+      <p class="card-sub">Diese Angaben erscheinen auf der ersten Seite des PDF-Reports.</p>
+      <div class="field-grid">
+        <div class="field">
+          <label for="project_name">Projektname</label>
+          <input type="text" id="project_name" name="project_name"
+                 value="{{ project.name }}"
+                 placeholder="z.B. Analyse Test-Reifegrad — Kunde XY" />
+        </div>
+        <div class="field">
+          <label for="project_owner">Verantwortliche/r</label>
+          <input type="text" id="project_owner" name="project_owner"
+                 value="{{ project.owner or '' }}"
+                 placeholder="z.B. Max Mustermann" />
+        </div>
+        <div class="field">
+          <label for="project_date">Datum</label>
+          <input type="date" id="project_date" name="project_date"
+                 value="{{ project.date or today }}" />
+        </div>
+      </div>
+    </div>
+
+    {% for cat in categories %}
+    <section class="card category-card" id="cat-{{ cat.id }}">
+      <header class="category-head">
+        <div>
+          <h2>{{ cat.title }}</h2>
+          <p>{{ cat.description }}</p>
+        </div>
+        <span class="cat-counter" data-cat="{{ cat.id }}" data-total="{{ cat.questions | length }}">
+          0&nbsp;/&nbsp;{{ cat.questions | length }}
+        </span>
+      </header>
+
+      <table class="qtable">
+        <thead>
+          <tr>
+            <th class="col-num">#</th>
+            <th class="col-question">Frage</th>
+            <th class="col-hint">Hilfsfrage</th>
+            <th class="col-answer">Bewertung</th>
+            <th class="col-notes">Notizen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in cat.questions %}
+          <tr data-cat="{{ cat.id }}">
+            <td class="col-num">{{ loop.index }}</td>
+            <td class="col-question">{{ q.text }}</td>
+            <td class="col-hint">
+              {% if q.hint %}<em>{{ q.hint }}</em>{% else %}<span class="muted">&mdash;</span>{% endif %}
+            </td>
+            <td class="col-answer" data-label="Bewertung">
+              <select class="js-answer" data-cat="{{ cat.id }}" data-qid="{{ q.id }}">
+                <option value="">Bitte wählen …</option>
+                {% for opt in answer_options %}
+                  <option value="{{ opt.id }}"
+                    {% if saved_answers.get(q.id) == opt.id %}selected{% endif %}>
+                    {{ opt.label }}
+                  </option>
+                {% endfor %}
+              </select>
+            </td>
+            <td class="col-notes" data-label="Notizen (optional)">
+              <textarea class="js-note" data-qid="{{ q.id }}" rows="2"
+                        placeholder="Optional ...">{{ saved_notes.get(q.id, '') }}</textarea>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+    {% endfor %}
+
+    {# CTA am Ende des Fragenkatalogs #}
+    <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
+      <button class="btn btn-primary" onclick="switchTab('auswertung')" style="width:auto;padding:12px 28px">
+        Weiter zur Auswertung &rarr;
       </button>
-    </form>
-  </div>
+    </div>
 
-  <div class="card project-card">
-    <h2>Projektinformationen</h2>
-    <p class="card-sub">Diese Angaben erscheinen auf der ersten Seite des PDF-Reports.</p>
-    <div class="field-grid">
-      <div class="field">
-        <label for="project_name">Projektname</label>
-        <input type="text" id="project_name" name="project_name"
-               value="{{ project.name }}"
-               placeholder="z.B. Analyse Test-Reifegrad — Kunde XY" />
-      </div>
-      <div class="field">
-        <label for="project_owner">Verantwortliche/r</label>
-        <input type="text" id="project_owner" name="project_owner"
-               value="{{ project.owner or '' }}"
-               placeholder="z.B. Max Mustermann" />
-      </div>
-      <div class="field">
-        <label for="project_date">Datum</label>
-        <input type="date" id="project_date" name="project_date"
-               value="{{ project.date or today }}" />
+  </div>{# /tab-fragen #}
+
+  {# ═══════════════════════════════════════════════════════════════════
+     TAB 2 – AUSWERTUNG & EXPORT
+     ══════════════════════════════════════════════════════════════════ #}
+  <div class="tab-panel" id="tab-auswertung">
+
+    {# Fortschrittsübersicht #}
+    <div class="card" style="margin-bottom:16px">
+      <h2>Fortschritt</h2>
+      <p class="card-sub">Übersicht der beantworteten Fragen vor dem Export.</p>
+      <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+        <div>
+          <div style="font-size:2.2rem;font-weight:700;color:var(--ws-blue);line-height:1">
+            <span id="js-ausw-answered">0</span><span style="font-size:1rem;color:var(--c-text-muted);font-weight:400"> / {{ total_questions }}</span>
+          </div>
+          <div style="font-size:.78rem;color:var(--c-text-muted);margin-top:3px;text-transform:uppercase;letter-spacing:.05em;font-weight:600">Fragen beantwortet</div>
+        </div>
+        <div style="flex:1;min-width:140px">
+          <div style="display:flex;justify-content:space-between;font-size:.75rem;color:var(--c-text-muted);margin-bottom:4px">
+            <span>Gesamtfortschritt</span><span id="js-ausw-pct" style="font-weight:700">0%</span>
+          </div>
+          <div class="ausw-prog-wrap">
+            <div class="ausw-prog-fill" id="js-ausw-bar" style="width:0%"></div>
+          </div>
+        </div>
       </div>
     </div>
-  </div>
 
-  {% for cat in categories %}
-  <section class="card category-card" id="cat-{{ cat.id }}">
-    <header class="category-head">
+    {# Export-Card #}
+    <section class="card submit-card">
       <div>
-        <h2>{{ cat.title }}</h2>
-        <p>{{ cat.description }}</p>
+        <h2>Report erzeugen</h2>
+        <p>PDF mit Wavestone-Branding, Gesamtscore, Kategorie-Charts und Fragen-Detail.</p>
       </div>
-      <span class="cat-counter" data-cat="{{ cat.id }}" data-total="{{ cat.questions | length }}">
-        0&nbsp;/&nbsp;{{ cat.questions | length }}
-      </span>
-    </header>
+      <div class="submit-actions">
+        <form method="POST" action="{{ url_for('project_report_html', pid=project.id) }}" target="_blank">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button type="submit" class="btn btn-secondary">Vorschau (HTML)</button>
+        </form>
+        <form method="POST" action="{{ url_for('project_report_pdf', pid=project.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <button type="submit" class="btn btn-primary">PDF herunterladen</button>
+        </form>
+      </div>
+    </section>
 
-    <table class="qtable">
-      <thead>
-        <tr>
-          <th class="col-num">#</th>
-          <th class="col-question">Frage</th>
-          <th class="col-hint">Hilfsfrage</th>
-          <th class="col-answer">Bewertung</th>
-          <th class="col-notes">Notizen</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for q in cat.questions %}
-        <tr data-cat="{{ cat.id }}">
-          <td class="col-num">{{ loop.index }}</td>
-          <td class="col-question">{{ q.text }}</td>
-          <td class="col-hint">
-            {% if q.hint %}<em>{{ q.hint }}</em>{% else %}<span class="muted">&mdash;</span>{% endif %}
-          </td>
-          <td class="col-answer" data-label="Bewertung">
-            <select class="js-answer" data-cat="{{ cat.id }}" data-qid="{{ q.id }}">
-              <option value="">Bitte wählen …</option>
-              {% for opt in answer_options %}
-                <option value="{{ opt.id }}"
-                  {% if saved_answers.get(q.id) == opt.id %}selected{% endif %}>
-                  {{ opt.label }}
-                </option>
-              {% endfor %}
-            </select>
-          </td>
-          <td class="col-notes" data-label="Notizen (optional)">
-            <textarea class="js-note" data-qid="{{ q.id }}" rows="2"
-                      placeholder="Optional ...">{{ saved_notes.get(q.id, '') }}</textarea>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </section>
-  {% endfor %}
+    {# Zurück zu den Fragen #}
+    <div style="margin-top:4px">
+      <button onclick="switchTab('fragen')" style="background:none;border:none;color:var(--ws-blue);font-size:.88rem;font-weight:600;cursor:pointer;padding:0">
+        &larr; Zurück zum Fragenkatalog
+      </button>
+    </div>
 
-  <section class="card submit-card" id="auswertung-section">
-    <div>
-      <h2>Auswertung erzeugen</h2>
-      <p>Der Report wird als PDF mit Wavestone-Branding, Gesamtscore, Kategorie-Charts und Fragen-Detail erzeugt.</p>
+  </div>{# /tab-auswertung #}
+
+  {# ═══════════════════════════════════════════════════════════════════
+     TAB 3 – KI-DOKUMENTE  (nur Assessment-Projekte)
+     ══════════════════════════════════════════════════════════════════ #}
+  {% if project.catalog_type != 'workshop' %}
+  <div class="tab-panel" id="tab-dokumente">
+
+    <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--ws-blue-soft) 100%);border:1px solid rgba(69,29,199,.1)">
+      <h2>KI-generierte Dokumente</h2>
+      <p class="card-sub" style="margin:0">WARP erstellt auf Basis deiner Antworten vollständige Testdokumente im Word-Format, vorausgefüllt durch KI.</p>
     </div>
-    <div class="submit-actions">
-      <form method="POST" action="{{ url_for('project_report_html', pid=project.id) }}" target="_blank">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <button type="submit" class="btn btn-secondary">Vorschau (HTML)</button>
-      </form>
-      <form method="POST" action="{{ url_for('project_report_pdf', pid=project.id) }}">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-        <button type="submit" class="btn btn-primary">PDF herunterladen</button>
-      </form>
+
+    <div class="dok-list">
+      {% for doc_type, label, desc in [
+        ('mastertestkonzept', 'Mastertestkonzept', 'Übergreifendes Testkonzept mit Teststrategie, Risikobewertung und Abdeckungsnachweis'),
+        ('teststrategie',     'Teststrategie',     'Strategische Ausrichtung des Testvorgehens für das gesamte Projekt'),
+        ('stufentestkonzept', 'Stufentestkonzept', 'Detailliertes Konzept je Teststufe – Unit, Integration, System, Abnahme')
+      ] %}
+      {% set gen_date = (generated_docs or {}).get(doc_type) %}
+      <div class="dok-item">
+        <div class="dok-item-head">
+          <div class="dok-item-icon">
+            <svg viewBox="0 0 16 16" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 2h6l4 4v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/>
+              <path d="M10 2v4h4M5 9h6M5 12h4"/>
+            </svg>
+          </div>
+          <div>
+            <div class="dok-item-label">{{ label }}</div>
+            <div class="dok-item-date">
+              {% if gen_date %}
+                <span style="color:#059669">&#10003; Erstellt am {{ gen_date.strftime('%d.%m.%Y') }}</span>
+              {% else %}
+                Noch nicht erstellt
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <p class="dok-item-desc">{{ desc }}</p>
+        <div class="dok-item-actions">
+          {% if gen_date %}
+          <a class="dok-btn dok-btn-dl"
+             href="{{ url_for('download_generated_document', pid=project.id, doc_type=doc_type) }}">
+            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
+              <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
+            </svg>
+            Herunterladen
+          </a>
+          <form method="POST" action="{{ url_for('generate_document', pid=project.id, doc_type=doc_type) }}"
+                class="dok-gen-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="dok-btn dok-btn-regen" title="Neu generieren">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M13.5 2.5v3h-3M2.5 13.5v-3h3"/>
+                <path d="M14 6A6 6 0 1 1 8 2"/>
+              </svg>
+            </button>
+          </form>
+          {% else %}
+          <form method="POST" action="{{ url_for('generate_document', pid=project.id, doc_type=doc_type) }}"
+                class="dok-gen-form" style="flex:1">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="dok-btn dok-btn-gen">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="13" cy="3" r="2.5" fill="var(--ws-blue)" stroke="none"/>
+                <text x="13" y="4" text-anchor="middle" font-size="3.5" fill="white" font-weight="bold">✦</text>
+                <path d="M8 2v9M5 8l3 3 3-3"/>
+              </svg>
+              <span class="dok-gen-label">{{ label }} erstellen</span>
+              <span class="dok-gen-spinner" style="display:none">Generiere …</span>
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
     </div>
-  </section>
+
+  </div>{# /tab-dokumente #}
+  {% endif %}
 
 </main>
 
@@ -161,25 +315,33 @@
 </div>
 
 <script>
+// ── Tab-Switching ────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-btn').forEach(function (btn) {
+    var active = btn.dataset.tab === name;
+    btn.classList.toggle('active', active);
+    btn.setAttribute('aria-selected', active);
+  });
+  document.querySelectorAll('.tab-panel').forEach(function (panel) {
+    panel.classList.toggle('active', panel.id === 'tab-' + name);
+  });
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+document.querySelectorAll('.tab-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () { switchTab(btn.dataset.tab); });
+});
+// Hash-basierter Tab beim Laden
 (function () {
-  const PROJECT_ID = {{ project.id }};
-  const SAVE_URL   = "/project/" + PROJECT_ID + "/answer";
-  const INFO_URL   = "/project/" + PROJECT_ID + "/info";
+  var hash = window.location.hash.replace('#', '');
+  if (['fragen', 'auswertung', 'dokumente'].indexOf(hash) !== -1) switchTab(hash);
+})();
 
-  // ── Aktiver Nav-Punkt via IntersectionObserver ───────────────────────
-  const auswSection = document.getElementById('auswertung-section');
-  if (auswSection) {
-    const navItems = document.querySelectorAll('#js-sidebar-nav .sidebar-nav-item');
-    const obs = new IntersectionObserver(entries => {
-      const isVisible = entries[0].isIntersecting;
-      navItems.forEach(a => a.classList.remove('active'));
-      // Fragenkatalog ist index 0, Auswertung index 1
-      if (navItems[isVisible ? 1 : 0]) navItems[isVisible ? 1 : 0].classList.add('active');
-    }, { threshold: 0.15 });
-    obs.observe(auswSection);
-  }
+// ── Haupt-Logik ──────────────────────────────────────────────────────
+(function () {
+  var PROJECT_ID = {{ project.id }};
+  var SAVE_URL   = "/project/" + PROJECT_ID + "/answer";
+  var INFO_URL   = "/project/" + PROJECT_ID + "/info";
 
-  // ── AJAX Helper ─────────────────────────────────────────────────────
   function post(url, body) {
     return fetch(url, {
       method: "POST",
@@ -188,11 +350,11 @@
     });
   }
 
-  // ── Projektinfos auto-speichern ─────────────────────────────────────
-  let infoTimer = null;
+  // Projektinfos auto-speichern
+  var infoTimer = null;
   function scheduleInfoSave() {
     clearTimeout(infoTimer);
-    infoTimer = setTimeout(() => {
+    infoTimer = setTimeout(function () {
       post(INFO_URL, {
         name:  document.getElementById("project_name").value,
         owner: document.getElementById("project_owner").value,
@@ -200,47 +362,68 @@
       });
     }, 600);
   }
-  ["project_name", "project_owner", "project_date"].forEach(id => {
-    document.getElementById(id).addEventListener("input", scheduleInfoSave);
-    document.getElementById(id).addEventListener("change", scheduleInfoSave);
+  ["project_name", "project_owner", "project_date"].forEach(function (id) {
+    var el = document.getElementById(id);
+    el.addEventListener("input", scheduleInfoSave);
+    el.addEventListener("change", scheduleInfoSave);
   });
 
-  // ── Antworten auto-speichern + Fortschrittsbalken ──────────────────
-  const total      = {{ total_questions }};
-  const answeredEl = document.getElementById("js-answered");
-  const barEl      = document.getElementById("js-progress-bar");
-  const selects    = document.querySelectorAll(".js-answer");
+  // Antworten auto-speichern + alle Fortschrittsanzeigen
+  var total       = {{ total_questions }};
+  var answeredEl  = document.getElementById("js-answered");
+  var barEl       = document.getElementById("js-progress-bar");
+  var auswAnsEl   = document.getElementById("js-ausw-answered");
+  var auswPctEl   = document.getElementById("js-ausw-pct");
+  var auswBarEl   = document.getElementById("js-ausw-bar");
+  var tabCountEl  = document.getElementById("js-tab-count");
+  var selects     = document.querySelectorAll(".js-answer");
 
   function updateCounter() {
-    let filled = 0;
-    const perCat = {};
-    selects.forEach(s => {
-      const cat = s.dataset.cat;
-      perCat[cat] = perCat[cat] || 0;
+    var filled = 0;
+    var perCat = {};
+    selects.forEach(function (s) {
+      var cat = s.dataset.cat;
+      if (!perCat[cat]) perCat[cat] = 0;
       if (s.value) { filled++; perCat[cat]++; }
     });
+    var pct = total > 0 ? Math.round(filled / total * 100) : 0;
+
+    // Topbar
     answeredEl.textContent = filled;
-    barEl.style.width = (filled / total * 100) + "%";
-    document.querySelectorAll(".cat-counter").forEach(el => {
-      const c = el.dataset.cat, t = el.dataset.total, n = perCat[c] || 0;
+    barEl.style.width = pct + "%";
+
+    // Auswertung-Tab
+    if (auswAnsEl) auswAnsEl.textContent = filled;
+    if (auswPctEl) auswPctEl.textContent = pct + "%";
+    if (auswBarEl) auswBarEl.style.width = pct + "%";
+
+    // Tab-Button Badge
+    if (tabCountEl) {
+      tabCountEl.innerHTML = filled + "&nbsp;/&nbsp;" + total;
+      tabCountEl.classList.toggle("complete", filled === total);
+    }
+
+    // Kategorie-Zähler
+    document.querySelectorAll(".cat-counter").forEach(function (el) {
+      var c = el.dataset.cat, t = parseInt(el.dataset.total), n = perCat[c] || 0;
       el.textContent = n + " / " + t;
-      el.classList.toggle("complete", String(n) === t);
+      el.classList.toggle("complete", n === t);
     });
   }
 
-  selects.forEach(s => {
-    s.addEventListener("change", () => {
+  selects.forEach(function (s) {
+    s.addEventListener("change", function () {
       updateCounter();
       post(SAVE_URL, { question_id: s.dataset.qid, answer_id: s.value });
     });
   });
 
-  // ── Notizen auto-speichern (debounced) ──────────────────────────────
-  const noteTimers = {};
-  document.querySelectorAll(".js-note").forEach(ta => {
-    ta.addEventListener("input", () => {
+  // Notizen auto-speichern (debounced)
+  var noteTimers = {};
+  document.querySelectorAll(".js-note").forEach(function (ta) {
+    ta.addEventListener("input", function () {
       clearTimeout(noteTimers[ta.dataset.qid]);
-      noteTimers[ta.dataset.qid] = setTimeout(() => {
+      noteTimers[ta.dataset.qid] = setTimeout(function () {
         post(SAVE_URL, { question_id: ta.dataset.qid, note: ta.value });
       }, 800);
     });
@@ -249,15 +432,27 @@
   updateCounter();
 })();
 
+// ── KI-Dokument Spinner ──────────────────────────────────────────────
+document.querySelectorAll('.dok-gen-form').forEach(function (form) {
+  form.addEventListener('submit', function () {
+    var btn  = form.querySelector('.dok-btn-gen');
+    var lbl  = form.querySelector('.dok-gen-label');
+    var spin = form.querySelector('.dok-gen-spinner');
+    if (btn)  btn.classList.add('loading');
+    if (lbl)  lbl.style.display = 'none';
+    if (spin) spin.style.display = 'inline';
+  });
+});
+
 // ── Bestätigungs-Modal ───────────────────────────────────────────────
 (function () {
-  const backdrop = document.getElementById("js-modal-backdrop");
-  const msgEl    = document.getElementById("js-modal-message");
-  const okBtn    = document.getElementById("js-modal-confirm");
-  const cancelBtn= document.getElementById("js-modal-cancel");
-  let pending = null;
+  var backdrop  = document.getElementById("js-modal-backdrop");
+  var msgEl     = document.getElementById("js-modal-message");
+  var okBtn     = document.getElementById("js-modal-confirm");
+  var cancelBtn = document.getElementById("js-modal-cancel");
+  var pending   = null;
 
-  document.querySelectorAll("form[data-confirm]").forEach(form => {
+  document.querySelectorAll("form[data-confirm]").forEach(function (form) {
     form.addEventListener("submit", function (e) {
       if (form.dataset.confirmed) { delete form.dataset.confirmed; return; }
       e.preventDefault();
@@ -267,38 +462,25 @@
     });
   });
 
-  okBtn.addEventListener("click", () => {
+  okBtn.addEventListener("click", function () {
     backdrop.classList.remove("open");
     if (pending) { pending.dataset.confirmed = "1"; pending.submit(); pending = null; }
   });
-  const close = () => { backdrop.classList.remove("open"); pending = null; };
+  function close() { backdrop.classList.remove("open"); pending = null; }
   cancelBtn.addEventListener("click", close);
-  backdrop.addEventListener("click", e => { if (e.target === backdrop) close(); });
+  backdrop.addEventListener("click", function (e) { if (e.target === backdrop) close(); });
 })();
 
-// ── Sidebar-Abschnitte ein-/ausklappen ───────────────────────────────
+// ── Sidebar Abschnitte ein-/ausklappen ───────────────────────────────
 function sidebarToggle(btn) {
-  const body = btn.nextElementSibling;
-  const open = btn.getAttribute('aria-expanded') === 'true';
+  var body = btn.nextElementSibling;
+  var open = btn.getAttribute('aria-expanded') === 'true';
   btn.setAttribute('aria-expanded', !open);
   body.style.maxHeight = open ? '0' : body.scrollHeight + 'px';
   btn.querySelector('.sidebar-chevron').style.transform = open ? 'rotate(-90deg)' : '';
 }
-// Initiale max-height setzen damit Transition beim ersten Schließen funktioniert
-document.querySelectorAll('.sidebar-section-body').forEach(b => {
+document.querySelectorAll('.sidebar-section-body').forEach(function (b) {
   b.style.maxHeight = b.scrollHeight + 'px';
-});
-
-// ── KI-Generate Spinner ──────────────────────────────────────────────
-document.querySelectorAll('.sidebar-gen-form').forEach(form => {
-  form.addEventListener('submit', () => {
-    const btn  = form.querySelector('.sidebar-gen-btn');
-    const lbl  = form.querySelector('.gen-label');
-    const spin = form.querySelector('.gen-spinner');
-    btn.classList.add('loading');
-    lbl.textContent = 'Generiere…';
-    spin.style.display = 'inline';
-  });
 });
 </script>
 

@@ -48,34 +48,6 @@
          href="{{ url_for('dashboard') }}">
         <span class="dot"></span>Dashboard
       </a>
-      {# Fragenkatalog / Auswertung – je Katalogtyp #}
-      {% set assessment_projects = projects | selectattr('catalog_type', 'equalto', 'assessment') | list %}
-      {% set workshop_projects   = projects | selectattr('catalog_type', 'equalto', 'workshop')   | list %}
-
-      {% if assessment_projects %}
-      {% set ap = assessment_projects[0] %}
-      <a class="sidebar-nav-item {% if active_nav == 'fragenkatalog' %}active{% endif %}"
-         href="{{ '#' if (project and project.id == ap.id and active_nav == 'fragenkatalog') else url_for('questionnaire', pid=ap.id) }}"
-         data-target="top">
-        <span class="dot"></span>WARP Assessment
-      </a>
-      <a class="sidebar-nav-item {% if active_nav == 'auswertung' %}active{% endif %}"
-         href="{% if project and active_nav != 'workshop' %}#auswertung-section{% else %}{{ url_for('questionnaire', pid=ap.id) }}#auswertung-section{% endif %}"
-         data-target="auswertung-section">
-        <span class="dot"></span>Auswertung
-      </a>
-      {% endif %}
-
-      {% if workshop_projects %}
-      {% set wp = workshop_projects[0] %}
-      <a class="sidebar-nav-item {% if active_nav == 'workshop' %}active{% endif %}"
-         href="{{ '#' if (project and project.id == wp.id and active_nav == 'workshop') else url_for('questionnaire', pid=wp.id) }}"
-         data-target="top">
-        <span class="dot"></span>Workshop
-      </a>
-      {% endif %}
-
-      {# Admin-Links #}
       {% if current_user.is_admin %}
       <div class="sidebar-nav-divider"></div>
       <a class="sidebar-nav-item {% if active_nav == 'postkorb' %}active{% endif %}"
@@ -117,62 +89,6 @@
         </a>
       </div>
     </div>
-
-    {# ── KI-Vorausfüllen – nur für Assessment-Projekte ───────────────── #}
-    {% set ki_project = project if (project and active_nav != 'workshop') else (assessment_projects[0] if assessment_projects else none) %}
-    {% if ki_project %}
-    <div class="sidebar-section">
-      <button class="sidebar-section-hd" onclick="sidebarToggle(this)" aria-expanded="false">
-        <span class="sidebar-downloads-label" style="margin:0">KI-Vorausfüllen</span>
-        <svg class="sidebar-chevron" viewBox="0 0 16 16" width="12" height="12" fill="none"
-             stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg>
-      </button>
-      <div class="sidebar-section-body">
-        {% for doc_type, label in [('mastertestkonzept','Mastertestkonzept'),('teststrategie','Teststrategie'),('stufentestkonzept','Stufentestkonzept')] %}
-        {% set gen_date = (generated_docs or {}).get(doc_type) %}
-        <div class="sidebar-doc-row">
-          {% if gen_date %}
-          {# Bereits generiert: Download-Link mit Datum #}
-          <a class="sidebar-download-btn sidebar-doc-exists"
-             href="{{ url_for('download_generated_document', pid=ki_project.id, doc_type=doc_type) }}">
-            <svg viewBox="0 0 16 16" width="13" height="13" fill="currentColor">
-              <path d="M8 12l-4-4h2.5V3h3v5H12L8 12zm-5 2h10v1.5H3V14z"/>
-            </svg>
-            <span class="sidebar-doc-name">{{ label }}</span>
-            <span class="sidebar-doc-date">{{ gen_date.strftime('%d.%m.%y') }}</span>
-          </a>
-          {# Neu generieren: kleiner Icon-Button #}
-          <form method="POST" action="{{ url_for('generate_document', pid=ki_project.id, doc_type=doc_type) }}"
-                class="sidebar-gen-form sidebar-regen-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button type="submit" class="sidebar-regen-btn" title="Neu generieren">
-              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8">
-                <path d="M13.5 2.5a.5.5 0 0 1 .5.5v3h-3M2.5 13.5v-3h3"/>
-                <path d="M14 6A6 6 0 1 1 8 2"/>
-              </svg>
-            </button>
-          </form>
-          {% else %}
-          {# Noch nicht generiert: voller Generier-Button #}
-          <form method="POST" action="{{ url_for('generate_document', pid=ki_project.id, doc_type=doc_type) }}"
-                class="sidebar-gen-form" style="flex:1">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button type="submit" class="sidebar-download-btn sidebar-gen-btn">
-              <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M8 1v10M4 7l4 4 4-4"/><rect x="2" y="13" width="12" height="2" rx="1"/>
-                <circle cx="13" cy="3" r="2.5" fill="#451DC7" stroke="none"/>
-                <text x="13" y="4" text-anchor="middle" font-size="3.5" fill="white" font-weight="bold">✦</text>
-              </svg>
-              <span class="gen-label">{{ label }}</span>
-              <span class="gen-spinner" style="display:none">…</span>
-            </button>
-          </form>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-    {% endif %}
 
   </div>{# /sidebar-scroll #}
 
@@ -232,18 +148,6 @@ function sidebarToggle(btn) {
 }
 document.querySelectorAll('.sidebar-section-body').forEach(b => {
   b.style.maxHeight = b.scrollHeight + 'px';
-});
-
-// ── KI-Generate Spinner ──────────────────────────────────────────────
-document.querySelectorAll('.sidebar-gen-form').forEach(form => {
-  form.addEventListener('submit', () => {
-    const btn  = form.querySelector('.sidebar-gen-btn');
-    const lbl  = form.querySelector('.gen-label');
-    const spin = form.querySelector('.gen-spinner');
-    btn.classList.add('loading');
-    lbl.textContent = 'Generiere…';
-    spin.style.display = 'inline';
-  });
 });
 
 // ── Postkorb-Badge per AJAX aktuell halten ───────────────────────────
