@@ -129,13 +129,14 @@
   {% for user in users %}
   <section class="card admin-user-card">
     <header class="admin-user-head">
-      <button type="button" class="admin-user-toggle" onclick="adminToggle(this)"
-              aria-expanded="false" title="Projekte ein-/ausklappen">
-        <svg class="admin-user-chevron" viewBox="0 0 16 16" width="14" height="14"
-             fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M4 6l4 4 4-4"/>
-        </svg>
-      </button>
+      <div class="admin-user-left">
+        <button type="button" class="admin-user-toggle" onclick="adminToggle(this)"
+                aria-expanded="false" title="Projekte ein-/ausklappen">
+          <svg class="admin-user-chevron" viewBox="0 0 16 16" width="14" height="14"
+               fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6l4 4 4-4"/>
+          </svg>
+        </button>
       <div class="admin-user-info">
         <span class="admin-user-name">
           {{ user.display_name or user.username }}
@@ -150,6 +151,7 @@
         </span>
         <span class="admin-user-meta">@{{ user.username }} &nbsp;&middot;&nbsp; {{ user.projects | length }} Projekt(e)</span>
       </div>
+      </div>{# /admin-user-left #}
       <div class="admin-user-actions">
         <form method="POST" action="{{ url_for('admin_user_set_role', uid=user.id) }}" style="display:flex;gap:4px;align-items:center">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />

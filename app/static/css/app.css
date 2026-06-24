@@ -929,6 +929,11 @@ button { cursor: pointer; }
   margin-bottom: 0;
   flex-wrap: wrap;
 }
+.admin-user-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 .admin-user-toggle {
   flex-shrink: 0;
   width: 30px;
