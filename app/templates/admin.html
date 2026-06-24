@@ -129,6 +129,13 @@
   {% for user in users %}
   <section class="card admin-user-card">
     <header class="admin-user-head">
+      <button type="button" class="admin-user-toggle" onclick="adminToggle(this)"
+              aria-expanded="false" title="Projekte ein-/ausklappen">
+        <svg class="admin-user-chevron" viewBox="0 0 16 16" width="14" height="14"
+             fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 6l4 4 4-4"/>
+        </svg>
+      </button>
       <div class="admin-user-info">
         <span class="admin-user-name">
           {{ user.display_name or user.username }}
@@ -167,38 +174,40 @@
       </div>
     </header>
 
-    {% if user.projects %}
-    <table class="admin-table">
-      <thead>
-        <tr>
-          <th>Projektname</th>
-          <th>Erstellt am</th>
-          <th>Verantwortliche/r</th>
-          <th>Antworten</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for project in user.projects %}
-        <tr>
-          <td class="admin-col-name">{{ project.name }}</td>
-          <td class="admin-col-date">{{ project.created_at.strftime('%d.%m.%Y') if project.created_at else '—' }}</td>
-          <td class="admin-col-owner">{{ project.owner or '—' }}</td>
-          <td class="admin-col-answers">{{ project.answers | length }} / {{ total_questions }}</td>
-          <td class="admin-col-action">
-            <form method="POST" action="{{ url_for('delete_project', pid=project.id) }}"
-                  data-confirm="Soll das Projekt »{{ project.name }}« wirklich gelöscht werden?">
-              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-              <button type="submit" class="btn-admin-delete">Löschen</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    {% else %}
-    <p class="admin-no-projects">Keine Projekte vorhanden.</p>
-    {% endif %}
+    <div class="admin-user-body" style="display:none">
+      {% if user.projects %}
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>Projektname</th>
+            <th>Erstellt am</th>
+            <th>Verantwortliche/r</th>
+            <th>Antworten</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for project in user.projects %}
+          <tr>
+            <td class="admin-col-name">{{ project.name }}</td>
+            <td class="admin-col-date">{{ project.created_at.strftime('%d.%m.%Y') if project.created_at else '—' }}</td>
+            <td class="admin-col-owner">{{ project.owner or '—' }}</td>
+            <td class="admin-col-answers">{{ project.answers | length }} / {{ total_questions }}</td>
+            <td class="admin-col-action">
+              <form method="POST" action="{{ url_for('delete_project', pid=project.id) }}"
+                    data-confirm="Soll das Projekt »{{ project.name }}« wirklich gelöscht werden?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="btn-admin-delete">Löschen</button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <p class="admin-no-projects">Keine Projekte vorhanden.</p>
+      {% endif %}
+    </div>
   </section>
   {% endfor %}
 
@@ -224,6 +233,15 @@
     bt.addEventListener("click", () => { sb.classList.toggle("open"); bd.classList.toggle("open"); });
     bd.addEventListener("click", closeSidebar);
   })();
+
+  function adminToggle(btn) {
+    var card = btn.closest(".admin-user-card");
+    var body = card.querySelector(".admin-user-body");
+    var open = btn.getAttribute("aria-expanded") === "true";
+    btn.setAttribute("aria-expanded", !open);
+    body.style.display = open ? "none" : "block";
+    btn.querySelector(".admin-user-chevron").style.transform = open ? "" : "rotate(180deg)";
+  }
 
   (function () {
     const backdrop  = document.getElementById("js-modal-backdrop");

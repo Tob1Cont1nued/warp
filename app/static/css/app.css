@@ -926,9 +926,27 @@ button { cursor: pointer; }
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 14px;
+  margin-bottom: 0;
   flex-wrap: wrap;
 }
+.admin-user-toggle {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  background: #f9fafb;
+  cursor: pointer;
+  color: var(--c-text-muted);
+  transition: background 0.15s, color 0.15s;
+}
+.admin-user-toggle:hover { background: var(--ws-blue-soft); color: var(--ws-blue); }
+.admin-user-chevron { transition: transform 0.2s; }
+.admin-user-body { padding-top: 14px; }
+.admin-user-card { padding-bottom: 16px; }
 .admin-user-info { display: flex; flex-direction: column; gap: 2px; }
 .admin-user-name {
   font-size: 17px;
