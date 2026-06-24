@@ -920,6 +920,20 @@ button { cursor: pointer; }
 }
 .label-optional { font-weight: 400; color: var(--c-text-muted); font-size: 12px; }
 
+/* ── Password-visibility toggle ──────────────────────────────────── */
+.pw-wrap { position: relative; display: block; width: 100%; }
+.pw-wrap input { padding-right: 40px !important; width: 100%; box-sizing: border-box; }
+.pw-toggle {
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; padding: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--c-text-muted); border-radius: 4px;
+  transition: color .15s;
+}
+.pw-toggle:hover { color: var(--c-text); }
+.pw-eye-off { display: none; }
+
 .admin-user-card + .admin-user-card { margin-top: 0; }
 .admin-user-head {
   display: flex;
