@@ -101,6 +101,13 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn" style="font-size:.8rem;padding:5px 12px;color:#059669;border-color:#a7f3d0;background:#f0fdf4" title="Als abgeschlossen markieren">&#10003; Abschließen</button>
           </form>
+          {% if not current_user.is_admin or current_user.is_superuser %}
+          <form method="POST" action="{{ url_for('delete_project', pid=e.project.id) }}"
+                onsubmit="return confirm('Projekt »{{ e.project.name }}« wirklich löschen?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn" style="font-size:.8rem;padding:5px 10px;color:#dc2626;border-color:#fecaca;background:#fff5f5" title="Projekt löschen">&times;</button>
+          </form>
+          {% endif %}
         </div>
       </div>
       {% endfor %}
@@ -136,6 +143,13 @@
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="btn" style="font-size:.8rem;padding:5px 12px;color:#6b7280;border-color:#d1d5db" title="Als offen markieren">&#8635; Wiederöffnen</button>
           </form>
+          {% if not current_user.is_admin or current_user.is_superuser %}
+          <form method="POST" action="{{ url_for('delete_project', pid=e.project.id) }}"
+                onsubmit="return confirm('Projekt »{{ e.project.name }}« wirklich löschen?')">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <button type="submit" class="btn" style="font-size:.8rem;padding:5px 10px;color:#dc2626;border-color:#fecaca;background:#fff5f5" title="Projekt löschen">&times;</button>
+          </form>
+          {% endif %}
         </div>
       </div>
       {% endfor %}

@@ -172,10 +172,14 @@ def create_app() -> Flask:
     def _get_project_or_403(pid: int) -> Project:
         project = db.session.get(Project, pid)
         if not project:
-            abort(403)
+            abort(404)
         if not current_user.is_admin and project.user_id != current_user.id:
             abort(403)
         return project
+
+    @app.errorhandler(403)
+    def handle_403(e):
+        return render_template("403.html"), 403
 
     def _db_question_count(catalog_type: str = 'assessment') -> int:
         return db.session.execute(

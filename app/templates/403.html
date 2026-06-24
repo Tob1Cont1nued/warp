@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Kein Zugriff</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body style="display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px">
+  <div class="card" style="max-width:440px;width:100%;text-align:center;padding:40px 32px">
+    <div style="font-size:3rem;margin-bottom:12px">🔒</div>
+    <h1 style="font-size:1.4rem;margin:0 0 10px;color:var(--ws-blue-deep)">Kein Zugriff</h1>
+    <p style="color:var(--c-text-muted);margin:0 0 24px;line-height:1.6">
+      Diese Aktion ist nicht erlaubt oder das Objekt gehört einem anderen Benutzer.
+    </p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      <a href="javascript:history.back()" class="btn" style="font-size:.85rem;padding:7px 16px">
+        &larr; Zurück
+      </a>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-primary" style="font-size:.85rem;padding:7px 16px">
+        Zum Dashboard
+      </a>
+    </div>
+  </div>
+</body>
+</html>
