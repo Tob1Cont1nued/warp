@@ -1543,3 +1543,35 @@ button { cursor: pointer; }
 @media (min-width: 1024px) {
   .tab-bar { margin: 0 -32px 20px; padding: 0 32px; }
 }
+
+/* ── Workshop-Fragen verwalten ────────────────────────────────────── */
+.wq-list { display: flex; flex-direction: column; gap: 0; margin-bottom: 0; }
+.wq-row {
+  border-top: 1px solid var(--c-border-soft);
+  padding: 12px 0;
+}
+.wq-row:first-child { border-top: none; }
+.wq-main {
+  display: flex; align-items: flex-start; gap: 12px;
+}
+.wq-num {
+  flex-shrink: 0; width: 24px; height: 24px; margin-top: 1px;
+  background: var(--ws-blue-soft); color: var(--ws-blue);
+  border-radius: 50%; font-size: .72rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.wq-content { flex: 1; min-width: 0; }
+.wq-text { font-size: .9rem; font-weight: 500; color: var(--c-text); line-height: 1.4; }
+.wq-hint { font-size: .8rem; color: var(--c-text-muted); margin-top: 3px; font-style: italic; }
+.wq-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: flex-start; }
+.wq-edit-form {
+  margin-top: 12px; padding: 14px 16px;
+  background: var(--c-bg); border-radius: 8px;
+  border: 1px solid var(--c-border);
+}
+.wq-empty {
+  padding: 24px 0; text-align: center;
+  color: var(--c-text-muted); font-size: .88rem;
+}
+.wq-add-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--c-border-soft); }
+.wq-add-title { font-size: .9rem; font-weight: 700; margin: 0 0 14px; color: var(--c-text); }

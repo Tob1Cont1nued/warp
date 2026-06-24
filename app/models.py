@@ -54,6 +54,11 @@ class Project(db.Model):
         "Answer", back_populates="project",
         cascade="all, delete-orphan",
     )
+    workshop_questions = db.relationship(
+        "WorkshopQuestion", back_populates="project",
+        cascade="all, delete-orphan",
+        order_by="WorkshopQuestion.sort_order",
+    )
 
     def answers_dict(self) -> dict:
         return {a.question_id: a.answer_id for a in self.answers if a.answer_id}
@@ -138,6 +143,18 @@ class InboxMessage(db.Model):
 
     claimed_by = db.relationship("User", foreign_keys=[claimed_by_id])
     project = db.relationship("Project", foreign_keys=[project_id])
+
+
+class WorkshopQuestion(db.Model):
+    __tablename__ = "workshop_question"
+    id = db.Column(db.String(80), primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False)
+    text = db.Column(db.Text, nullable=False)
+    hint = db.Column(db.Text, nullable=True)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+    created_at = db.Column(db.DateTime, default=dt.datetime.utcnow)
+
+    project = db.relationship("Project", back_populates="workshop_questions")
 
 
 class GeneratedDocument(db.Model):

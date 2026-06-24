@@ -54,7 +54,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from .models import db, User, Project, Answer, Category, Question, InboxMessage, GeneratedDocument
+from .models import db, User, Project, Answer, Category, Question, InboxMessage, GeneratedDocument, WorkshopQuestion
 from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER
 
 ROOT = Path(__file__).parent.parent
@@ -873,18 +873,95 @@ def create_app() -> Flask:
                 db.select(GeneratedDocument).where(GeneratedDocument.project_id == pid)
             ).scalars().all()
         }
+        if ct == 'workshop':
+            wq_list = project.workshop_questions
+            categories = [{
+                'id': f'ws-proj-{project.id}',
+                'title': 'Workshop-Fragen',
+                'description': '',
+                'questions': [{'id': q.id, 'text': q.text, 'hint': q.hint or ''} for q in wq_list],
+            }] if wq_list else []
+            total_q = len(wq_list)
+            can_manage = current_user.is_superuser or project.user_id == current_user.id
+            workshop_questions = wq_list
+        else:
+            categories = _load_categories_from_db(ct)
+            total_q = _db_question_count(ct)
+            can_manage = False
+            workshop_questions = []
         return render_template(
             "index.html",
             project=project,
             projects=projects,
             saved_answers=project.answers_dict(),
             saved_notes=project.notes_dict(),
-            categories=_load_categories_from_db(ct),
+            categories=categories,
             answer_options=ANSWER_OPTIONS,
-            total_questions=_db_question_count(ct),
+            total_questions=total_q,
             today=dt.date.today().strftime("%Y-%m-%d"),
             generated_docs=generated_docs,
+            can_manage_questions=can_manage,
+            workshop_questions=workshop_questions,
         )
+
+    @app.route("/project/<int:pid>/workshop/question/add", methods=["POST"])
+    @login_required
+    def workshop_question_add(pid: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'workshop':
+            abort(400)
+        if not (current_user.is_superuser or project.user_id == current_user.id):
+            abort(403)
+        text = request.form.get("text", "").strip()
+        if not text:
+            return redirect(url_for("questionnaire", pid=pid) + "#verwalten")
+        hint = request.form.get("hint", "").strip() or None
+        max_order = db.session.execute(
+            db.select(db.func.max(WorkshopQuestion.sort_order))
+            .where(WorkshopQuestion.project_id == pid)
+        ).scalar() or 0
+        qid = f"wq-{pid}-{uuid.uuid4().hex[:8]}"
+        q = WorkshopQuestion(id=qid, project_id=pid, text=text, hint=hint, sort_order=max_order + 1)
+        db.session.add(q)
+        db.session.commit()
+        return redirect(url_for("questionnaire", pid=pid) + "#verwalten")
+
+    @app.route("/project/<int:pid>/workshop/question/<qid>/edit", methods=["POST"])
+    @login_required
+    def workshop_question_edit(pid: int, qid: str):
+        project = _get_project_or_403(pid)
+        if not (current_user.is_superuser or project.user_id == current_user.id):
+            abort(403)
+        q = db.session.execute(
+            db.select(WorkshopQuestion)
+            .where(WorkshopQuestion.id == qid, WorkshopQuestion.project_id == pid)
+        ).scalar_one_or_none()
+        if q:
+            text = request.form.get("text", "").strip()
+            if text:
+                q.text = text
+            q.hint = request.form.get("hint", "").strip() or None
+            db.session.commit()
+        return redirect(url_for("questionnaire", pid=pid) + "#verwalten")
+
+    @app.route("/project/<int:pid>/workshop/question/<qid>/delete", methods=["POST"])
+    @login_required
+    def workshop_question_delete(pid: int, qid: str):
+        project = _get_project_or_403(pid)
+        if not (current_user.is_superuser or project.user_id == current_user.id):
+            abort(403)
+        q = db.session.execute(
+            db.select(WorkshopQuestion)
+            .where(WorkshopQuestion.id == qid, WorkshopQuestion.project_id == pid)
+        ).scalar_one_or_none()
+        if q:
+            db.session.execute(
+                db.delete(Answer)
+                .where(Answer.project_id == pid, Answer.question_id == qid)
+            )
+            db.session.delete(q)
+            db.session.commit()
+        return redirect(url_for("questionnaire", pid=pid) + "#verwalten")
 
     @app.route("/project/<int:pid>/answer", methods=["POST"])
     @login_required

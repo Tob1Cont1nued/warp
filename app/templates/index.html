@@ -57,6 +57,16 @@
       KI-Dokumente
     </button>
     {% endif %}
+    {% if project.catalog_type == 'workshop' and can_manage_questions %}
+    <button class="tab-btn" data-tab="verwalten" role="tab" aria-selected="false">
+      <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
+        <path d="M2 4h12M2 8h8M2 12h5"/>
+        <path d="M12 10l1 1 2-2"/>
+      </svg>
+      Fragen verwalten
+      <span class="tab-count">{{ workshop_questions | length }}</span>
+    </button>
+    {% endif %}
   </div>
 
   {# ═══════════════════════════════════════════════════════════════════
@@ -223,6 +233,78 @@
   {# ═══════════════════════════════════════════════════════════════════
      TAB 3 – KI-DOKUMENTE  (nur Assessment-Projekte)
      ══════════════════════════════════════════════════════════════════ #}
+  {# ═══════════════════════════════════════════════════════════════════
+     TAB 3 – FRAGEN VERWALTEN  (nur Workshop-Projekte, nur Eigentümer/Superuser)
+     ══════════════════════════════════════════════════════════════════ #}
+  {% if project.catalog_type == 'workshop' and can_manage_questions %}
+  <div class="tab-panel" id="tab-verwalten">
+
+    <div class="card">
+      <h2>Fragen verwalten</h2>
+      <p class="card-sub">Fragen zu diesem Workshop hinzufügen, bearbeiten oder löschen. Nur du (und Superuser) siehst diese Fragen.</p>
+
+      <div class="wq-list">
+        {% for q in workshop_questions %}
+        <div class="wq-row">
+          <div class="wq-main">
+            <span class="wq-num">{{ loop.index }}</span>
+            <div class="wq-content">
+              <div class="wq-text">{{ q.text }}</div>
+              {% if q.hint %}<div class="wq-hint">{{ q.hint }}</div>{% endif %}
+            </div>
+            <div class="wq-actions">
+              <button type="button" class="iab-btn" onclick="wqToggleEdit('{{ q.id }}')">Bearbeiten</button>
+              <form method="POST"
+                    action="{{ url_for('workshop_question_delete', pid=project.id, qid=q.id) }}"
+                    data-confirm="Frage »{{ q.text[:50] }}« wirklich löschen?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                <button type="submit" class="iab-btn" style="color:#dc2626;border-color:#fecaca">Löschen</button>
+              </form>
+            </div>
+          </div>
+          <div class="wq-edit-form" id="wq-edit-{{ q.id }}" style="display:none">
+            <form method="POST" action="{{ url_for('workshop_question_edit', pid=project.id, qid=q.id) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+              <div class="field" style="margin-bottom:8px">
+                <label>Frage</label>
+                <input type="text" name="text" value="{{ q.text }}" required />
+              </div>
+              <div class="field" style="margin-bottom:10px">
+                <label>Hilfsfrage <span style="font-weight:400;color:var(--c-text-muted)">(optional)</span></label>
+                <input type="text" name="hint" value="{{ q.hint or '' }}" />
+              </div>
+              <div style="display:flex;gap:8px">
+                <button type="submit" class="iab-btn iab-btn--primary">Speichern</button>
+                <button type="button" class="iab-btn" onclick="wqToggleEdit('{{ q.id }}')">Abbrechen</button>
+              </div>
+            </form>
+          </div>
+        </div>
+        {% else %}
+        <div class="wq-empty">Noch keine Fragen vorhanden. Füge unten die erste Frage hinzu.</div>
+        {% endfor %}
+      </div>
+
+      <div class="wq-add-section">
+        <h3 class="wq-add-title">Neue Frage hinzufügen</h3>
+        <form method="POST" action="{{ url_for('workshop_question_add', pid=project.id) }}" class="wq-add-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <div class="field" style="margin-bottom:8px">
+            <label>Frage <span style="font-weight:400;color:var(--c-text-muted)">(Pflichtfeld)</span></label>
+            <input type="text" name="text" required placeholder="z.B. Wie ist die Teststrategie definiert?" />
+          </div>
+          <div class="field" style="margin-bottom:12px">
+            <label>Hilfsfrage <span style="font-weight:400;color:var(--c-text-muted)">(optional)</span></label>
+            <input type="text" name="hint" placeholder="z.B. Gibt es ein formelles Dokument?" />
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:auto;padding:9px 22px">+ Frage hinzufügen</button>
+        </form>
+      </div>
+    </div>
+
+  </div>{# /tab-verwalten #}
+  {% endif %}
+
   {% if project.catalog_type != 'workshop' %}
   <div class="tab-panel" id="tab-dokumente">
 
@@ -333,8 +415,14 @@ document.querySelectorAll('.tab-btn').forEach(function (btn) {
 // Hash-basierter Tab beim Laden
 (function () {
   var hash = window.location.hash.replace('#', '');
-  if (['fragen', 'auswertung', 'dokumente'].indexOf(hash) !== -1) switchTab(hash);
+  if (['fragen', 'auswertung', 'dokumente', 'verwalten'].indexOf(hash) !== -1) switchTab(hash);
 })();
+
+// Workshop-Frage: Inline-Bearbeiten ein-/ausklappen
+function wqToggleEdit(qid) {
+  var form = document.getElementById('wq-edit-' + qid);
+  if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+}
 
 // ── Haupt-Logik ──────────────────────────────────────────────────────
 (function () {
