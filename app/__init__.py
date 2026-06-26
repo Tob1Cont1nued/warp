@@ -508,80 +508,55 @@ def create_app() -> Flask:
         txt(s1, 'Ihr Partner für strukturierte\nTest-Reifegrad-Bewertung', 0.8, 3.9, 9, 1.2, size=18, color='#ddd8f8')
         txt(s1, 'wavestone', 0.8, 6.5, 4, 0.5, size=14, bold=True, color=WS_GREEN)
 
-        # ── Folie 2: Was ist WARP? ───────────────────────────────────
+        # ── Folie 2: WARP auf einen Blick (Was ist WARP + Ergebnisse) ──
         s2 = add_slide()
         rect(s2, 0, 0, 13.33, 7.5, LIGHT_BG)
         rect(s2, 0, 0, 13.33, 1.1, WS_BLUE)
-        txt(s2, 'Was ist WARP?', 0.6, 0.18, 12, 0.75, size=28, bold=True, color=WHITE)
-        points = [
-            ('Digitales Assessment-Framework', 'Strukturierte Bewertung des Test-Reifegrads Ihres Unternehmens auf Basis bewährter Teststandards.'),
-            ('Schnell & standardisiert', 'Innerhalb weniger Stunden zum vollständigen Überblick — reproduzierbar und vergleichbar über Projekte hinweg.'),
+        txt(s2, 'WARP auf einen Blick', 0.6, 0.18, 12, 0.75, size=28, bold=True, color=WHITE)
+        # Left column: Was ist WARP?
+        col_title_kw = {'size': 11, 'bold': True, 'color': WS_BLUE}
+        txt(s2, 'WAS IST WARP?', 0.5, 1.2, 5.8, 0.4, **col_title_kw)
+        ov_points = [
+            ('Digitales Assessment-Framework', 'Strukturierte Bewertung des Test-Reifegrads auf Basis bewährter Standards — vollständig digital und papierlos.'),
+            ('Schnell & standardisiert', 'Innerhalb von 2–3 Tagen zum vollständigen Überblick — reproduzierbar und projektübergreifend vergleichbar.'),
             ('Klare Ergebnisse', 'Konkreter Score, Stärken-/Schwächenprofil und direkt verwertbare Handlungsempfehlungen.'),
         ]
-        for i, (title, desc) in enumerate(points):
-            bx, by = 0.5 + i * 4.22, 1.4
-            rect(s2, bx, by, 3.9, 4.8, WHITE)
-            rect(s2, bx, by, 3.9, 0.12, WS_GREEN)
-            txt(s2, title, bx + 0.2, by + 0.3, 3.5, 0.7, size=15, bold=True, color=WS_DEEP)
-            txt(s2, desc,  bx + 0.2, by + 1.1, 3.5, 3.2, size=12, color=GRAY)
-
-        # ── Folie 3: Der WARP-Prozess ────────────────────────────────
-        s3 = add_slide()
-        rect(s3, 0, 0, 13.33, 7.5, WHITE)
-        rect(s3, 0, 0, 13.33, 1.1, WS_DEEP)
-        txt(s3, 'Der WARP-Prozess', 0.6, 0.18, 12, 0.75, size=28, bold=True, color=WHITE)
-        steps = [
-            ('01', 'Workshop', 'Gemeinsamer Workshop mit Ihrem Team — Beantwortung des strukturierten Fragenkatalogs.'),
-            ('02', 'Bewertung', 'Automatische Auswertung der Antworten nach standardisierten Kriterien.'),
-            ('03', 'Auswertung', 'Detaillierte Ergebnisanalyse: Score je Kategorie, Stärken und Optimierungspotenziale.'),
-            ('04', 'Report', 'Vollständiger PDF-Report und KI-generierte Testdokumente als sofort nutzbare Grundlage.'),
-        ]
-        for i, (num, title, desc) in enumerate(steps):
-            bx = 0.4 + i * 3.15
-            rect(s3, bx, 1.5, 2.9, 5.2, LIGHT_BG)
-            rect(s3, bx, 1.5, 2.9, 0.1, WS_BLUE)
-            txt(s3, num,   bx + 0.2, 1.7,  2.5, 0.8, size=32, bold=True, color=WS_BLUE)
-            txt(s3, title, bx + 0.2, 2.55, 2.5, 0.6, size=16, bold=True, color=WS_DEEP)
-            txt(s3, desc,  bx + 0.2, 3.2,  2.5, 3.0, size=11, color=GRAY)
-            if i < 3:
-                txt(s3, '→', bx + 2.95, 3.5, 0.3, 0.5, size=18, bold=True, color=WS_BLUE)
-
-        # ── Folie 4: Ergebnisse & Reports ───────────────────────────
-        s4 = add_slide()
-        rect(s4, 0, 0, 13.33, 7.5, LIGHT_BG)
-        rect(s4, 0, 0, 13.33, 1.1, WS_BLUE)
-        txt(s4, 'Ihre Ergebnisse', 0.6, 0.18, 12, 0.75, size=28, bold=True, color=WHITE)
-        rect(s4, 0.5, 1.3, 5.8, 5.5, WHITE)
-        rect(s4, 0.5, 1.3, 5.8, 0.12, WS_GREEN)
-        txt(s4, 'PDF-Report', 0.7, 1.55, 5.4, 0.6, size=17, bold=True, color=WS_DEEP)
-        report_items = ['Gesamtscore auf einen Blick', 'Score je Testkategorie', 'Stärken- & Schwächenprofil', 'Konkrete Handlungsempfehlungen', 'Wavestone-Branding & Formatierung']
+        for i, (title, desc) in enumerate(ov_points):
+            by = 1.7 + i * 1.7
+            rect(s2, 0.5, by, 5.8, 1.5, WHITE)
+            txt(s2, title, 0.7, by + 0.15, 5.4, 0.45, size=13, bold=True, color=WS_DEEP)
+            txt(s2, desc,  0.7, by + 0.65, 5.4, 0.75, size=11, color=GRAY)
+        # Right column: Ihre Ergebnisse
+        txt(s2, 'IHRE ERGEBNISSE', 7.0, 1.2, 5.8, 0.4, **col_title_kw)
+        rect(s2, 7.0, 1.7, 5.8, 2.45, WHITE)
+        rect(s2, 7.0, 1.7, 0.06, 2.45, WS_GREEN)
+        txt(s2, 'PDF-Report', 7.2, 1.85, 5.4, 0.5, size=14, bold=True, color=WS_DEEP)
+        report_items = ['Gesamtscore & Score je Testkategorie', 'Stärken- & Schwächenprofil', 'Konkrete Handlungsempfehlungen']
         for j, item in enumerate(report_items):
-            txt(s4, '✓  ' + item, 0.7, 2.25 + j * 0.75, 5.4, 0.6, size=12, color=GRAY)
-        rect(s4, 6.9, 1.3, 5.9, 5.5, WHITE)
-        rect(s4, 6.9, 1.3, 5.9, 0.12, WS_GREEN)
-        txt(s4, 'KI-Dokumente', 7.1, 1.55, 5.5, 0.6, size=17, bold=True, color=WS_DEEP)
-        txt(s4, 'Automatisch vorausgefüllte Testdokumente\nauf Basis Ihrer Antworten:', 7.1, 2.2, 5.5, 0.9, size=12, color=GRAY)
-        docs = [('Teststrategie', 'Strategische Testausrichtung'), ('Mastertestkonzept', 'Übergreifendes Testkonzept'), ('Stufentestkonzept', 'Konzept je Teststufe')]
-        for j, (doc, sub) in enumerate(docs):
-            rect(s4, 7.1, 3.25 + j * 1.15, 5.5, 0.95, LIGHT_BG)
-            txt(s4, doc, 7.3, 3.3  + j * 1.15, 5.0, 0.45, size=13, bold=True, color=WS_DEEP)
-            txt(s4, sub, 7.3, 3.72 + j * 1.15, 5.0, 0.4,  size=11, color=GRAY)
+            txt(s2, '✓  ' + item, 7.2, 2.45 + j * 0.55, 5.4, 0.5, size=11, color=GRAY)
+        rect(s2, 7.0, 4.3, 5.8, 2.55, WHITE)
+        rect(s2, 7.0, 4.3, 0.06, 2.55, WS_GREEN)
+        txt(s2, 'KI-generierte Testdokumente', 7.2, 4.45, 5.4, 0.5, size=14, bold=True, color=WS_DEEP)
+        ki_docs = ['Teststrategie', 'Mastertestkonzept', 'Stufentestkonzept']
+        for j, doc in enumerate(ki_docs):
+            txt(s2, '✓  ' + doc, 7.2, 5.1 + j * 0.55, 5.4, 0.5, size=11, color=GRAY)
 
-        # ── Folie 5: Nächste Schritte ────────────────────────────────
-        s5 = add_slide()
-        rect(s5, 0, 0, 13.33, 7.5, WS_DEEP)
-        rect(s5, 0, 0, 13.33, 0.08, WS_GREEN)
-        txt(s5, 'Starten Sie Ihr WARP-Assessment', 0.8, 0.5, 11.5, 1.0, size=30, bold=True, color=WHITE, align='center')
+        # ── Folie 3: Nächste Schritte (CTA) ─────────────────────────
+        s3 = add_slide()
+        rect(s3, 0, 0, 13.33, 7.5, WS_DEEP)
+        rect(s3, 0, 0, 13.33, 0.08, WS_GREEN)
+        txt(s3, 'Starten Sie Ihr WARP-Assessment', 0.8, 0.5, 11.5, 1.0, size=30, bold=True, color=WHITE, align='center')
         steps2 = [('1', 'Termin vereinbaren', 'Gemeinsamen Workshop-Termin mit Ihrem Wavestone-Ansprechpartner festlegen.'),
                   ('2', 'Workshop durchführen', 'Beantwortung des Fragenkatalogs gemeinsam im Team — ca. 2–3 Tage.'),
-                  ('3', 'Report & Roadmap', 'Erhalt des vollständigen Reports mit KI-Dokumenten und Empfehlungen.')]
+                  ('3', 'Report & Roadmap', 'Vollständiger Report mit KI-Dokumenten und Empfehlungen als Ihre Roadmap.')]
         for i, (num, title, desc) in enumerate(steps2):
             bx = 0.7 + i * 4.0
-            rect(s5, bx, 1.8, 3.6, 4.0, '#1a0a50')
-            txt(s5, num,   bx + 1.55, 2.0,  0.5, 0.7, size=28, bold=True, color=WS_GREEN, align='center')
-            txt(s5, title, bx + 0.2,  2.85, 3.2, 0.6, size=14, bold=True, color=WHITE, align='center')
-            txt(s5, desc,  bx + 0.2,  3.6,  3.2, 1.9, size=11, color='#c5b8f5', align='center')
-        txt(s5, 'wavestone', 0.8, 6.8, 12, 0.5, size=14, bold=True, color=WS_GREEN, align='center')
+            rect(s3, bx, 1.8, 3.6, 4.0, '#1a0a50')
+            rect(s3, bx, 1.8, 3.6, 0.08, WS_GREEN)
+            txt(s3, num,   bx + 1.55, 2.0,  0.5, 0.7, size=28, bold=True, color=WS_GREEN, align='center')
+            txt(s3, title, bx + 0.2,  2.85, 3.2, 0.6, size=14, bold=True, color=WHITE, align='center')
+            txt(s3, desc,  bx + 0.2,  3.6,  3.2, 1.9, size=11, color='#c5b8f5', align='center')
+        txt(s3, 'wavestone', 0.8, 6.8, 12, 0.5, size=14, bold=True, color=WS_GREEN, align='center')
 
         buf = io.BytesIO()
         prs.save(buf)
