@@ -573,7 +573,7 @@ def create_app() -> Flask:
         rect(s5, 0, 0, 13.33, 0.08, WS_GREEN)
         txt(s5, 'Starten Sie Ihr WARP-Assessment', 0.8, 0.5, 11.5, 1.0, size=30, bold=True, color=WHITE, align='center')
         steps2 = [('1', 'Termin vereinbaren', 'Gemeinsamen Workshop-Termin mit Ihrem Wavestone-Ansprechpartner festlegen.'),
-                  ('2', 'Workshop durchführen', 'Beantwortung des Fragenkatalogs gemeinsam im Team — ca. 2–3 Stunden.'),
+                  ('2', 'Workshop durchführen', 'Beantwortung des Fragenkatalogs gemeinsam im Team — ca. 2–3 Tage.'),
                   ('3', 'Report & Roadmap', 'Erhalt des vollständigen Reports mit KI-Dokumenten und Empfehlungen.')]
         for i, (num, title, desc) in enumerate(steps2):
             bx = 0.7 + i * 4.0
