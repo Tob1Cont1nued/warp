@@ -440,6 +440,159 @@ def create_app() -> Flask:
     def index():
         return redirect(url_for("dashboard"))
 
+    @app.route("/praesentation")
+    def praesentation():
+        return render_template("praesentation.html")
+
+    @app.route("/praesentation/download")
+    def praesentation_download():
+        try:
+            from pptx import Presentation as PPTXPresentation
+            from pptx.util import Inches, Pt, Emu
+            from pptx.dml.color import RGBColor
+            from pptx.enum.text import PP_ALIGN
+        except ImportError:
+            abort(500, description="python-pptx nicht installiert.")
+
+        def rgb(hex_str):
+            hex_str = hex_str.lstrip('#')
+            return RGBColor(int(hex_str[0:2], 16), int(hex_str[2:4], 16), int(hex_str[4:6], 16))
+
+        prs = PPTXPresentation()
+        prs.slide_width  = Inches(13.33)
+        prs.slide_height = Inches(7.5)
+        blank = prs.slide_layouts[6]
+
+        def add_slide():
+            return prs.slides.add_slide(blank)
+
+        def rect(slide, x, y, w, h, fill=None):
+            from pptx.util import Inches
+            shape = slide.shapes.add_shape(1, Inches(x), Inches(y), Inches(w), Inches(h))
+            shape.line.fill.background()
+            if fill:
+                shape.fill.solid()
+                shape.fill.fore_color.rgb = rgb(fill)
+            else:
+                shape.fill.background()
+            return shape
+
+        def txt(slide, text, x, y, w, h, size=24, bold=False, color='#000000', align='left', wrap=True):
+            txb = slide.shapes.add_textbox(Inches(x), Inches(y), Inches(w), Inches(h))
+            txb.word_wrap = wrap
+            tf = txb.text_frame
+            tf.word_wrap = wrap
+            p = tf.paragraphs[0]
+            p.alignment = {'left': PP_ALIGN.LEFT, 'center': PP_ALIGN.CENTER, 'right': PP_ALIGN.RIGHT}.get(align, PP_ALIGN.LEFT)
+            run = p.add_run()
+            run.text = text
+            run.font.size = Pt(size)
+            run.font.bold = bold
+            run.font.color.rgb = rgb(color)
+            return txb
+
+        WS_DEEP   = '#250F6B'
+        WS_BLUE   = '#451DC7'
+        WS_GREEN  = '#04F06A'
+        WHITE     = '#FFFFFF'
+        GRAY      = '#595959'
+        LIGHT_BG  = '#F0F2F5'
+
+        # ── Folie 1: Cover ──────────────────────────────────────────
+        s1 = add_slide()
+        rect(s1, 0, 0, 13.33, 7.5, WS_DEEP)
+        rect(s1, 0, 5.8, 13.33, 1.7, '#1a0a50')
+        rect(s1, 0.5, 3.0, 0.08, 2.5, WS_GREEN)
+        txt(s1, 'WARP', 0.8, 1.2, 10, 1.8, size=72, bold=True, color=WHITE)
+        txt(s1, 'Wavestone Assessment Risk Planner', 0.8, 3.0, 10, 0.7, size=22, bold=False, color='#c5b8f5')
+        txt(s1, 'Ihr Partner für strukturierte\nTest-Reifegrad-Bewertung', 0.8, 3.9, 9, 1.2, size=18, color='#ddd8f8')
+        txt(s1, 'wavestone', 0.8, 6.5, 4, 0.5, size=14, bold=True, color=WS_GREEN)
+
+        # ── Folie 2: Was ist WARP? ───────────────────────────────────
+        s2 = add_slide()
+        rect(s2, 0, 0, 13.33, 7.5, LIGHT_BG)
+        rect(s2, 0, 0, 13.33, 1.1, WS_BLUE)
+        txt(s2, 'Was ist WARP?', 0.6, 0.18, 12, 0.75, size=28, bold=True, color=WHITE)
+        points = [
+            ('Digitales Assessment-Framework', 'Strukturierte Bewertung des Test-Reifegrads Ihres Unternehmens auf Basis bewährter Teststandards.'),
+            ('Schnell & standardisiert', 'Innerhalb weniger Stunden zum vollständigen Überblick — reproduzierbar und vergleichbar über Projekte hinweg.'),
+            ('Klare Ergebnisse', 'Konkreter Score, Stärken-/Schwächenprofil und direkt verwertbare Handlungsempfehlungen.'),
+        ]
+        for i, (title, desc) in enumerate(points):
+            bx, by = 0.5 + i * 4.22, 1.4
+            rect(s2, bx, by, 3.9, 4.8, WHITE)
+            rect(s2, bx, by, 3.9, 0.12, WS_GREEN)
+            txt(s2, title, bx + 0.2, by + 0.3, 3.5, 0.7, size=15, bold=True, color=WS_DEEP)
+            txt(s2, desc,  bx + 0.2, by + 1.1, 3.5, 3.2, size=12, color=GRAY)
+
+        # ── Folie 3: Der WARP-Prozess ────────────────────────────────
+        s3 = add_slide()
+        rect(s3, 0, 0, 13.33, 7.5, WHITE)
+        rect(s3, 0, 0, 13.33, 1.1, WS_DEEP)
+        txt(s3, 'Der WARP-Prozess', 0.6, 0.18, 12, 0.75, size=28, bold=True, color=WHITE)
+        steps = [
+            ('01', 'Workshop', 'Gemeinsamer Workshop mit Ihrem Team — Beantwortung des strukturierten Fragenkatalogs.'),
+            ('02', 'Bewertung', 'Automatische Auswertung der Antworten nach standardisierten Kriterien.'),
+            ('03', 'Auswertung', 'Detaillierte Ergebnisanalyse: Score je Kategorie, Stärken und Optimierungspotenziale.'),
+            ('04', 'Report', 'Vollständiger PDF-Report und KI-generierte Testdokumente als sofort nutzbare Grundlage.'),
+        ]
+        for i, (num, title, desc) in enumerate(steps):
+            bx = 0.4 + i * 3.15
+            rect(s3, bx, 1.5, 2.9, 5.2, LIGHT_BG)
+            rect(s3, bx, 1.5, 2.9, 0.1, WS_BLUE)
+            txt(s3, num,   bx + 0.2, 1.7,  2.5, 0.8, size=32, bold=True, color=WS_BLUE)
+            txt(s3, title, bx + 0.2, 2.55, 2.5, 0.6, size=16, bold=True, color=WS_DEEP)
+            txt(s3, desc,  bx + 0.2, 3.2,  2.5, 3.0, size=11, color=GRAY)
+            if i < 3:
+                txt(s3, '→', bx + 2.95, 3.5, 0.3, 0.5, size=18, bold=True, color=WS_BLUE)
+
+        # ── Folie 4: Ergebnisse & Reports ───────────────────────────
+        s4 = add_slide()
+        rect(s4, 0, 0, 13.33, 7.5, LIGHT_BG)
+        rect(s4, 0, 0, 13.33, 1.1, WS_BLUE)
+        txt(s4, 'Ihre Ergebnisse', 0.6, 0.18, 12, 0.75, size=28, bold=True, color=WHITE)
+        rect(s4, 0.5, 1.3, 5.8, 5.5, WHITE)
+        rect(s4, 0.5, 1.3, 5.8, 0.12, WS_GREEN)
+        txt(s4, 'PDF-Report', 0.7, 1.55, 5.4, 0.6, size=17, bold=True, color=WS_DEEP)
+        report_items = ['Gesamtscore auf einen Blick', 'Score je Testkategorie', 'Stärken- & Schwächenprofil', 'Konkrete Handlungsempfehlungen', 'Wavestone-Branding & Formatierung']
+        for j, item in enumerate(report_items):
+            txt(s4, '✓  ' + item, 0.7, 2.25 + j * 0.75, 5.4, 0.6, size=12, color=GRAY)
+        rect(s4, 6.9, 1.3, 5.9, 5.5, WHITE)
+        rect(s4, 6.9, 1.3, 5.9, 0.12, WS_GREEN)
+        txt(s4, 'KI-Dokumente', 7.1, 1.55, 5.5, 0.6, size=17, bold=True, color=WS_DEEP)
+        txt(s4, 'Automatisch vorausgefüllte Testdokumente\nauf Basis Ihrer Antworten:', 7.1, 2.2, 5.5, 0.9, size=12, color=GRAY)
+        docs = [('Teststrategie', 'Strategische Testausrichtung'), ('Mastertestkonzept', 'Übergreifendes Testkonzept'), ('Stufentestkonzept', 'Konzept je Teststufe')]
+        for j, (doc, sub) in enumerate(docs):
+            rect(s4, 7.1, 3.25 + j * 1.15, 5.5, 0.95, LIGHT_BG)
+            txt(s4, doc, 7.3, 3.3  + j * 1.15, 5.0, 0.45, size=13, bold=True, color=WS_DEEP)
+            txt(s4, sub, 7.3, 3.72 + j * 1.15, 5.0, 0.4,  size=11, color=GRAY)
+
+        # ── Folie 5: Nächste Schritte ────────────────────────────────
+        s5 = add_slide()
+        rect(s5, 0, 0, 13.33, 7.5, WS_DEEP)
+        rect(s5, 0, 0, 13.33, 0.08, WS_GREEN)
+        txt(s5, 'Starten Sie Ihr WARP-Assessment', 0.8, 0.5, 11.5, 1.0, size=30, bold=True, color=WHITE, align='center')
+        steps2 = [('1', 'Termin vereinbaren', 'Gemeinsamen Workshop-Termin mit Ihrem Wavestone-Ansprechpartner festlegen.'),
+                  ('2', 'Workshop durchführen', 'Beantwortung des Fragenkatalogs gemeinsam im Team — ca. 2–3 Stunden.'),
+                  ('3', 'Report & Roadmap', 'Erhalt des vollständigen Reports mit KI-Dokumenten und Empfehlungen.')]
+        for i, (num, title, desc) in enumerate(steps2):
+            bx = 0.7 + i * 4.0
+            rect(s5, bx, 1.8, 3.6, 4.0, '#1a0a50')
+            txt(s5, num,   bx + 1.55, 2.0,  0.5, 0.7, size=28, bold=True, color=WS_GREEN, align='center')
+            txt(s5, title, bx + 0.2,  2.85, 3.2, 0.6, size=14, bold=True, color=WHITE, align='center')
+            txt(s5, desc,  bx + 0.2,  3.6,  3.2, 1.9, size=11, color='#c5b8f5', align='center')
+        txt(s5, 'wavestone', 0.8, 6.8, 12, 0.5, size=14, bold=True, color=WS_GREEN, align='center')
+
+        buf = io.BytesIO()
+        prs.save(buf)
+        buf.seek(0)
+        return send_file(
+            buf,
+            as_attachment=True,
+            download_name='WARP_Kundenpraesentation.pptx',
+            mimetype='application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        )
+
     @app.route("/dashboard")
     @login_required
     def dashboard():

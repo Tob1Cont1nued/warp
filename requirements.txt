@@ -12,3 +12,4 @@ pytest-playwright>=0.4
 anthropic>=0.40
 python-docx>=1.1
 openpyxl>=3.1
+python-pptx>=0.6
