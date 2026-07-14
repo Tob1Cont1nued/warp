@@ -59,9 +59,10 @@
     }
 
     /* ── Deck & Slides ─────────────────────────────────────────────────── */
-    #deck { width: 100vw; height: 100vh; }
+    #deck { width: 100vw; height: 100vh; position: relative; }
     .slide {
       position: absolute; inset: 0;
+      width: 100%; height: 100%;
       display: none; flex-direction: column;
       overflow: hidden;
     }
@@ -71,7 +72,7 @@
     .slide-body {
       flex: 1; display: flex; flex-direction: column;
       justify-content: center;
-      padding: 0 8% 72px;
+      padding: 64px 8% 80px;
       overflow-y: auto;
     }
     .eyebrow {
@@ -93,7 +94,7 @@
     .s-cover {
       background: var(--deep);
       justify-content: center; align-items: flex-start;
-      padding: 0 10% 72px; position: relative; overflow: hidden;
+      padding: 72px 10% 80px; position: relative; overflow: hidden;
     }
     /* Decorative ring */
     .s-cover::after {
@@ -260,13 +261,16 @@
     }
     .path-card-i .path-check { color: var(--impulse); }
     .path-card-w .path-check { color: var(--warp); }
-    /* Vertical "oder" separator */
-    .paths-oder {
+    /* Arrow separator between phases */
+    .paths-arrow {
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.65rem; font-weight: 700;
-      letter-spacing: 0.12em; text-transform: uppercase;
-      color: var(--muted);
-      writing-mode: vertical-rl; text-orientation: mixed;
+      flex-direction: column; gap: 6px;
+    }
+    .paths-arrow-icon {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--rule);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 14px;
     }
 
     /* ══════════════════════════════════════════════════════════════════════
@@ -275,7 +279,7 @@
     .s-cta {
       background: var(--deep);
       justify-content: center; align-items: center;
-      padding: 0 8% 72px; position: relative;
+      padding: 72px 8% 80px; position: relative;
     }
     .s-cta::before {
       content: ''; position: absolute;
@@ -367,12 +371,12 @@
       <div class="cover-eyebrow">Testing Intelligence — Wavestone</div>
       <h1 class="cover-h1">Wie gut ist Ihr&nbsp;Software-Testing — <em>wirklich?</em></h1>
       <p class="cover-sub">
-        Viele Unternehmen investieren erheblich in Testing — und wissen trotzdem nicht objektiv, wo sie stehen.
-        IMPULSE und WARP geben Ihnen in 5 Minuten oder 2 Tagen eine ehrliche Antwort.
+        IMPULSE öffnet die Tür: ein 5-Minuten-Self-Assessment, das sofort zeigt wo Sie stehen.
+        WARP bringt Sie ans Ziel: ein strukturierter Workshop mit konkretem Report und Roadmap.
       </p>
       <div class="cover-pills">
         <span class="cpill cpill-i">
-          <span class="cpill-dot"></span>IMPULSE — Sofort-Check
+          <span class="cpill-dot"></span>IMPULSE — Türöffner
         </span>
         <span class="cpill cpill-w">
           <span class="cpill-dot"></span>WARP — Tiefenanalyse
@@ -409,16 +413,16 @@
   {# ══ FOLIE 3 – Zwei Wege ══════════════════════════════════════════════ #}
   <section class="slide s-paths">
     <div class="slide-body">
-      <div class="eyebrow">Ihr Einstieg</div>
-      <h2 class="slide-h2">Zwei Wege — je nach Ihrem Bedarf.</h2>
+      <div class="eyebrow">Der Beratungsweg</div>
+      <h2 class="slide-h2">Erst Orientierung, dann Tiefe — in Ihrem Tempo.</h2>
       <div class="paths-grid">
 
         <div class="path-card path-card-i">
           <div class="path-badge">
-            <div class="badge-rect"></div>IMPULSE
+            <div class="badge-rect"></div>Phase 1 — IMPULSE
           </div>
-          <div class="path-title">Sofortige Orientierung</div>
-          <div class="path-claim">Für alle, die in wenigen Minuten wissen wollen, wo sie stehen — ohne Voraberfahrung oder Vorabgespräch.</div>
+          <div class="path-title">Der Türöffner</div>
+          <div class="path-claim">In 5 Minuten ein erstes, ehrliches Bild Ihres Testing-Reifegrads — ohne Voraberfahrung, ohne Vorabgespräch.</div>
           <div class="path-meta">
             <div class="path-meta-row">
               <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/></svg>
@@ -451,14 +455,18 @@
           </div>
         </div>
 
-        <div class="paths-oder">oder</div>
+        <div class="paths-arrow">
+          <div class="paths-arrow-icon">
+            <svg viewBox="0 0 14 14" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 7h10M8 3l4 4-4 4"/></svg>
+          </div>
+        </div>
 
         <div class="path-card path-card-w">
           <div class="path-badge">
-            <div class="badge-rect"></div>WARP
+            <div class="badge-rect"></div>Phase 2 — WARP
           </div>
-          <div class="path-title">Fundierte Tiefenanalyse</div>
-          <div class="path-claim">Für alle, die eine belastbare Entscheidungsgrundlage und konkrete Dokumente brauchen.</div>
+          <div class="path-title">Die Tiefenanalyse</div>
+          <div class="path-claim">Aufbauend auf IMPULSE: ein strukturierter Workshop, der aus Orientierung eine belastbare Entscheidungsgrundlage macht.</div>
           <div class="path-meta">
             <div class="path-meta-row">
               <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/></svg>
@@ -503,23 +511,23 @@
   <section class="slide s-cta">
     <div class="cta-body">
       <div class="cta-eyebrow">Jetzt starten</div>
-      <h2 class="cta-h2">Ihr nächster Schritt dauert 5 Minuten.</h2>
-      <p class="cta-sub">Starten Sie mit IMPULSE — kostenlos, ohne Registrierung, sofort. Wenn Sie mehr wollen, begleiten wir Sie durch den vollständigen WARP-Prozess.</p>
+      <h2 class="cta-h2">Der erste Schritt dauert 5 Minuten.</h2>
+      <p class="cta-sub">IMPULSE öffnet die Tür — WARP bringt Sie ans Ziel. Starten Sie jetzt, kostenlos und ohne Vorabgespräch.</p>
       <div class="cta-steps">
         <div class="cta-step">
-          <div class="cta-step-kicker">Schritt 1</div>
-          <div class="cta-step-title">IMPULSE aufrufen</div>
-          <div class="cta-step-desc">10–15 gezielte Fragen zur Testpraxis beantworten — kein Login, kein Aufwand, keine Vorbereitung.</div>
+          <div class="cta-step-kicker">IMPULSE — Jetzt</div>
+          <div class="cta-step-title">Self-Assessment starten</div>
+          <div class="cta-step-desc">10–15 Fragen, kein Login, kein Aufwand. Sie bekommen sofort Ihren Reifegrad-Score und eine erste Empfehlung.</div>
         </div>
         <div class="cta-step">
-          <div class="cta-step-kicker">Schritt 2</div>
-          <div class="cta-step-title">Ergebnis sofort sehen</div>
-          <div class="cta-step-desc">Reifegrad-Score und erste Handlungsempfehlung erscheinen direkt — kein Warten auf einen Berater.</div>
+          <div class="cta-step-kicker">Gemeinsam — Im Erstgespräch</div>
+          <div class="cta-step-title">Ergebnisse besprechen</div>
+          <div class="cta-step-desc">Wir nehmen Ihr IMPULSE-Ergebnis als Ausgangspunkt und zeigen Ihnen, wo WARP ansetzt.</div>
         </div>
         <div class="cta-step">
-          <div class="cta-step-kicker">Optional: Schritt 3</div>
-          <div class="cta-step-title">WARP-Workshop anfragen</div>
-          <div class="cta-step-desc">Wenn Sie die volle Analyse mit konkreten Dokumenten möchten, sprechen Sie uns an.</div>
+          <div class="cta-step-kicker">WARP — Im Workshop</div>
+          <div class="cta-step-title">Tiefenanalyse &amp; Report</div>
+          <div class="cta-step-desc">2–3 Tage strukturierter Workshop. Ergebnis: PDF-Report, KI-Dokumente, Roadmap — direkt verwertbar.</div>
         </div>
       </div>
       <div class="cta-brand">
