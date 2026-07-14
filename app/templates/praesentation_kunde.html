@@ -76,15 +76,15 @@
       overflow-y: auto;
     }
     .eyebrow {
-      font-size: 0.68rem; font-weight: 700;
+      font-size: 0.78rem; font-weight: 700;
       letter-spacing: 0.13em; text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 10px;
+      margin-bottom: 12px;
     }
     .slide-h2 {
-      font-size: clamp(1.45rem, 2.8vw, 2.2rem);
+      font-size: clamp(1.9rem, 3.2vw, 2.7rem);
       font-weight: 800; letter-spacing: -0.025em;
-      color: var(--ink); line-height: 1.15;
+      color: var(--ink); line-height: 1.12;
       text-wrap: balance; margin-bottom: 32px;
     }
 
@@ -161,46 +161,59 @@
     .cpill-w .cpill-dot { background: #C4A0FF; }
 
     /* ══════════════════════════════════════════════════════════════════════
-       SLIDE 2 – Problem
+       SLIDE 2 – Problem  (always light — presentation context)
     ══════════════════════════════════════════════════════════════════════ */
-    .s-problem { background: var(--paper); }
+    .s-problem {
+      background: #F4F3EF;
+      --ink:   #0E0C24;
+      --card:  #FFFFFF;
+      --muted: #5C5A78;
+      --rule:  rgba(14,12,36,0.09);
+    }
     .problem-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      gap: 18px;
     }
     .prob-card {
       background: var(--card);
-      border-radius: 10px; padding: 22px 20px;
-      border-top: 3px solid transparent;
+      border-radius: 12px; padding: 28px 24px;
+      border-top: 4px solid transparent;
     }
     .prob-card-i { border-top-color: var(--impulse); }
     .prob-card-w { border-top-color: var(--warp); }
-    .prob-card-g { border-top-color: var(--spark); }
+    .prob-card-g { border-top-color: #04C858; }
     .prob-kicker {
-      font-size: 0.65rem; font-weight: 700;
+      font-size: 0.72rem; font-weight: 700;
       letter-spacing: 0.11em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 8px;
+      color: var(--muted); margin-bottom: 10px;
     }
     .prob-title {
-      font-size: 1rem; font-weight: 700;
-      color: var(--ink); margin-bottom: 9px; line-height: 1.25;
+      font-size: 1.15rem; font-weight: 700;
+      color: var(--ink); margin-bottom: 12px; line-height: 1.25;
     }
     .prob-desc {
-      font-size: 0.81rem; color: var(--muted); line-height: 1.68;
+      font-size: 0.93rem; color: var(--muted); line-height: 1.7;
     }
 
     /* ══════════════════════════════════════════════════════════════════════
-       SLIDE 3 – Two Paths
+       SLIDE 3 – Two Paths  (always light — presentation context)
     ══════════════════════════════════════════════════════════════════════ */
-    .s-paths { background: var(--paper); }
+    .s-paths {
+      background: #F4F3EF;
+      --ink:           #0E0C24;
+      --muted:         #5C5A78;
+      --impulse-tint:  #DDE8F9;
+      --warp-tint:     #E8DEFA;
+      --rule:          rgba(14,12,36,0.09);
+    }
     .paths-grid {
       display: grid;
-      grid-template-columns: 1fr 28px 1fr;
-      gap: 0 14px; align-items: stretch;
+      grid-template-columns: 1fr 36px 1fr;
+      gap: 0 18px; align-items: stretch;
     }
     .path-card {
-      border-radius: 12px; padding: 26px 24px 22px;
+      border-radius: 14px; padding: 28px 26px 24px;
       display: flex; flex-direction: column;
     }
     .path-card-i {
@@ -213,9 +226,9 @@
     }
     .path-badge {
       display: inline-flex; align-items: center; gap: 5px;
-      font-size: 0.65rem; font-weight: 700;
+      font-size: 0.72rem; font-weight: 700;
       letter-spacing: 0.13em; text-transform: uppercase;
-      margin-bottom: 8px;
+      margin-bottom: 10px;
     }
     .path-card-i .path-badge { color: var(--impulse); }
     .path-card-w .path-badge { color: var(--warp); }
@@ -225,52 +238,51 @@
     .path-card-i .badge-rect { background: var(--impulse); }
     .path-card-w .badge-rect { background: var(--warp); }
     .path-title {
-      font-size: clamp(1.1rem, 1.8vw, 1.4rem); font-weight: 800;
-      letter-spacing: -0.02em; color: var(--ink); margin-bottom: 4px;
+      font-size: clamp(1.3rem, 2.2vw, 1.7rem); font-weight: 800;
+      letter-spacing: -0.02em; color: var(--ink); margin-bottom: 6px;
     }
     .path-claim {
-      font-size: 0.8rem; color: var(--muted); margin-bottom: 16px; line-height: 1.5;
+      font-size: 0.92rem; color: var(--muted); margin-bottom: 18px; line-height: 1.55;
     }
     .path-meta {
-      display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;
+      display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;
     }
     .path-meta-row {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 0.79rem; font-weight: 600; line-height: 1;
+      display: flex; align-items: center; gap: 9px;
+      font-size: 0.88rem; font-weight: 600; line-height: 1;
     }
     .path-card-i .path-meta-row { color: var(--impulse-mid); }
     .path-card-w .path-meta-row { color: var(--warp); }
     .path-rule {
-      height: 1px; background: var(--rule); margin-bottom: 14px;
+      height: 1px; background: var(--rule); margin-bottom: 16px;
     }
     .path-out-label {
-      font-size: 0.62rem; font-weight: 700;
+      font-size: 0.7rem; font-weight: 700;
       letter-spacing: 0.11em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 10px;
+      color: var(--muted); margin-bottom: 12px;
     }
     .path-out-list {
-      display: flex; flex-direction: column; gap: 8px; flex: 1;
+      display: flex; flex-direction: column; gap: 10px; flex: 1;
     }
     .path-out-item {
-      display: flex; gap: 8px; align-items: flex-start;
-      font-size: 0.8rem; color: var(--ink); line-height: 1.45;
+      display: flex; gap: 9px; align-items: flex-start;
+      font-size: 0.92rem; color: var(--ink); line-height: 1.45;
     }
     .path-check {
       font-weight: 700; flex-shrink: 0; margin-top: 1px;
-      font-size: 0.75rem;
+      font-size: 0.82rem;
     }
     .path-card-i .path-check { color: var(--impulse); }
     .path-card-w .path-check { color: var(--warp); }
     /* Arrow separator between phases */
     .paths-arrow {
       display: flex; align-items: center; justify-content: center;
-      flex-direction: column; gap: 6px;
     }
     .paths-arrow-icon {
-      width: 28px; height: 28px; border-radius: 50%;
-      background: var(--rule);
+      width: 32px; height: 32px; border-radius: 50%;
+      background: rgba(14,12,36,0.08);
       display: flex; align-items: center; justify-content: center;
-      color: var(--muted); font-size: 14px;
+      color: #5C5A78;
     }
 
     /* ══════════════════════════════════════════════════════════════════════
