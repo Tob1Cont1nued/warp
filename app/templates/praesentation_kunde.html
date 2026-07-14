@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IMPULSE &amp; WARP – Wavestone</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Design Tokens: Light ──────────────────────────────────────────── */
+    :root {
+      --ink:           #0E0C24;
+      --paper:         #F4F3EF;
+      --card:          #FFFFFF;
+      --deep:          #18125A;
+      --impulse:       #1D5FD4;
+      --impulse-tint:  #EAF0FC;
+      --impulse-mid:   #2E6FE0;
+      --warp:          #6825C8;
+      --warp-tint:     #F0EAFB;
+      --spark:         #04F06A;
+      --muted:         #5C5A78;
+      --rule:          rgba(14,12,36,0.09);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --ink:          #EDEAFF;
+        --paper:        #0D0B1E;
+        --card:         #181630;
+        --impulse-tint: #0B1838;
+        --warp-tint:    #190A35;
+        --muted:        #8E8BAE;
+        --rule:         rgba(255,255,255,0.08);
+      }
+    }
+    :root[data-theme="dark"] {
+      --ink:          #EDEAFF;
+      --paper:        #0D0B1E;
+      --card:         #181630;
+      --impulse-tint: #0B1838;
+      --warp-tint:    #190A35;
+      --muted:        #8E8BAE;
+      --rule:         rgba(255,255,255,0.08);
+    }
+    :root[data-theme="light"] {
+      --ink:           #0E0C24;
+      --paper:         #F4F3EF;
+      --card:          #FFFFFF;
+      --impulse-tint:  #EAF0FC;
+      --warp-tint:     #F0EAFB;
+      --muted:         #5C5A78;
+      --rule:          rgba(14,12,36,0.09);
+    }
+
+    html, body {
+      height: 100%; overflow: hidden;
+      font-family: 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+      background: #0D0B1E;
+    }
+
+    /* ── Deck & Slides ─────────────────────────────────────────────────── */
+    #deck { width: 100vw; height: 100vh; }
+    .slide {
+      position: absolute; inset: 0;
+      display: none; flex-direction: column;
+      overflow: hidden;
+    }
+    .slide.active { display: flex; }
+
+    /* ── Reusable Slide Internals ──────────────────────────────────────── */
+    .slide-body {
+      flex: 1; display: flex; flex-direction: column;
+      justify-content: center;
+      padding: 0 8% 72px;
+      overflow-y: auto;
+    }
+    .eyebrow {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .slide-h2 {
+      font-size: clamp(1.45rem, 2.8vw, 2.2rem);
+      font-weight: 800; letter-spacing: -0.025em;
+      color: var(--ink); line-height: 1.15;
+      text-wrap: balance; margin-bottom: 32px;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       SLIDE 1 – Cover
+    ══════════════════════════════════════════════════════════════════════ */
+    .s-cover {
+      background: var(--deep);
+      justify-content: center; align-items: flex-start;
+      padding: 0 10% 72px; position: relative; overflow: hidden;
+    }
+    /* Decorative ring */
+    .s-cover::after {
+      content: ''; position: absolute;
+      width: 52vw; height: 52vw; border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.055);
+      right: -12vw; top: 50%; transform: translateY(-50%);
+      pointer-events: none;
+    }
+    .cover-brand {
+      position: absolute; top: 26px; left: 10%;
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--spark); z-index: 1;
+    }
+    .cover-brand-sq {
+      width: 9px; height: 9px;
+      background: var(--spark); border-radius: 2px;
+    }
+    .cover-content {
+      max-width: 660px;
+      padding-left: 22px;
+      border-left: 3px solid var(--spark);
+      position: relative; z-index: 1;
+    }
+    .cover-eyebrow {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: rgba(255,255,255,0.38); margin-bottom: 18px;
+    }
+    .cover-h1 {
+      font-size: clamp(2rem, 4.2vw, 3.6rem);
+      font-weight: 800; letter-spacing: -0.035em;
+      color: #fff; line-height: 1.08; text-wrap: balance;
+      margin-bottom: 18px;
+    }
+    .cover-h1 em { font-style: normal; color: rgba(255,255,255,0.55); }
+    .cover-sub {
+      font-size: clamp(0.88rem, 1.6vw, 1.05rem);
+      color: rgba(255,255,255,0.48); line-height: 1.7;
+      margin-bottom: 30px; max-width: 520px;
+    }
+    .cover-pills { display: flex; gap: 9px; flex-wrap: wrap; }
+    .cpill {
+      display: inline-flex; align-items: center; gap: 8px;
+      border-radius: 999px; padding: 6px 15px;
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.03em;
+    }
+    .cpill-i {
+      background: rgba(29,95,212,0.22);
+      color: #8AB8FF;
+      border: 1px solid rgba(29,95,212,0.45);
+    }
+    .cpill-w {
+      background: rgba(104,37,200,0.22);
+      color: #C4A0FF;
+      border: 1px solid rgba(104,37,200,0.45);
+    }
+    .cpill-dot {
+      width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+    }
+    .cpill-i .cpill-dot { background: #8AB8FF; }
+    .cpill-w .cpill-dot { background: #C4A0FF; }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       SLIDE 2 – Problem
+    ══════════════════════════════════════════════════════════════════════ */
+    .s-problem { background: var(--paper); }
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+    .prob-card {
+      background: var(--card);
+      border-radius: 10px; padding: 22px 20px;
+      border-top: 3px solid transparent;
+    }
+    .prob-card-i { border-top-color: var(--impulse); }
+    .prob-card-w { border-top-color: var(--warp); }
+    .prob-card-g { border-top-color: var(--spark); }
+    .prob-kicker {
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.11em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 8px;
+    }
+    .prob-title {
+      font-size: 1rem; font-weight: 700;
+      color: var(--ink); margin-bottom: 9px; line-height: 1.25;
+    }
+    .prob-desc {
+      font-size: 0.81rem; color: var(--muted); line-height: 1.68;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       SLIDE 3 – Two Paths
+    ══════════════════════════════════════════════════════════════════════ */
+    .s-paths { background: var(--paper); }
+    .paths-grid {
+      display: grid;
+      grid-template-columns: 1fr 28px 1fr;
+      gap: 0 14px; align-items: stretch;
+    }
+    .path-card {
+      border-radius: 12px; padding: 26px 24px 22px;
+      display: flex; flex-direction: column;
+    }
+    .path-card-i {
+      background: var(--impulse-tint);
+      border-top: 4px solid var(--impulse);
+    }
+    .path-card-w {
+      background: var(--warp-tint);
+      border-top: 4px solid var(--warp);
+    }
+    .path-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .path-card-i .path-badge { color: var(--impulse); }
+    .path-card-w .path-badge { color: var(--warp); }
+    .badge-rect {
+      width: 8px; height: 8px; border-radius: 2px;
+    }
+    .path-card-i .badge-rect { background: var(--impulse); }
+    .path-card-w .badge-rect { background: var(--warp); }
+    .path-title {
+      font-size: clamp(1.1rem, 1.8vw, 1.4rem); font-weight: 800;
+      letter-spacing: -0.02em; color: var(--ink); margin-bottom: 4px;
+    }
+    .path-claim {
+      font-size: 0.8rem; color: var(--muted); margin-bottom: 16px; line-height: 1.5;
+    }
+    .path-meta {
+      display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px;
+    }
+    .path-meta-row {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 0.79rem; font-weight: 600; line-height: 1;
+    }
+    .path-card-i .path-meta-row { color: var(--impulse-mid); }
+    .path-card-w .path-meta-row { color: var(--warp); }
+    .path-rule {
+      height: 1px; background: var(--rule); margin-bottom: 14px;
+    }
+    .path-out-label {
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.11em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px;
+    }
+    .path-out-list {
+      display: flex; flex-direction: column; gap: 8px; flex: 1;
+    }
+    .path-out-item {
+      display: flex; gap: 8px; align-items: flex-start;
+      font-size: 0.8rem; color: var(--ink); line-height: 1.45;
+    }
+    .path-check {
+      font-weight: 700; flex-shrink: 0; margin-top: 1px;
+      font-size: 0.75rem;
+    }
+    .path-card-i .path-check { color: var(--impulse); }
+    .path-card-w .path-check { color: var(--warp); }
+    /* Vertical "oder" separator */
+    .paths-oder {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.65rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted);
+      writing-mode: vertical-rl; text-orientation: mixed;
+    }
+
+    /* ══════════════════════════════════════════════════════════════════════
+       SLIDE 4 – CTA
+    ══════════════════════════════════════════════════════════════════════ */
+    .s-cta {
+      background: var(--deep);
+      justify-content: center; align-items: center;
+      padding: 0 8% 72px; position: relative;
+    }
+    .s-cta::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; right: 0; height: 4px;
+      background: var(--spark);
+    }
+    .cta-body {
+      display: flex; flex-direction: column;
+      align-items: center; text-align: center;
+      max-width: 800px; width: 100%;
+    }
+    .cta-eyebrow {
+      font-size: 0.68rem; font-weight: 700;
+      letter-spacing: 0.13em; text-transform: uppercase;
+      color: rgba(255,255,255,0.36); margin-bottom: 10px;
+    }
+    .cta-h2 {
+      font-size: clamp(1.5rem, 3vw, 2.4rem);
+      font-weight: 800; letter-spacing: -0.03em;
+      color: #fff; margin-bottom: 10px; text-wrap: balance;
+    }
+    .cta-sub {
+      font-size: 0.9rem; color: rgba(255,255,255,0.45);
+      line-height: 1.7; margin-bottom: 32px; max-width: 560px;
+    }
+    .cta-steps {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px; width: 100%; margin-bottom: 32px;
+    }
+    .cta-step {
+      background: rgba(255,255,255,0.06);
+      border-radius: 10px; padding: 20px 16px;
+      border-top: 2px solid rgba(255,255,255,0.09);
+      text-align: left;
+    }
+    .cta-step-kicker {
+      font-size: 0.62rem; font-weight: 700;
+      letter-spacing: 0.11em; text-transform: uppercase;
+      color: var(--spark); margin-bottom: 6px;
+    }
+    .cta-step-title {
+      font-size: 0.88rem; font-weight: 700;
+      color: #fff; margin-bottom: 6px;
+    }
+    .cta-step-desc {
+      font-size: 0.76rem; color: rgba(255,255,255,0.42); line-height: 1.6;
+    }
+    .cta-brand {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.72rem; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--spark);
+    }
+    .cta-brand-sq {
+      width: 9px; height: 9px;
+      background: var(--spark); border-radius: 2px;
+    }
+
+    /* ── Nav ───────────────────────────────────────────────────────────── */
+    #nav {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      display: flex; align-items: center; gap: 9px;
+      background: rgba(0,0,0,0.62); backdrop-filter: blur(12px);
+      border-radius: 999px; padding: 7px 15px; z-index: 100;
+    }
+    #nav button {
+      width: 32px; height: 32px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,0.13); color: #fff; font-size: 14px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: background .15s;
+    }
+    #nav button:hover { background: rgba(255,255,255,0.26); }
+    #nav button:disabled { opacity: .28; cursor: default; }
+    #slide-counter {
+      color: rgba(255,255,255,0.55); font-size: 0.72rem;
+      min-width: 30px; text-align: center;
+    }
+  </style>
+</head>
+<body>
+<div id="deck">
+
+  {# ══ FOLIE 1 – Cover ═══════════════════════════════════════════════════ #}
+  <section class="slide s-cover active">
+    <div class="cover-brand">
+      <div class="cover-brand-sq"></div>wavestone
+    </div>
+    <div class="cover-content">
+      <div class="cover-eyebrow">Testing Intelligence — Wavestone</div>
+      <h1 class="cover-h1">Wie gut ist Ihr&nbsp;Software-Testing — <em>wirklich?</em></h1>
+      <p class="cover-sub">
+        Viele Unternehmen investieren erheblich in Testing — und wissen trotzdem nicht objektiv, wo sie stehen.
+        IMPULSE und WARP geben Ihnen in 5 Minuten oder 2 Tagen eine ehrliche Antwort.
+      </p>
+      <div class="cover-pills">
+        <span class="cpill cpill-i">
+          <span class="cpill-dot"></span>IMPULSE — Sofort-Check
+        </span>
+        <span class="cpill cpill-w">
+          <span class="cpill-dot"></span>WARP — Tiefenanalyse
+        </span>
+      </div>
+    </div>
+  </section>
+
+  {# ══ FOLIE 2 – Problem ═════════════════════════════════════════════════ #}
+  <section class="slide s-problem">
+    <div class="slide-body">
+      <div class="eyebrow">Warum Testing-Klarheit entscheidend ist</div>
+      <h2 class="slide-h2">Testing-Schwächen kosten — man sieht sie nur oft zu spät.</h2>
+      <div class="problem-grid">
+        <div class="prob-card prob-card-i">
+          <div class="prob-kicker">Orientierung fehlt</div>
+          <div class="prob-title">Kein Benchmark, kein Fortschritt</div>
+          <div class="prob-desc">Ohne objektiven Vergleichsmaßstab wissen Teams nicht, ob Verbesserungsmaßnahmen wirklich wirken oder ob man sich im Kreis dreht.</div>
+        </div>
+        <div class="prob-card prob-card-w">
+          <div class="prob-kicker">Sichtbarkeit fehlt</div>
+          <div class="prob-title">Fehler zeigen sich zu spät</div>
+          <div class="prob-desc">Qualitätslücken in der Testphase werden erst in Produktion sichtbar — teurer, stressiger, mit deutlich größerer Außenwirkung.</div>
+        </div>
+        <div class="prob-card prob-card-g">
+          <div class="prob-kicker">Datenbasis fehlt</div>
+          <div class="prob-title">Budgets ohne Grundlage</div>
+          <div class="prob-desc">Investitionsentscheidungen in Tooling, Automatisierung und Personal werden aus dem Bauch heraus getroffen — nicht auf Basis realer Bedarfsanalyse.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# ══ FOLIE 3 – Zwei Wege ══════════════════════════════════════════════ #}
+  <section class="slide s-paths">
+    <div class="slide-body">
+      <div class="eyebrow">Ihr Einstieg</div>
+      <h2 class="slide-h2">Zwei Wege — je nach Ihrem Bedarf.</h2>
+      <div class="paths-grid">
+
+        <div class="path-card path-card-i">
+          <div class="path-badge">
+            <div class="badge-rect"></div>IMPULSE
+          </div>
+          <div class="path-title">Sofortige Orientierung</div>
+          <div class="path-claim">Für alle, die in wenigen Minuten wissen wollen, wo sie stehen — ohne Voraberfahrung oder Vorabgespräch.</div>
+          <div class="path-meta">
+            <div class="path-meta-row">
+              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/></svg>
+              5 Minuten
+            </div>
+            <div class="path-meta-row">
+              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 1a6 6 0 1 0 0 12A6 6 0 0 0 7 1z"/><path d="M5 7l1.5 1.5L9.5 5"/></svg>
+              Kostenlos · Keine Registrierung
+            </div>
+            <div class="path-meta-row">
+              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><rect x="1.5" y="2.5" width="11" height="9" rx="1.5"/><path d="M4 6.5h6M4 9h4"/></svg>
+              Sofort online verfügbar
+            </div>
+          </div>
+          <div class="path-rule"></div>
+          <div class="path-out-label">Was Sie erhalten</div>
+          <div class="path-out-list">
+            <div class="path-out-item">
+              <span class="path-check">✓</span>
+              <span>Reifegrad-Score Ihrer Testing-Praxis</span>
+            </div>
+            <div class="path-out-item">
+              <span class="path-check">✓</span>
+              <span>Empfehlung: welches Angebot zu Ihrem Stand passt</span>
+            </div>
+            <div class="path-out-item">
+              <span class="path-check">✓</span>
+              <span>Erster konkreter Handlungshinweis</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="paths-oder">oder</div>
+
+        <div class="path-card path-card-w">
+          <div class="path-badge">
+            <div class="badge-rect"></div>WARP
+          </div>
+          <div class="path-title">Fundierte Tiefenanalyse</div>
+          <div class="path-claim">Für alle, die eine belastbare Entscheidungsgrundlage und konkrete Dokumente brauchen.</div>
+          <div class="path-meta">
+            <div class="path-meta-row">
+              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="7" r="5.5"/><path d="M7 4v3l2 2"/></svg>
+              2–3 Tage Workshop
+            </div>
+            <div class="path-meta-row">
+              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="4" r="1.8"/><circle cx="9" cy="4" r="1.8"/><path d="M1.5 12c0-2.2 1.6-3.5 3.5-3.5h4c1.9 0 3.5 1.3 3.5 3.5"/></svg>
+              Mit Wavestone-Experten
+            </div>
+            <div class="path-meta-row">
+              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2h5.5L11 4.5V12H3V2z"/><path d="M8 2v3h3"/><path d="M5 7h4M5 9.5h3"/></svg>
+              Vollständig dokumentiert
+            </div>
+          </div>
+          <div class="path-rule"></div>
+          <div class="path-out-label">Was Sie erhalten</div>
+          <div class="path-out-list">
+            <div class="path-out-item">
+              <span class="path-check">✓</span>
+              <span>PDF-Bericht: Score je Kategorie, Stärken &amp; Lücken</span>
+            </div>
+            <div class="path-out-item">
+              <span class="path-check">✓</span>
+              <span>KI-generierte Teststrategie &amp; Testkonzepte</span>
+            </div>
+            <div class="path-out-item">
+              <span class="path-check">✓</span>
+              <span>Konkrete Handlungsempfehlungen &amp; Roadmap</span>
+            </div>
+            <div class="path-out-item">
+              <span class="path-check">✓</span>
+              <span>Beschleunigter Projektstart — keine erneute Analysephase</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  {# ══ FOLIE 4 – CTA ════════════════════════════════════════════════════ #}
+  <section class="slide s-cta">
+    <div class="cta-body">
+      <div class="cta-eyebrow">Jetzt starten</div>
+      <h2 class="cta-h2">Ihr nächster Schritt dauert 5 Minuten.</h2>
+      <p class="cta-sub">Starten Sie mit IMPULSE — kostenlos, ohne Registrierung, sofort. Wenn Sie mehr wollen, begleiten wir Sie durch den vollständigen WARP-Prozess.</p>
+      <div class="cta-steps">
+        <div class="cta-step">
+          <div class="cta-step-kicker">Schritt 1</div>
+          <div class="cta-step-title">IMPULSE aufrufen</div>
+          <div class="cta-step-desc">10–15 gezielte Fragen zur Testpraxis beantworten — kein Login, kein Aufwand, keine Vorbereitung.</div>
+        </div>
+        <div class="cta-step">
+          <div class="cta-step-kicker">Schritt 2</div>
+          <div class="cta-step-title">Ergebnis sofort sehen</div>
+          <div class="cta-step-desc">Reifegrad-Score und erste Handlungsempfehlung erscheinen direkt — kein Warten auf einen Berater.</div>
+        </div>
+        <div class="cta-step">
+          <div class="cta-step-kicker">Optional: Schritt 3</div>
+          <div class="cta-step-title">WARP-Workshop anfragen</div>
+          <div class="cta-step-desc">Wenn Sie die volle Analyse mit konkreten Dokumenten möchten, sprechen Sie uns an.</div>
+        </div>
+      </div>
+      <div class="cta-brand">
+        <div class="cta-brand-sq"></div>wavestone
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="nav">
+  <button id="btn-prev" onclick="slide(-1)" title="Zurück">&#8592;</button>
+  <span id="slide-counter">1 / 4</span>
+  <button id="btn-next" onclick="slide(1)" title="Weiter">&#8594;</button>
+  <button onclick="toggleFS()" title="Vollbild" style="width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.13);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s">
+    <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor"><path d="M1 1h5v1.5H2.5V7H1V1zm9 0h5v6h-1.5V2.5H10V1zM1 9h1.5v4.5H7V15H1V9zm13 4.5H9.5V15H15V9h-1.5v4.5z"/></svg>
+  </button>
+</div>
+
+<script>
+var current = 0;
+var slides = document.querySelectorAll('.slide');
+var total = slides.length;
+
+function show(n) {
+  slides[current].classList.remove('active');
+  current = Math.max(0, Math.min(total - 1, n));
+  slides[current].classList.add('active');
+  document.getElementById('slide-counter').textContent = (current + 1) + ' / ' + total;
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === total - 1;
+}
+function slide(dir) { show(current + dir); }
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); slide(1); }
+  if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')                    { e.preventDefault(); slide(-1); }
+  if (e.key === 'f' || e.key === 'F') toggleFS();
+});
+
+function toggleFS() {
+  if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+  else document.exitFullscreen();
+}
+
+var touchX = 0;
+document.addEventListener('touchstart', function(e) { touchX = e.touches[0].clientX; }, { passive: true });
+document.addEventListener('touchend', function(e) {
+  var dx = e.changedTouches[0].clientX - touchX;
+  if (Math.abs(dx) > 50) slide(dx < 0 ? 1 : -1);
+});
+
+show(0);
+</script>
+</body>
+</html>

@@ -444,6 +444,10 @@ def create_app() -> Flask:
     def praesentation():
         return render_template("praesentation.html")
 
+    @app.route("/praesentation/kunde")
+    def praesentation_kunde():
+        return render_template("praesentation_kunde.html")
+
     @app.route("/praesentation/download")
     def praesentation_download():
         try:
