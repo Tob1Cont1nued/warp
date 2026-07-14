@@ -21,12 +21,17 @@
     {# ── Projektliste ──────────────────────────────────────────────── #}
     <div class="sidebar-projects">
       <div class="sidebar-projects-header">
-        <span>Meine Projekte</span>
+        <button class="sidebar-projects-toggle" id="js-proj-toggle" aria-expanded="true">
+          <svg class="sidebar-proj-chevron" viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3,5 8,11 13,5"/>
+          </svg>
+          Meine Projekte
+        </button>
         {% if current_user.is_superuser or not current_user.is_admin %}
         <a href="{{ url_for('new_project') }}" class="sidebar-new-btn" title="Neues Projekt">+</a>
         {% endif %}
       </div>
-      <nav class="sidebar-projects-list">
+      <nav class="sidebar-projects-list" id="js-proj-list">
         {% for p in projects %}
         <div class="sidebar-project-row {% if project and p.id == project.id %}active{% endif %}">
           <a href="{{ url_for('questionnaire', pid=p.id) }}" class="sidebar-project-name">{{ p.name }}</a>
@@ -99,6 +104,24 @@
 </aside>
 
 <script>
+// ── Projektliste ein-/ausklappen ─────────────────────────────────────
+(function () {
+  var list = document.getElementById('js-proj-list');
+  var btn  = document.getElementById('js-proj-toggle');
+  if (!list || !btn) return;
+  var chevron = btn.querySelector('.sidebar-proj-chevron');
+  var isOpen = localStorage.getItem('sidebar-proj-open') !== 'false';
+  function setOpen(v) {
+    isOpen = v;
+    list.style.display = v ? '' : 'none';
+    chevron.style.transform = v ? '' : 'rotate(-90deg)';
+    btn.setAttribute('aria-expanded', String(v));
+    localStorage.setItem('sidebar-proj-open', String(v));
+  }
+  setOpen(isOpen);
+  btn.addEventListener('click', function () { setOpen(!isOpen); });
+})();
+
 // ── Sidebar-Drawer (mobile) ──────────────────────────────────────────
 (function () {
   var sb = document.getElementById("js-sidebar");

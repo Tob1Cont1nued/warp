@@ -633,6 +633,24 @@ button { cursor: pointer; }
   text-transform: uppercase;
   color: rgba(255,255,255,0.4);
 }
+.sidebar-projects-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  line-height: 1;
+}
+.sidebar-projects-toggle:hover { color: rgba(255,255,255,0.7); }
+.sidebar-proj-chevron { transition: transform 0.2s ease; flex-shrink: 0; }
+
 .sidebar-new-btn {
   width: 22px; height: 22px;
   display: inline-flex;
