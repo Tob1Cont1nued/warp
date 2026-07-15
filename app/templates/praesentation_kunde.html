@@ -161,52 +161,43 @@
     .cpill-w .cpill-dot { background: #C4A0FF; }
 
     /* ══════════════════════════════════════════════════════════════════════
-       SLIDE 2 – Problem  (always light — presentation context)
+       SLIDE 2 – Problem
     ══════════════════════════════════════════════════════════════════════ */
-    .s-problem {
-      background: #ECEAF5;
-      --ink:   #0E0C24;
-      --card:  #F5F4FB;
-      --muted: #5C5A78;
-      --rule:  rgba(14,12,36,0.09);
-    }
+    .s-problem { background: var(--deep); }
+    .s-problem .eyebrow { color: rgba(255,255,255,0.4); }
+    .s-problem .slide-h2 { color: #fff; }
     .problem-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 18px;
     }
     .prob-card {
-      background: var(--card);
+      background: rgba(255,255,255,0.07);
       border-radius: 12px; padding: 28px 24px;
       border-top: 4px solid transparent;
     }
-    .prob-card-i { border-top-color: var(--impulse); }
-    .prob-card-w { border-top-color: var(--warp); }
-    .prob-card-g { border-top-color: #04C858; }
+    .prob-card-i { border-top-color: #6AAEFF; }
+    .prob-card-w { border-top-color: #B48EFF; }
+    .prob-card-g { border-top-color: var(--spark); }
     .prob-kicker {
       font-size: 0.72rem; font-weight: 700;
       letter-spacing: 0.11em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 10px;
+      color: rgba(255,255,255,0.38); margin-bottom: 10px;
     }
     .prob-title {
       font-size: 1.15rem; font-weight: 700;
-      color: var(--ink); margin-bottom: 12px; line-height: 1.25;
+      color: #fff; margin-bottom: 12px; line-height: 1.25;
     }
     .prob-desc {
-      font-size: 0.93rem; color: var(--muted); line-height: 1.7;
+      font-size: 0.93rem; color: rgba(255,255,255,0.55); line-height: 1.7;
     }
 
     /* ══════════════════════════════════════════════════════════════════════
-       SLIDE 3 – Two Paths  (always light — presentation context)
+       SLIDE 3 – Two Paths
     ══════════════════════════════════════════════════════════════════════ */
-    .s-paths {
-      background: #ECEAF5;
-      --ink:           #0E0C24;
-      --muted:         #5C5A78;
-      --impulse-tint:  #C8D9F5;
-      --warp-tint:     #D5C8F5;
-      --rule:          rgba(14,12,36,0.09);
-    }
+    .s-paths { background: var(--deep); }
+    .s-paths .eyebrow { color: rgba(255,255,255,0.4); }
+    .s-paths .slide-h2 { color: #fff; }
     .paths-grid {
       display: grid;
       grid-template-columns: 1fr 36px 1fr;
@@ -217,12 +208,12 @@
       display: flex; flex-direction: column;
     }
     .path-card-i {
-      background: var(--impulse-tint);
-      border-top: 4px solid var(--impulse);
+      background: rgba(29,95,212,0.18);
+      border-top: 4px solid #6AAEFF;
     }
     .path-card-w {
-      background: var(--warp-tint);
-      border-top: 4px solid var(--warp);
+      background: rgba(104,37,200,0.2);
+      border-top: 4px solid #B48EFF;
     }
     .path-badge {
       display: inline-flex; align-items: center; gap: 5px;
@@ -230,19 +221,18 @@
       letter-spacing: 0.13em; text-transform: uppercase;
       margin-bottom: 10px;
     }
-    .path-card-i .path-badge { color: var(--impulse); }
-    .path-card-w .path-badge { color: var(--warp); }
-    .badge-rect {
-      width: 8px; height: 8px; border-radius: 2px;
-    }
-    .path-card-i .badge-rect { background: var(--impulse); }
-    .path-card-w .badge-rect { background: var(--warp); }
+    .path-card-i .path-badge { color: #6AAEFF; }
+    .path-card-w .path-badge { color: #B48EFF; }
+    .badge-rect { width: 8px; height: 8px; border-radius: 2px; }
+    .path-card-i .badge-rect { background: #6AAEFF; }
+    .path-card-w .badge-rect { background: #B48EFF; }
     .path-title {
       font-size: clamp(1.3rem, 2.2vw, 1.7rem); font-weight: 800;
-      letter-spacing: -0.02em; color: var(--ink); margin-bottom: 6px;
+      letter-spacing: -0.02em; color: #fff; margin-bottom: 6px;
     }
     .path-claim {
-      font-size: 0.92rem; color: var(--muted); margin-bottom: 18px; line-height: 1.55;
+      font-size: 0.92rem; color: rgba(255,255,255,0.55);
+      margin-bottom: 18px; line-height: 1.55;
     }
     .path-meta {
       display: flex; flex-direction: column; gap: 8px; margin-bottom: 18px;
@@ -251,38 +241,31 @@
       display: flex; align-items: center; gap: 9px;
       font-size: 0.88rem; font-weight: 600; line-height: 1;
     }
-    .path-card-i .path-meta-row { color: var(--impulse-mid); }
-    .path-card-w .path-meta-row { color: var(--warp); }
+    .path-card-i .path-meta-row { color: #6AAEFF; }
+    .path-card-w .path-meta-row { color: #B48EFF; }
     .path-rule {
-      height: 1px; background: var(--rule); margin-bottom: 16px;
+      height: 1px; background: rgba(255,255,255,0.12); margin-bottom: 16px;
     }
     .path-out-label {
       font-size: 0.7rem; font-weight: 700;
       letter-spacing: 0.11em; text-transform: uppercase;
-      color: var(--muted); margin-bottom: 12px;
+      color: rgba(255,255,255,0.38); margin-bottom: 12px;
     }
-    .path-out-list {
-      display: flex; flex-direction: column; gap: 10px; flex: 1;
-    }
+    .path-out-list { display: flex; flex-direction: column; gap: 10px; flex: 1; }
     .path-out-item {
       display: flex; gap: 9px; align-items: flex-start;
-      font-size: 0.92rem; color: var(--ink); line-height: 1.45;
+      font-size: 0.92rem; color: rgba(255,255,255,0.85); line-height: 1.45;
     }
-    .path-check {
-      font-weight: 700; flex-shrink: 0; margin-top: 1px;
-      font-size: 0.82rem;
-    }
-    .path-card-i .path-check { color: var(--impulse); }
-    .path-card-w .path-check { color: var(--warp); }
-    /* Arrow separator between phases */
-    .paths-arrow {
-      display: flex; align-items: center; justify-content: center;
-    }
+    .path-check { font-weight: 700; flex-shrink: 0; margin-top: 1px; font-size: 0.82rem; }
+    .path-card-i .path-check { color: #6AAEFF; }
+    .path-card-w .path-check { color: #B48EFF; }
+    /* Arrow separator */
+    .paths-arrow { display: flex; align-items: center; justify-content: center; }
     .paths-arrow-icon {
       width: 32px; height: 32px; border-radius: 50%;
-      background: rgba(14,12,36,0.08);
+      background: rgba(255,255,255,0.1);
       display: flex; align-items: center; justify-content: center;
-      color: #5C5A78;
+      color: rgba(255,255,255,0.5);
     }
 
     /* ══════════════════════════════════════════════════════════════════════
