@@ -92,50 +92,31 @@
     .btn-icon-delete:hover { background: #fee2e2; border-color: #f87171; }
     @media (max-width: 640px) { .btn-icon-delete { display: none !important; } }
 
-    /* ── Inline chart (always visible) ─────────────────────────────────── */
-    .inbox-chart { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--c-border-soft); }
-    .ic-header {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .ic-title { font-size: .7rem; font-weight: 700; text-transform: uppercase;
-                letter-spacing: .08em; color: var(--c-text-muted); }
-    .ic-maturity {
-      font-size: .7rem; font-weight: 700; border-radius: 999px;
-      padding: 2px 9px; letter-spacing: .02em;
-    }
-    .ic-maturity-gut          { background: #dcfce7; color: #15803d; }
-    .ic-maturity-ausbaufaehig { background: #fef3c7; color: #b45309; }
-    .ic-maturity-minimal      { background: #fee2e2; color: #b91c1c; }
-    .ic-bars { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
-    .ic-row { display: flex; align-items: center; gap: 8px; }
-    .ic-label {
-      width: 130px; font-size: .75rem; color: var(--c-text-muted);
-      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-      flex-shrink: 0; text-align: right;
-    }
-    .ic-track {
-      flex: 1; height: 10px; background: var(--c-border);
-      border-radius: 5px; overflow: hidden; min-width: 40px;
-    }
-    .ic-fill {
-      height: 100%; border-radius: 5px; transition: width .4s ease;
-    }
-    .ic-fill--top  { background: var(--ws-blue); }
-    .ic-fill--mid  { background: color-mix(in srgb, var(--ws-blue) 55%, transparent); }
-    .ic-fill--low  { background: color-mix(in srgb, var(--ws-blue) 30%, transparent); }
-    .ic-val { width: 32px; font-size: .72rem; font-weight: 700;
-              color: var(--c-text-muted); flex-shrink: 0; }
-    .ic-factors { display: flex; gap: 6px; flex-wrap: wrap; padding-top: 4px; }
-    .ic-factor {
-      font-size: .75rem; background: #f0f9ff; border: 1px solid #bae6fd;
+    /* ── Expandable detail ──────────────────────────────────────────────── */
+    .inbox-detail { padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--c-border-soft); }
+    .inbox-rationale { font-size: .875rem; color: var(--c-text-muted); line-height: 1.6; margin-bottom: 12px; }
+    .scores-legend { font-size:.75rem; color:var(--c-text-muted); margin:0 0 8px; }
+    .score-row { display:flex; align-items:center; gap:10px; margin:5px 0; }
+    .score-label { width:160px; font-size:.8rem; text-align:right; white-space:nowrap;
+                   overflow:hidden; text-overflow:ellipsis; flex-shrink:0; }
+    .score-track { flex:1; height:8px; background:var(--c-border); border-radius:4px; overflow:hidden; min-width:60px; }
+    .score-fill  { height:100%; background:var(--ws-blue); border-radius:4px; transition:width .3s; }
+    .score-val   { width:36px; font-size:.78rem; font-weight:700; color:var(--c-text-muted); flex-shrink:0; }
+    .inbox-factors { display: flex; gap: 6px; flex-wrap: wrap; }
+    .inbox-factor {
+      font-size: .78rem; background: #f0f9ff; border: 1px solid #bae6fd;
       border-radius: 999px; padding: 3px 10px; color: #0369a1;
     }
-    .ic-ok { font-size: .78rem; color: #15803d; }
 
-    /* ── Expandable detail (rationale only now) ─────────────────────────── */
-    .inbox-detail { padding-top: 14px; margin-top: 14px; border-top: 1px solid var(--c-border-soft); }
-    .inbox-rationale { font-size: .875rem; color: var(--c-text-muted); line-height: 1.6; }
+    /* ── Maturity badges ────────────────────────────────────────────────── */
+    .maturity-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: .72rem; font-weight: 600; border-radius: 999px;
+      padding: 3px 10px; letter-spacing: .02em;
+    }
+    .maturity-gut          { background: #dcfce7; color: #15803d; }
+    .maturity-ausbaufaehig { background: #fef3c7; color: #b45309; }
+    .maturity-minimal      { background: #fee2e2; color: #b91c1c; }
 
     /* ── Action bar at bottom of card ──────────────────────────────────── */
     .inbox-action-bar {
@@ -271,6 +252,14 @@
             <p class="inbox-sender-email">{{ msg.user_email }}</p>
             <div class="inbox-tags">
               <span class="inbox-rec">{{ msg.recommendation }}</span>
+              {% if msg.maturity %}
+              <span class="maturity-badge maturity-{{ msg.maturity }}">
+                {%- if msg.maturity == 'gut' -%}😊 Gut aufgestellt
+                {%- elif msg.maturity == 'ausbaufaehig' -%}😐 Ausbaufähig
+                {%- else -%}😕 Handlungsbedarf
+                {%- endif -%}
+              </span>
+              {% endif %}
             </div>
             <div class="inbox-meta">
               {% if msg.contact_pref %}
@@ -307,54 +296,35 @@
           </div>
         </div>
 
-        {# ── Balkendiagramm + Keywords (immer sichtbar) ──────────────── #}
-        {% if msg.scores %}
-        {% set sorted_scores = msg.scores.items() | sort(attribute=1, reverse=True) | list %}
-        {% set max_val = sorted_scores[0][1] if sorted_scores else 1 %}
-        <div class="inbox-chart">
-          <div class="ic-header">
-            <span class="ic-title">Methoden-Fit</span>
-            {% if msg.maturity %}
-            <span class="ic-maturity ic-maturity-{{ msg.maturity }}">
-              {%- if msg.maturity == 'gut' -%}Gut aufgestellt
-              {%- elif msg.maturity == 'ausbaufaehig' -%}Ausbaufähig
-              {%- else -%}Handlungsbedarf
-              {%- endif -%}
-            </span>
-            {% endif %}
-          </div>
-          <div class="ic-bars">
-            {% for key, val in sorted_scores %}
-            {% set pct = [((val / 12) * 100) | round | int, 100] | min %}
-            {% if loop.index == 1 %}{% set fill_cls = 'ic-fill--top' %}
-            {% elif pct >= 50 %}{% set fill_cls = 'ic-fill--mid' %}
-            {% else %}{% set fill_cls = 'ic-fill--low' %}
-            {% endif %}
-            <div class="ic-row">
-              <span class="ic-label" title="{{ key }}">{{ key }}</span>
-              <div class="ic-track"><div class="ic-fill {{ fill_cls }}" style="width:{{ pct }}%"></div></div>
-              <span class="ic-val">{{ val }}/12</span>
+        {# ── Expandable detail ───────────────────────────────────────── #}
+        <div class="inbox-detail" style="display:none">
+          {% if msg.rationale %}
+          <p class="inbox-rationale"><strong>Begründung:</strong> {{ msg.rationale }}</p>
+          {% endif %}
+          {% if msg.scores %}
+          <p class="scores-legend"><strong>Methoden-Fit</strong> — je Methode max. 12 Punkte (3 Dimensionen × 4). Höchster Balken = Empfehlung.</p>
+          {% set sorted_scores = msg.scores.items() | sort(attribute=1, reverse=True) %}
+          {% for key, val in sorted_scores %}
+          <div class="score-row">
+            <span class="score-label" title="{{ key }}">{{ key }}</span>
+            <div class="score-track">
+              <div class="score-fill" style="width:{{ [((val / 12) * 100) | round | int, 100] | min }}%"></div>
             </div>
-            {% endfor %}
+            <span class="score-val">{{ val }}/12</span>
           </div>
+          {% endfor %}
+          {% endif %}
           {% if msg.top_factors %}
-          <div class="ic-factors">
+          <p style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--c-text-muted);margin:12px 0 6px">Identifizierte Schwachstellen</p>
+          <div class="inbox-factors">
             {% for factor in msg.top_factors %}
-            <span class="ic-factor">{{ factor }}</span>
+            <span class="inbox-factor">{{ factor }}</span>
             {% endfor %}
           </div>
-          {% else %}
-          <p class="ic-ok">✓ Keine auffälligen Schwachstellen</p>
+          {% elif msg.scores %}
+          <p style="font-size:.8rem;color:#15803d;margin-top:10px">✓ Keine auffälligen Schwachstellen identifiziert</p>
           {% endif %}
         </div>
-        {% endif %}
-
-        {# ── Ausklappbare Begründung ──────────────────────────────────── #}
-        {% if msg.rationale %}
-        <div class="inbox-detail" style="display:none">
-          <p class="inbox-rationale"><strong>Begründung:</strong> {{ msg.rationale }}</p>
-        </div>
-        {% endif %}
 
         {# ── Aktionsleiste ───────────────────────────────────────────── #}
         <div class="inbox-action-bar">
@@ -424,16 +394,14 @@
           </form>
           {% endif %}
 
-          {# Detail-Toggle nur wenn Begründung vorhanden #}
-          {% if msg.rationale %}
-          <button type="button" class="iab-toggle" title="Begründung aufklappen"
+          {# Detail-Toggle (rechts) #}
+          <button type="button" class="iab-toggle" title="Details aufklappen"
                   onclick="toggleDetail(this)">
             <svg class="toggle-icon" viewBox="0 0 24 24" width="16" height="16"
                  fill="none" stroke="currentColor" stroke-width="2.5">
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </button>
-          {% endif %}
 
         </div>{# /inbox-action-bar #}
 
