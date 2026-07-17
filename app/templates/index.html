@@ -208,8 +208,15 @@
 
     {# Handlungsempfehlungen #}
     <div class="card" id="js-recs-card" style="margin-bottom:16px;display:none">
-      <h2>Handlungsempfehlungen</h2>
-      <p class="card-sub">Basierend auf Ihren Antworten — nur für Fragen mit Verbesserungspotenzial.</p>
+      <div class="rec-card-header">
+        <div>
+          <h2>Handlungsempfehlungen</h2>
+          <p class="card-sub">Basierend auf Ihren Antworten — nur für Fragen mit Verbesserungspotenzial.</p>
+        </div>
+        <button type="button" class="rec-toggle-btn" id="js-recs-toggle" title="Alles ein-/ausklappen">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l5 5 5-5"/></svg>
+        </button>
+      </div>
       <div id="js-recs-list"></div>
     </div>
 
@@ -509,40 +516,90 @@ function wqToggleEdit(qid) {
     });
   }
 
-  // Handlungsempfehlungen im Auswertungs-Tab aufbauen
+  // Kategorie-Lookup für Handlungsempfehlungen
+  var CAT_TITLES = { {% for cat in categories %}"{{ cat.id }}": "{{ cat.title | e }}"{% if not loop.last %},{% endif %}{% endfor %} };
+  var CAT_ORDER  = [{% for cat in categories %}"{{ cat.id }}"{% if not loop.last %},{% endif %}{% endfor %}];
+
+  function esc(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  // Handlungsempfehlungen im Auswertungs-Tab aufbauen (nach Themengebiet gruppiert, ausklappbar)
   function buildRecs() {
     var card = document.getElementById('js-recs-card');
     var list = document.getElementById('js-recs-list');
     if (!card || !list) return;
-    var items = [];
+
+    var bycat = {};
     selects.forEach(function (s) {
       if (!s.value) return;
-      var row    = s.closest('tr');
+      var row = s.closest('tr');
       if (!row) return;
       var recLow = row.dataset.recLow || '';
       var recMid = row.dataset.recMid || '';
       var qtext  = row.dataset.qtext  || '';
+      var catId  = row.dataset.cat    || '';
       var text = '', level = '';
       if ((s.value === 'nicht' || s.value === 'kaum') && recLow) { text = recLow; level = 'low'; }
       else if (s.value === 'teil' && recMid)                      { text = recMid; level = 'mid'; }
-      if (text) items.push({ qtext: qtext, text: text, level: level, val: s.value });
+      if (text) {
+        if (!bycat[catId]) bycat[catId] = [];
+        bycat[catId].push({ qtext: qtext, text: text, level: level, val: s.value });
+      }
     });
+
     list.innerHTML = '';
-    if (items.length === 0) {
-      card.style.display = 'none'; return;
-    }
-    // Sortierung: nicht → kaum → teil
     var order = { 'nicht': 0, 'kaum': 1, 'teil': 2 };
-    items.sort(function (a, b) { return (order[a.val] || 0) - (order[b.val] || 0); });
-    items.forEach(function (item) {
-      var div = document.createElement('div');
-      div.className = 'rec-box' + (item.level === 'mid' ? ' rec-box--mid' : '');
-      div.innerHTML = '<span class="rec-icon">💡</span><div><div class="rec-qtext">' +
-        item.qtext.replace(/</g,'&lt;') + '</div><div class="rec-content">' +
-        item.text.replace(/</g,'&lt;') + '</div></div>';
-      list.appendChild(div);
+    var totalItems = 0;
+
+    CAT_ORDER.forEach(function (catId) {
+      var items = bycat[catId];
+      if (!items || !items.length) return;
+      totalItems += items.length;
+      items.sort(function (a, b) { return (order[a.val]||0) - (order[b.val]||0); });
+
+      var section = document.createElement('div');
+      section.className = 'rec-category';
+
+      var hdr = document.createElement('button');
+      hdr.type = 'button';
+      hdr.className = 'rec-cat-header';
+      hdr.innerHTML =
+        '<span class="rec-cat-title">' + esc(CAT_TITLES[catId] || catId) + '</span>' +
+        '<span class="rec-cat-count">' + items.length + ' Empfehlung' + (items.length !== 1 ? 'en' : '') + '</span>' +
+        '<svg class="rec-cat-chevron" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6l5 5 5-5"/></svg>';
+
+      var body = document.createElement('div');
+      body.className = 'rec-cat-body';
+
+      items.forEach(function (item) {
+        var div = document.createElement('div');
+        div.className = 'rec-box' + (item.level === 'mid' ? ' rec-box--mid' : '');
+        div.innerHTML = '<span class="rec-icon">💡</span><div><div class="rec-qtext">' +
+          esc(item.qtext) + '</div><div class="rec-content">' + esc(item.text) + '</div></div>';
+        body.appendChild(div);
+      });
+
+      hdr.addEventListener('click', function () {
+        var open = body.style.display !== 'none';
+        body.style.display = open ? 'none' : '';
+        hdr.classList.toggle('rec-cat-header--collapsed', open);
+      });
+
+      section.appendChild(hdr);
+      section.appendChild(body);
+      list.appendChild(section);
     });
-    card.style.display = '';
+
+    card.style.display = totalItems > 0 ? '' : 'none';
+  }
+
+  var recsToggle = document.getElementById('js-recs-toggle');
+  if (recsToggle) {
+    recsToggle.addEventListener('click', function () {
+      var list = document.getElementById('js-recs-list');
+      var open = list.style.display !== 'none';
+      list.style.display = open ? 'none' : '';
+      recsToggle.classList.toggle('rec-toggle-btn--collapsed', open);
+    });
   }
 
   selects.forEach(function (s) {

@@ -448,6 +448,22 @@
           </form>
           {% endif %}
 
+          {# E-Mail-Antwort #}
+          <button type="button" class="iab-btn"
+                  onclick="replyMail(this)"
+                  data-email="{{ msg.user_email | e }}"
+                  data-name="{{ msg.user_name | e }}"
+                  data-maturity="{{ msg.maturity or '' }}"
+                  data-recommendation="{{ msg.recommendation or '' | e }}"
+                  data-factors="{{ (msg.top_factors or []) | join(', ') | e }}"
+                  data-scores="{{ msg.scores | tojson | e if msg.scores else '{}' }}">
+            <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8">
+              <rect x="1" y="3" width="14" height="10" rx="2"/>
+              <path d="M1 5l7 5 7-5"/>
+            </svg>
+            Antworten
+          </button>
+
           {# Detail-Toggle (rechts) #}
           <button type="button" class="iab-toggle" title="Details aufklappen"
                   onclick="toggleDetail(this)">
@@ -565,6 +581,59 @@
       fetch("/api/inbox/count").then(r => r.json()).then(d => updateBell(d.count || 0)).catch(() => {});
     }, 60000);
   })();
+
+  /* ── Antworten per E-Mail ───────────────────────────────────────────── */
+  function replyMail(btn) {
+    var email          = btn.dataset.email;
+    var name           = btn.dataset.name;
+    var maturity       = btn.dataset.maturity;
+    var recommendation = btn.dataset.recommendation;
+    var factors        = btn.dataset.factors;
+    var maturityLabel  = { gut: 'Gut aufgestellt', ausbaufaehig: 'Ausbaufähig', handlungsbedarf: 'Handlungsbedarf' }[maturity] || '';
+
+    var scores = {};
+    try { scores = JSON.parse(btn.dataset.scores || '{}'); } catch(e) {}
+    var scoreEntries = Object.entries(scores).sort(function(a, b) { return b[1] - a[1]; });
+
+    var lines = [
+      'Guten Tag ' + name + ',',
+      '',
+      'vielen Dank für Ihre Teilnahme am IMPULSE Self-Assessment von Wavestone.',
+      'Im Folgenden finden Sie eine Zusammenfassung Ihrer Ergebnisse.',
+      '',
+      '── Ihre Ergebnisse ──────────────────────────────────',
+    ];
+
+    if (maturityLabel) lines.push('Test-Reifegrad:        ' + maturityLabel);
+    if (recommendation) lines.push('Empfohlene Methode:    ' + recommendation);
+
+    if (scoreEntries.length) {
+      lines.push('');
+      lines.push('Methoden-Fit (max. 12 Punkte je Methode):');
+      scoreEntries.forEach(function(p) {
+        lines.push('  ' + (p[0] + '                    ').slice(0, 20) + p[1] + ' / 12');
+      });
+    }
+
+    if (factors) {
+      lines.push('');
+      lines.push('Identifizierte Handlungsfelder:');
+      factors.split(', ').forEach(function(f) { if (f.trim()) lines.push('  • ' + f.trim()); });
+    }
+
+    lines.push('─────────────────────────────────────────────────────');
+    lines.push('');
+    lines.push('Gerne würden wir Ihre Ergebnisse in einem persönlichen Gespräch vertiefen und gemeinsam konkrete nächste Schritte erarbeiten.');
+    lines.push('');
+    lines.push('Hätten Sie in den nächsten Tagen Zeit für einen kurzen Austausch? Wir freuen uns auf Ihre Rückmeldung.');
+    lines.push('');
+    lines.push('Mit freundlichen Grüßen');
+    lines.push('Ihr Wavestone-Team');
+
+    window.location.href = 'mailto:' + encodeURIComponent(email) +
+      '?subject=' + encodeURIComponent('Ihre IMPULSE-Ergebnisse – nächste Schritte') +
+      '&body=' + encodeURIComponent(lines.join('\r\n'));
+  }
 
   /* ── Mobile swipe-to-delete ──────────────────────────────────────────── */
   (function () {

@@ -613,26 +613,62 @@ button { cursor: pointer; }
   .qtable td.col-notes::before { content: ""; display: none; }
   .qtable select   { font-size: 13.5px; min-height: 0; padding: 8px 32px 8px 10px; }
   .qtable textarea { font-size: 13px;   min-height: 38px; }
-  .rec-row td { padding: 0 !important; }
-  .rec-box { margin: 0 8px 6px 8px; }
+  .rec-cat-body { padding: 8px; }
 }
 
 /* =================================================================
-   HANDLUNGSEMPFEHLUNGEN (Fragenkatalog)
+   HANDLUNGSEMPFEHLUNGEN (Auswertungs-Tab)
    ================================================================= */
 .rec-cell { padding: 0 !important; border: none !important; }
+
+/* Card header row with toggle button */
+.rec-card-header {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  margin-bottom: 12px;
+}
+.rec-card-header > div { flex: 1; }
+.rec-card-header h2 { margin-bottom: 2px; }
+.rec-card-header .card-sub { margin-top: 0; margin-bottom: 0; }
+
+.rec-toggle-btn {
+  flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border: 1px solid var(--c-border);
+  border-radius: 6px; background: var(--c-bg); color: var(--c-text-muted);
+  cursor: pointer; transition: background .15s, color .15s;
+}
+.rec-toggle-btn:hover { background: var(--c-row-alt); color: var(--c-text); }
+.rec-toggle-btn svg { transition: transform .2s; }
+.rec-toggle-btn--collapsed svg { transform: rotate(180deg); }
+
+/* Category section */
+.rec-category { border: 1px solid var(--c-border); border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+.rec-category:last-child { margin-bottom: 0; }
+
+.rec-cat-header {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  padding: 10px 14px; background: var(--c-bg); border: none; cursor: pointer;
+  text-align: left; font-size: .88rem; color: var(--c-text);
+  transition: background .15s;
+}
+.rec-cat-header:hover { background: var(--c-row-alt); }
+.rec-cat-title { font-weight: 600; flex: 1; }
+.rec-cat-count { font-size: .78rem; color: var(--c-text-muted); white-space: nowrap; }
+.rec-cat-chevron { flex-shrink: 0; color: var(--c-text-muted); transition: transform .2s; }
+.rec-cat-header--collapsed .rec-cat-chevron { transform: rotate(180deg); }
+
+.rec-cat-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+
+/* Individual recommendation box */
 .rec-box {
   display: flex; gap: 10px; align-items: flex-start;
   background: var(--c-bg); border-left: 3px solid var(--ws-blue);
   border-radius: 0 6px 6px 0; padding: 10px 14px;
-  margin: 0 0 4px 0; font-size: .82rem; line-height: 1.6;
+  font-size: .82rem; line-height: 1.6;
 }
 .rec-icon { font-size: 1rem; flex-shrink: 0; padding-top: 2px; }
 .rec-qtext { font-size: .8rem; font-weight: 600; color: var(--c-text); margin-bottom: 4px; }
 .rec-content { font-size: .82rem; color: var(--c-text-muted); }
 .rec-box--mid { border-left-color: #d97706; }
-.rec-box { margin-bottom: 8px; }
-.rec-box:last-child { margin-bottom: 0; }
 
 /* =================================================================
    SIDEBAR PROJECTS
