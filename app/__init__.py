@@ -55,7 +55,15 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
 from .models import db, User, Project, Answer, Category, Question, InboxMessage, GeneratedDocument, WorkshopQuestion
-from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER
+from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER, CATEGORIES as _PY_CATS
+
+# Lookup: question_id → recommendations dict (low/mid), built from questions.py
+_REC_LOOKUP: dict = {
+    q["id"]: q["recommendations"]
+    for cat in _PY_CATS
+    for q in cat["questions"]
+    if q.get("recommendations")
+}
 
 ROOT = Path(__file__).parent.parent
 
@@ -201,7 +209,8 @@ def create_app() -> Flask:
                 "parent": c.parent,
                 "description": c.description,
                 "questions": [
-                    {"id": q.id, "text": q.text, "hint": q.hint, "new": q.is_new}
+                    {"id": q.id, "text": q.text, "hint": q.hint, "new": q.is_new,
+                     "recommendations": _REC_LOOKUP.get(q.id, {})}
                     for q in c.questions
                 ],
             }
