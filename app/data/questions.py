@@ -37,51 +37,91 @@ CATEGORIES = [
                 "id": "ts-1",
                 "text": "Es existiert eine dokumentierte, projekt- oder organisationsweite Teststrategie.",
                 "hint": None,
+                "recommendations": {
+                    "low": "Legen Sie eine schriftliche Teststrategie an, die Testziele, Teststufen, Testarten, Ressourcen und Risiken beschreibt. Bereits ein zweiseitiges Dokument schafft die notwendige Verbindlichkeit und Transparenz für alle Beteiligten.",
+                    "mid": "Ergänzen Sie die vorhandene Teststrategie um fehlende Kernelemente (z.B. Risikobetrachtung, Ressourcenplanung) und stellen Sie sicher, dass sie allen Projektbeteiligten zugänglich ist.",
+                },
             },
             {
                 "id": "ts-2",
                 "text": "Testlevel (Komponente, Integration, System, Akzeptanz) sind klar definiert und voneinander abgegrenzt.",
                 "hint": None,
+                "recommendations": {
+                    "low": "Definieren Sie die Testebenen schriftlich: Legen Sie für jede Ebene fest, was getestet wird, wer testet, welche Werkzeuge eingesetzt werden und welche Ein-/Ausstiegskriterien gelten.",
+                    "mid": "Schärfen Sie die Abgrenzung zwischen den bestehenden Testebenen und klären Sie Überschneidungen oder Zuständigkeitslücken. Dokumentieren Sie die Festlegungen verbindlich im Testkonzept.",
+                },
             },
             {
                 "id": "ts-3",
                 "text": "Produktrisiken sind analysiert und in die Priorisierung der Testfälle einbezogen.",
                 "hint": "Gibt es eine Risikoanalyse für die Software? Gibt es eine Priorisierung der Testfälle, die darauf basiert?",
+                "recommendations": {
+                    "low": "Führen Sie eine strukturierte Risikoanalyse durch (z.B. mit einer Risikomatrix: Eintrittswahrscheinlichkeit × Schadensausmaß) und nutzen Sie die Ergebnisse, um Testfälle nach Priorität zu ordnen.",
+                    "mid": "Aktualisieren Sie die Risikoanalyse regelmäßig (z.B. bei jeder Releaseplanung) und stellen Sie sicher, dass die Priorisierung der Testfälle die jeweils aktuellen Risiken widerspiegelt.",
+                },
             },
             {
                 "id": "ts-4",
                 "text": "Testarten (funktional, nicht-funktional wie Performance, Security, Usability) werden angemessen berücksichtigt.",
                 "hint": None,
+                "recommendations": {
+                    "low": "Ermitteln Sie, welche nicht-funktionalen Anforderungen (Performance, Security, Usability, Reliability) für Ihre Software relevant sind, und planen Sie entsprechende Testaktivitäten explizit in die Teststrategie ein.",
+                    "mid": "Überprüfen Sie, ob alle relevanten Testarten ausreichend abgedeckt sind — insbesondere ob nicht-funktionale Tests (z.B. Last- und Sicherheitstests) systematisch geplant und nicht nur ad hoc durchgeführt werden.",
+                },
             },
             {
                 "id": "ts-5",
                 "text": "Die Teststrategie wird regelmäßig überprüft und an veränderte Rahmenbedingungen angepasst.",
                 "hint": None,
+                "recommendations": {
+                    "low": "Etablieren Sie einen festen Review-Rhythmus für die Teststrategie (z.B. quartalsweise oder nach größeren Projektänderungen) und weisen Sie die Verantwortung für den Review explizit einer Person zu.",
+                    "mid": "Formalisieren Sie den Review-Prozess: Definieren Sie konkrete Auslöser (z.B. Technologiewechsel, neue regulatorische Anforderungen) und einen Freigabeprozess für Änderungen an der Teststrategie.",
+                },
             },
             {
                 "id": "ts-6",
                 "text": "Die Teststrategie ist mit der übergeordneten Projekt-/Unternehmensstrategie abgestimmt.",
                 "hint": None,
+                "recommendations": {
+                    "low": "Binden Sie Projektleitung und relevante Stakeholder in die Erstellung der Teststrategie ein. Verankern Sie Qualitätsziele explizit im Projektauftrag und stellen Sie sicher, dass Testressourcen entsprechend eingeplant werden.",
+                    "mid": "Holen Sie eine explizite Bestätigung der Stakeholder zur aktuellen Teststrategie ein und dokumentieren Sie die Abstimmung. Überprüfen Sie, ob die Teststrategie die strategischen Prioritäten der Projektleitung widerspiegelt.",
+                },
             },
             {
                 "id": "ts-7",
                 "text": "Es gibt klare Entry-/Exit-Kriterien (Ein-/Ausstiegskriterien) je Teststufe.",
                 "hint": None,
+                "recommendations": {
+                    "low": "Definieren Sie für jede Teststufe verbindliche Einstiegs- und Ausstiegskriterien mit messbaren Schwellwerten (z.B. Codeabdeckung ≥ 80 %, keine offenen Critical Bugs) und dokumentieren Sie diese im Testkonzept.",
+                    "mid": "Konkretisieren Sie die vorhandenen Kriterien mit messbaren Schwellwerten und stellen Sie sicher, dass sie vor Beginn jeder Teststufe allen Beteiligten bekannt sind und verbindlich angewendet werden.",
+                },
             },
             {
                 "id": "ts-8",
                 "text": "Besonders risikobehaftete Softwarekomponenten oder Prozesse werden zuerst getestet.",
                 "hint": "Werden risikoreiche Softwarekomponenten zuerst getestet? Gibt es eine Übersicht?",
+                "recommendations": {
+                    "low": "Erstellen Sie eine Übersicht Ihrer Softwarekomponenten mit einer Risikobewertung (nach Kritikalität, Fehleranfälligkeit und Komplexität) und stellen Sie sicher, dass hochriskante Bereiche in der Testplanung Vorrang erhalten.",
+                    "mid": "Überprüfen Sie, ob die aktuelle Testreihenfolge die Risikopriorisierung konsistent umsetzt — insbesondere ob auch unter Zeitdruck die kritischsten Komponenten zuerst getestet werden.",
+                },
             },
             {
                 "id": "ts-9",
                 "text": "Fehlernachtests und Regressionstests werden gemäß Risikoeinschätzung durchgeführt.",
                 "hint": "Gibt es eine Empfehlung, wie viel nach der Fehlerbehebung getestet wird?",
+                "recommendations": {
+                    "low": "Legen Sie verbindlich fest, welcher Umfang an Regressionstests nach Fehlerbehebungen auf Basis der Risikoeinschätzung durchgeführt wird. Automatisierte Regressionstests reduzieren den Aufwand langfristig erheblich.",
+                    "mid": "Formalisieren Sie den Entscheidungsprozess für den Regressionsumfang: Definieren Sie, wer entscheidet, welche Tests nach einer Änderung ausgeführt werden, und evaluieren Sie Automatisierungspotenzial.",
+                },
             },
             {
                 "id": "ts-10",
                 "text": "Es existiert ein definierter Eskalationsweg, wenn Testbedarfe nicht ausreichend berücksichtigt werden.",
                 "hint": None,
+                "recommendations": {
+                    "low": "Definieren Sie einen klaren Eskalationsweg (z.B. Testleiter → Projektleiter → Steuerungskreis) mit konkreten Auslösern und Entscheidungsbefugnissen, und kommunizieren Sie ihn an alle Testbeteiligten.",
+                    "mid": "Überprüfen Sie, ob der vorhandene Eskalationsweg bekannt und praktisch nutzbar ist. Stellen Sie sicher, dass er auch unter Zeitdruck tatsächlich genutzt wird und zu verbindlichen Entscheidungen führt.",
+                },
             },
             {
                 "id": "ts-11",

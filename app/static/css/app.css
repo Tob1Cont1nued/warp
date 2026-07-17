@@ -613,7 +613,24 @@ button { cursor: pointer; }
   .qtable td.col-notes::before { content: ""; display: none; }
   .qtable select   { font-size: 13.5px; min-height: 0; padding: 8px 32px 8px 10px; }
   .qtable textarea { font-size: 13px;   min-height: 38px; }
+  .rec-row td { padding: 0 !important; }
+  .rec-box { margin: 0 8px 6px 8px; }
 }
+
+/* =================================================================
+   HANDLUNGSEMPFEHLUNGEN (Fragenkatalog)
+   ================================================================= */
+.rec-cell { padding: 0 !important; border: none !important; }
+.rec-box {
+  display: flex; gap: 10px; align-items: flex-start;
+  background: var(--c-bg); border-left: 3px solid var(--ws-blue);
+  border-radius: 0 6px 6px 0; padding: 10px 14px;
+  margin: 0 0 4px 0; font-size: .82rem; line-height: 1.6;
+}
+.rec-icon { font-size: 1rem; flex-shrink: 0; padding-top: 1px; }
+.rec-content { color: var(--c-text-muted); }
+.rec-box--mid { border-left-color: #d97706; }
+.rec-box--mid .rec-content { color: var(--c-text-muted); }
 
 /* =================================================================
    SIDEBAR PROJECTS

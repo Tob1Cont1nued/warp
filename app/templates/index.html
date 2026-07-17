@@ -139,7 +139,9 @@
         </thead>
         <tbody>
           {% for q in cat.questions %}
-          <tr data-cat="{{ cat.id }}">
+          {% set recs = q.get('recommendations', {}) %}
+          <tr data-cat="{{ cat.id }}"
+              {% if recs %}data-rec-low="{{ recs.get('low', '') }}" data-rec-mid="{{ recs.get('mid', '') }}"{% endif %}>
             <td class="col-num">{{ loop.index }}</td>
             <td class="col-question">{{ q.text }}</td>
             <td class="col-hint">
@@ -161,6 +163,16 @@
                         placeholder="Optional ...">{{ saved_notes.get(q.id, '') }}</textarea>
             </td>
           </tr>
+          {% if recs %}
+          <tr class="rec-row" id="rec-{{ q.id }}" style="display:none">
+            <td colspan="5" class="rec-cell">
+              <div class="rec-box">
+                <span class="rec-icon">💡</span>
+                <span class="rec-content"></span>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
           {% endfor %}
         </tbody>
       </table>
@@ -499,11 +511,32 @@ function wqToggleEdit(qid) {
     });
   }
 
+  // Handlungsempfehlung ein-/ausblenden
+  function updateRec(select) {
+    var qid     = select.dataset.qid;
+    var val     = select.value;
+    var row     = select.closest('tr');
+    var recRow  = document.getElementById('rec-' + qid);
+    if (!recRow || !row) return;
+    var recLow  = row.dataset.recLow  || '';
+    var recMid  = row.dataset.recMid  || '';
+    var box     = recRow.querySelector('.rec-box');
+    var content = recRow.querySelector('.rec-content');
+    var text    = '';
+    if ((val === 'nicht' || val === 'kaum') && recLow)  { text = recLow;  box.className = 'rec-box'; }
+    else if (val === 'teil' && recMid)                   { text = recMid;  box.className = 'rec-box rec-box--mid'; }
+    content.textContent = text;
+    recRow.style.display = text ? '' : 'none';
+  }
+
   selects.forEach(function (s) {
     s.addEventListener("change", function () {
       updateCounter();
+      updateRec(s);
       post(SAVE_URL, { question_id: s.dataset.qid, answer_id: s.value });
     });
+    // Beim Laden gespeicherte Antworten auswerten
+    if (s.value) updateRec(s);
   });
 
   // Notizen auto-speichern (debounced)
