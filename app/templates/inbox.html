@@ -179,6 +179,28 @@
     /* ── Empty state ────────────────────────────────────────────────────── */
     .inbox-empty { text-align: center; color: var(--c-text-muted); padding: 56px 24px; }
     .inbox-empty svg { opacity: .25; margin-bottom: 14px; }
+
+    /* ── Handlungsempfehlungen ──────────────────────────────────────────── */
+    .recs-header {
+      font-size: .72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .07em; color: var(--c-text-muted);
+      margin: 16px 0 8px; display: flex; align-items: center; gap: 8px;
+    }
+    .recs-header::after { content: ""; flex: 1; height: 1px; background: var(--c-border-soft); }
+    .rec-item {
+      display: flex; gap: 10px; align-items: flex-start;
+      padding: 10px 12px; border-radius: 8px;
+      background: var(--c-bg); border-left: 3px solid var(--ws-blue);
+      margin-bottom: 7px; font-size: .82rem; line-height: 1.55;
+      color: var(--c-text);
+    }
+    .rec-item:last-child { margin-bottom: 0; }
+    .rec-factor {
+      font-size: .7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .05em; color: var(--ws-blue); white-space: nowrap;
+      padding-top: 2px; min-width: 0;
+    }
+    .rec-text { color: var(--c-text-muted); }
   </style>
 </head>
 <body>
@@ -323,6 +345,38 @@
           </div>
           {% elif msg.scores %}
           <p style="font-size:.8rem;color:#15803d;margin-top:10px">✓ Keine auffälligen Schwachstellen identifiziert</p>
+          {% endif %}
+
+          {# ── Handlungsempfehlungen ─────────────────────────────────── #}
+          {% set rec_map = {
+            'Fehlende Testtransparenz':
+              'Führen Sie ein zentrales Test-Dashboard ein, das Testfortschritt und -status in Echtzeit sichtbar macht. Tools wie JIRA, TestRail oder Xray helfen, den Überblick über alle Testaktivitäten zu behalten.',
+            'Späte Problemerkennung':
+              'Verlagern Sie Tests so früh wie möglich in den Entwicklungsprozess (Shift-Left Testing). Automatisierte Regressionstests und kontinuierliche Integration ermöglichen es, Probleme bereits vor dem Release zu erkennen.',
+            'Fehler in Produktion':
+              'Etablieren Sie eine dedizierte Staging-Umgebung mit obligatorischen Smoke-Tests nach jedem Deployment. Risikobasiertes Testen hilft, kritische Bereiche zu priorisieren und die Fehlerrate in Produktion zu senken.',
+            'Unklare Rollen & Verantwortlichkeiten':
+              'Definieren Sie eine RACI-Matrix für den Testprozess und benennen Sie einen verantwortlichen Testmanager. Klären Sie verbindlich, welche Verantwortung bei Entwicklung, QA und Fachabteilung liegt.',
+            'Kein dokumentierter Testprozess':
+              'Erstellen Sie eine schriftliche Teststrategie mit Testphasen, Eintritts- und Abnahmekriterien sowie klar geregelten Verantwortlichkeiten. Schon ein einseitiges Testkonzept schafft Verbindlichkeit.',
+            'Hoher manueller Testanteil':
+              'Identifizieren Sie repetitive Testfälle als Automatisierungskandidaten. Ein schrittweiser Einstieg mit Selenium, Cypress oder Playwright für UI-Tests reduziert den manuellen Aufwand dauerhaft.',
+            'Keine systematische Testunterstützung':
+              'Evaluieren Sie Testmanagement-Tools (z.B. TestRail, Zephyr, Xray) zur strukturierten Verwaltung von Testfällen und -ergebnissen. Standardisierte Testfall-Templates sind ein schneller erster Schritt.'
+          } %}
+          {% if msg.top_factors %}
+          {% set matching_recs = msg.top_factors | select('in', rec_map) | list %}
+          {% if matching_recs %}
+          <p class="recs-header">Handlungsempfehlungen</p>
+          {% for factor in msg.top_factors %}
+          {% if factor in rec_map %}
+          <div class="rec-item">
+            <span class="rec-factor">{{ factor }}</span>
+            <span class="rec-text">{{ rec_map[factor] }}</span>
+          </div>
+          {% endif %}
+          {% endfor %}
+          {% endif %}
           {% endif %}
         </div>
 
