@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WARP – Testdokumentation</title>
+  <style>
+    /* ── Tokens ──────────────────────────────────────────────────────── */
+    :root {
+      --purple:      #250F6B;
+      --purple-mid:  #451DC7;
+      --purple-lite: #EDE9FE;
+      --green:       #00B05A;
+      --green-lite:  #E6F7EE;
+      --amber:       #B45309;
+      --amber-lite:  #FEF3C7;
+      --bg:          #FFFFFF;
+      --bg-alt:      #F7F6FB;
+      --border:      #E2DCF7;
+      --text:        #1C1B2E;
+      --muted:       #635D80;
+      --nav-w:       220px;
+      --r:           8px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg:          #14122A;
+        --bg-alt:      #1E1B3A;
+        --border:      #2E2A50;
+        --text:        #EAE8F5;
+        --muted:       #9E97C4;
+        --purple-lite: #2A2350;
+        --green-lite:  #0A2E1C;
+        --amber-lite:  #2D1E07;
+      }
+    }
+    :root[data-theme="light"] {
+      --bg: #FFFFFF; --bg-alt: #F7F6FB; --border: #E2DCF7;
+      --text: #1C1B2E; --muted: #635D80;
+      --purple-lite: #EDE9FE; --green-lite: #E6F7EE; --amber-lite: #FEF3C7;
+    }
+    :root[data-theme="dark"] {
+      --bg: #14122A; --bg-alt: #1E1B3A; --border: #2E2A50;
+      --text: #EAE8F5; --muted: #9E97C4;
+      --purple-lite: #2A2350; --green-lite: #0A2E1C; --amber-lite: #2D1E07;
+    }
+
+    /* ── Reset ───────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 15px; scroll-behavior: smooth; }
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar Nav ─────────────────────────────────────────────────── */
+    .sidenav {
+      width: var(--nav-w);
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: var(--purple);
+      padding: 28px 0 28px;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidenav-logo {
+      padding: 0 20px 20px;
+      border-bottom: 1px solid rgba(255,255,255,.12);
+      margin-bottom: 16px;
+    }
+    .sidenav-logo-name {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: .04em;
+      display: block;
+    }
+    .sidenav-logo-sub {
+      font-size: .7rem;
+      color: rgba(255,255,255,.5);
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      display: block;
+      margin-top: 2px;
+    }
+    .sidenav-section-label {
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: rgba(255,255,255,.35);
+      padding: 16px 20px 4px;
+    }
+    .sidenav a {
+      display: block;
+      padding: 7px 20px;
+      font-size: .82rem;
+      color: rgba(255,255,255,.65);
+      text-decoration: none;
+      border-left: 2px solid transparent;
+      transition: color .15s, border-color .15s, background .15s;
+    }
+    .sidenav a:hover,
+    .sidenav a.active {
+      color: #fff;
+      border-left-color: var(--green);
+      background: rgba(255,255,255,.06);
+    }
+    .sidenav-footer {
+      margin-top: auto;
+      padding: 16px 20px 0;
+      border-top: 1px solid rgba(255,255,255,.1);
+      font-size: .7rem;
+      color: rgba(255,255,255,.3);
+    }
+
+    /* ── Main ────────────────────────────────────────────────────────── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: 40px 48px 80px;
+      max-width: 960px;
+    }
+
+    /* ── Page Header ─────────────────────────────────────────────────── */
+    .page-header {
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .page-eyebrow {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .12em;
+      color: var(--green);
+      margin-bottom: 6px;
+    }
+    .page-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--purple);
+      line-height: 1.2;
+    }
+    @media (prefers-color-scheme: dark) { .page-title { color: var(--text); } }
+    :root[data-theme="dark"] .page-title { color: var(--text); }
+    .page-meta {
+      margin-top: 8px;
+      font-size: .85rem;
+      color: var(--muted);
+    }
+
+    /* ── Stats Row ───────────────────────────────────────────────────── */
+    .stats-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px 20px;
+      min-width: 110px;
+      flex: 1;
+    }
+    .stat-value {
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: var(--purple-mid);
+      display: block;
+      line-height: 1;
+    }
+    .stat-label {
+      font-size: .72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-top: 4px;
+      display: block;
+    }
+    .stat-card.green .stat-value { color: var(--green); }
+    .stat-card.amber .stat-value { color: var(--amber); }
+
+    /* ── Section ─────────────────────────────────────────────────────── */
+    .section {
+      margin-bottom: 48px;
+      scroll-margin-top: 20px;
+    }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .section-file {
+      font-size: .72rem;
+      color: var(--muted);
+      font-family: 'Courier New', monospace;
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+    }
+    .section-desc {
+      font-size: .85rem;
+      color: var(--muted);
+      margin-bottom: 14px;
+      line-height: 1.5;
+    }
+
+    /* ── Badges ──────────────────────────────────────────────────────── */
+    .badge {
+      display: inline-block;
+      font-size: .67rem;
+      font-weight: 700;
+      letter-spacing: .04em;
+      padding: 2px 7px;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .badge-unit     { background: var(--purple-lite); color: var(--purple-mid); }
+    .badge-e2e      { background: var(--green-lite);  color: #077040; }
+    .badge-frontend { background: var(--amber-lite);  color: var(--amber); }
+    .badge-pos      { background: #E6F7EE; color: #077040; }
+    .badge-neg      { background: #FEE2E2; color: #B91C1C; }
+    @media (prefers-color-scheme: dark) {
+      .badge-pos { background: #0A2E1C; color: #4ADE80; }
+      .badge-neg { background: #2D1010; color: #F87171; }
+      .badge-unit     { background: #2A2350; color: #A78BFA; }
+      .badge-e2e      { background: #0A2E1C; color: #34D399; }
+      .badge-frontend { background: #2D1E07; color: #FCD34D; }
+    }
+    :root[data-theme="dark"] .badge-pos { background: #0A2E1C; color: #4ADE80; }
+    :root[data-theme="dark"] .badge-neg { background: #2D1010; color: #F87171; }
+    :root[data-theme="dark"] .badge-unit     { background: #2A2350; color: #A78BFA; }
+    :root[data-theme="dark"] .badge-e2e      { background: #0A2E1C; color: #34D399; }
+    :root[data-theme="dark"] .badge-frontend { background: #2D1E07; color: #FCD34D; }
+
+    /* ── Table ───────────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; border-radius: var(--r); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: .83rem; }
+    thead th {
+      background: var(--bg-alt);
+      font-size: .67rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      padding: 8px 12px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr:nth-child(even) { background: var(--bg-alt); }
+    tbody tr:hover { background: var(--purple-lite); }
+    td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+    tbody tr:last-child td { border-bottom: none; }
+    td.tc-id {
+      font-family: 'Courier New', monospace;
+      font-size: .75rem;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+    td.tc-desc { line-height: 1.45; }
+
+    /* ── Command block ───────────────────────────────────────────────── */
+    .cmd-section {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 20px 24px;
+      margin-bottom: 16px;
+    }
+    .cmd-label {
+      font-size: .7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .cmd {
+      font-family: 'Courier New', monospace;
+      font-size: .8rem;
+      background: var(--purple);
+      color: #C4B9F7;
+      padding: 10px 16px;
+      border-radius: 6px;
+      display: block;
+      white-space: pre;
+      overflow-x: auto;
+      margin-bottom: 6px;
+      line-height: 1.5;
+    }
+    .cmd .kw  { color: var(--green); }
+    .cmd .arg { color: #E2D9FF; }
+    .cmd-note { font-size: .78rem; color: var(--muted); margin-top: 6px; }
+
+    /* ── Legend ──────────────────────────────────────────────────────── */
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 28px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .78rem;
+      color: var(--muted);
+    }
+
+    /* ── Responsive ──────────────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      body { flex-direction: column; }
+      .sidenav { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 12px; }
+      .sidenav a { padding: 6px 10px; }
+      .sidenav-footer, .sidenav-section-label { display: none; }
+      .main { padding: 20px 16px 60px; }
+      .page-title { font-size: 1.4rem; }
+      .stats-row { gap: 8px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<nav class="sidenav">
+  <div class="sidenav-logo">
+    <span class="sidenav-logo-name">WARP</span>
+    <span class="sidenav-logo-sub">Testdokumentation</span>
+  </div>
+
+  <span class="sidenav-section-label">Unit-Tests</span>
+  <a href="#auth">Authentifizierung</a>
+  <a href="#sec">Sicherheit</a>
+  <a href="#proj">Projektverwaltung</a>
+  <a href="#api">API &amp; Postkorb</a>
+
+  <span class="sidenav-section-label">Frontend-Tests</span>
+  <a href="#login">Login</a>
+  <a href="#register">Registrierung</a>
+  <a href="#admin">Administration</a>
+  <a href="#questionnaire">Fragenkatalog</a>
+  <a href="#recs">Handlungsempfehlungen</a>
+  <a href="#inbox">Postkorb UI</a>
+
+  <span class="sidenav-section-label">E2E Live</span>
+  <a href="#e2e">Vollständiger Workflow</a>
+
+  <span class="sidenav-section-label">Ausführung</span>
+  <a href="#run">Befehle</a>
+  <a href="#infra">Infrastruktur</a>
+
+  <div class="sidenav-footer">Stand: Juli 2026</div>
+</nav>
+
+<!-- Main Content -->
+<main class="main">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="page-eyebrow">Quality Assurance</div>
+    <h1 class="page-title">WARP – Testdokumentation</h1>
+    <p class="page-meta">Wavestone Assessment Risk Planner &nbsp;·&nbsp; Branch: <code>dev</code> &nbsp;·&nbsp; Stand Juli 2026</p>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <span class="stat-value">78</span>
+      <span class="stat-label">Tests gesamt</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">42</span>
+      <span class="stat-label">Unit-Tests</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-value">35</span>
+      <span class="stat-label">Frontend-Tests</span>
+    </div>
+    <div class="stat-card green">
+      <span class="stat-value">1</span>
+      <span class="stat-label">E2E Live</span>
+    </div>
+    <div class="stat-card amber">
+      <span class="stat-value">4</span>
+      <span class="stat-label">Test-Suiten</span>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item"><span class="badge badge-unit">Unit</span> Flask Test Client, kein Browser</div>
+    <div class="legend-item"><span class="badge badge-frontend">Frontend</span> Playwright, lokaler Server</div>
+    <div class="legend-item"><span class="badge badge-e2e">E2E Live</span> Playwright, Render-Produktiv</div>
+    <div class="legend-item"><span class="badge badge-pos">P</span> Positiv-Test (Happy Path)</div>
+    <div class="legend-item"><span class="badge badge-neg">N</span> Negativ-Test (Fehlerfall)</div>
+  </div>
+
+  <!-- ── UNIT TESTS ─────────────────────────────────────────────────── -->
+
+  <div class="section" id="auth">
+    <div class="section-header">
+      <span class="section-title">Authentifizierung &amp; Autorisierung</span>
+      <code class="section-file">tests/unit/test_auth.py</code>
+      <span class="badge badge-unit">Unit</span>
+    </div>
+    <p class="section-desc">Prüft Login, Logout, Registrierung und Zugriffskontrolle auf Routen-Ebene über den Flask Test Client ohne Browser.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">TC-AUTH-01</td><td class="tc-desc">GET /login → HTTP 200</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-02</td><td class="tc-desc">GET /register → HTTP 200</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-03</td><td class="tc-desc">POST /login mit gültigen Daten → Redirect 302</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-04</td><td class="tc-desc">POST /login mit falschem Passwort → 200 + Fehlermeldung im HTML</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-05</td><td class="tc-desc">GET /logout → Redirect auf /login</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-06</td><td class="tc-desc">GET /dashboard ohne Login → Redirect auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-07</td><td class="tc-desc">GET /admin ohne Login → Redirect auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-08</td><td class="tc-desc">GET /admin als normaler Benutzer → 403</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-09</td><td class="tc-desc">POST /register mit doppeltem Benutzernamen → Fehlermeldung</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-10</td><td class="tc-desc">POST /register mit nicht übereinstimmenden Passwörtern → Fehlermeldung</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-11</td><td class="tc-desc">POST /register mit Passwort unter 6 Zeichen → Fehlermeldung</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="sec">
+    <div class="section-header">
+      <span class="section-title">Sicherheit</span>
+      <code class="section-file">tests/unit/test_security.py</code>
+      <span class="badge badge-unit">Unit</span>
+    </div>
+    <p class="section-desc">Überprüft OWASP-relevante Sicherheitsaspekte: SQL-Injection, XSS, CSRF, Session-Schutz, Path Traversal, HTTP-Sicherheits-Header und Zugriffskontrolle.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">TC-SEC-01</td><td class="tc-desc">SQL-Injection-Payloads im Login-Formular → kein Auth-Bypass</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-02</td><td class="tc-desc">XSS-Payload im Projektnamen → HTML-escaped in der Ausgabe</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-03</td><td class="tc-desc">Flask-WTF CSRFProtect in app.extensions registriert</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-03b</td><td class="tc-desc">POST ohne CSRF-Token → 400 (CSRF-Schutz aktiv)</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-04</td><td class="tc-desc">Flask-Login initialisiert, session_protection auf "strong"</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-05</td><td class="tc-desc">Path-Traversal-Versuche über /static/ → 400 oder 404</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-06</td><td class="tc-desc">10 aufeinanderfolgende Fehlanmeldungen → kein HTTP 500</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-07</td><td class="tc-desc">Benutzer B kann nicht auf Projekte von Benutzer A zugreifen → 403</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-08</td><td class="tc-desc">X-Frame-Options, X-Content-Type-Options und CSP-Header vorhanden</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-09</td><td class="tc-desc">WARP_INBOX_API_KEY nicht im Response-Body sichtbar</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-10</td><td class="tc-desc">Alle geschützten Routen ohne Login → Redirect zu /login</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-SEC-11</td><td class="tc-desc">Admin-Routen (/inbox, /admin, /admin/questions) für normalen User → 403</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="proj">
+    <div class="section-header">
+      <span class="section-title">Projektverwaltung &amp; Fragenkatalog</span>
+      <code class="section-file">tests/unit/test_projects.py</code>
+      <span class="badge badge-unit">Unit</span>
+    </div>
+    <p class="section-desc">Testet CRUD-Operationen für Projekte, das Speichern von Antworten per AJAX, den HTML-Report sowie den Zugriffschutz auf Projekt-Ebene.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">TC-PROJ-01</td><td class="tc-desc">POST /project/new → Projekt angelegt, Redirect auf /project/&lt;id&gt;</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-02</td><td class="tc-desc">GET /project/&lt;id&gt; → Fragenkatalog mit 200 geladen</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-03</td><td class="tc-desc">POST /project/&lt;id&gt;/answer → Antwort gespeichert, JSON {ok: true}</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-04</td><td class="tc-desc">Antwort erneut speichern → Upsert, kein Duplikat-Fehler</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-05</td><td class="tc-desc">POST /project/&lt;id&gt;/info → Projektname/Owner/Datum aktualisiert (200)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-06</td><td class="tc-desc">GET /project/&lt;id&gt; als fremder Benutzer → 403</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-07</td><td class="tc-desc">GET /project/999999 → 403 (nicht existente ID)</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-08</td><td class="tc-desc">GET /dashboard eingeloggt → 200, "Dashboard" im Body</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-09</td><td class="tc-desc">POST /project/&lt;id&gt;/report/html → HTML-Report generiert (200)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-10</td><td class="tc-desc">GET /project/new → Formular sichtbar (200)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-11</td><td class="tc-desc">POST /project/&lt;id&gt;/complete → Projektstatus auf "abgeschlossen" gesetzt</td><td><span class="badge badge-pos">P</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="api">
+    <div class="section-header">
+      <span class="section-title">API-Endpunkte &amp; Postkorb</span>
+      <code class="section-file">tests/unit/test_api.py</code>
+      <span class="badge badge-unit">Unit</span>
+    </div>
+    <p class="section-desc">Prüft den Webhook-Endpunkt für eingehende IMPULSE-Ergebnisse sowie Erreichbarkeit und Zugriffskontrolle des Postkorbs.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">TC-API-01</td><td class="tc-desc">POST /api/inbox mit gültigem API-Key → 201, Nachricht angelegt</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-API-02</td><td class="tc-desc">POST /api/inbox mit falschem API-Key → 401</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-API-03</td><td class="tc-desc">POST /api/inbox ohne Pflichtfeld (userName) → 400 oder 422</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-API-04</td><td class="tc-desc">GET /api/inbox/count als Admin → 200, JSON {count: N}</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-API-05</td><td class="tc-desc">GET /api/inbox/count ohne Login → 302 oder 401</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-API-06</td><td class="tc-desc">GET /inbox als Admin → 200</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-API-07</td><td class="tc-desc">GET /inbox als normaler Benutzer → 403</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-API-08</td><td class="tc-desc">GET /admin/questions als Superuser → 200</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-API-09</td><td class="tc-desc">GET /coverage-matrix → 200, "Abdeckung" im Body</td><td><span class="badge badge-pos">P</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── FRONTEND TESTS ─────────────────────────────────────────────── -->
+
+  <div class="section" id="login">
+    <div class="section-header">
+      <span class="section-title">Login</span>
+      <code class="section-file">tests/test_login.py</code>
+      <span class="badge badge-frontend">Frontend</span>
+    </div>
+    <p class="section-desc">Playwright-Tests für die Login-Seite im echten Browser. Prüft UI-Elemente, Weiterleitungen nach Login und Fehlermeldungen bei ungültigen Eingaben.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">P1</td><td class="tc-desc">Alle UI-Elemente der Login-Seite sind sichtbar (Logo, Felder, Button, Link)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P2</td><td class="tc-desc">Admin-Login → Weiterleitung auf /admin</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P3</td><td class="tc-desc">Benutzer-Login → Weiterleitung auf /project/…</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">N1</td><td class="tc-desc">Falsches Passwort → Fehlermeldung im DOM sichtbar</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N2</td><td class="tc-desc">Nicht existenter Benutzername → Fehlermeldung im DOM sichtbar</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N3</td><td class="tc-desc">Gesperrter Benutzer → Fehlermeldung enthält "gesperrt", bleibt auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="register">
+    <div class="section-header">
+      <span class="section-title">Registrierung</span>
+      <code class="section-file">tests/test_register.py</code>
+      <span class="badge badge-frontend">Frontend</span>
+    </div>
+    <p class="section-desc">Playwright-Tests für die Registrierungsseite. Prüft erfolgreiche Kontoanlage, Navigation zur Login-Seite und Validierungsfehler.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">P1</td><td class="tc-desc">Alle UI-Elemente sichtbar (Felder: Benutzername, Anzeigename, Passwort, Bestätigung)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P2</td><td class="tc-desc">Neuer Benutzer wird angelegt → Weiterleitung auf /project/…</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P3</td><td class="tc-desc">„Bereits registriert?"-Link → Weiterleitung auf /login</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">N1</td><td class="tc-desc">Bereits vergebener Benutzername → Fehlermeldung "vergeben"</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N2</td><td class="tc-desc">Passwörter stimmen nicht überein → Fehlermeldung "überein"</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N3</td><td class="tc-desc">Passwort kürzer als 6 Zeichen → Fehlermeldung "6 Zeichen"</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="admin">
+    <div class="section-header">
+      <span class="section-title">Administration</span>
+      <code class="section-file">tests/test_admin.py</code>
+      <span class="badge badge-frontend">Frontend</span>
+    </div>
+    <p class="section-desc">Playwright-Tests für das Admin-Panel. Prüft Benutzerverwaltung (Anlegen, Sperren) und Zugriffskontrolle auf /admin.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">P1</td><td class="tc-desc">Alle UI-Elemente der Admin-Seite sichtbar (Formular, Benutzerliste)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P2</td><td class="tc-desc">Admin legt neuen Benutzer an → erscheint anschließend in der Liste</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P3</td><td class="tc-desc">Admin sperrt Benutzer → "gesperrt"-Badge in der Benutzerkarte sichtbar</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">N1</td><td class="tc-desc">Normaler Benutzer ruft /admin auf → 403</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N2</td><td class="tc-desc">Nicht eingeloggter Benutzer → Redirect auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N3</td><td class="tc-desc">Admin kann kein neues Projekt anlegen (POST /project/new → Redirect /admin)</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="questionnaire">
+    <div class="section-header">
+      <span class="section-title">Fragenkatalog</span>
+      <code class="section-file">tests/test_questionnaire.py</code>
+      <span class="badge badge-frontend">Frontend</span>
+    </div>
+    <p class="section-desc">Playwright-Tests für den Fragebogen. Prüft UI-Darstellung, AJAX-Autosave und Zugriffskontrolle auf Projektebene.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">P1</td><td class="tc-desc">Alle UI-Elemente sichtbar (Sidebar, Dropdowns, Notizen, Fortschrittsbalken)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P2</td><td class="tc-desc">Antwort wird per AJAX gespeichert → Selektion bleibt nach Seitenreload erhalten</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P3</td><td class="tc-desc">3 Download-Buttons für Vorlagen vorhanden und auf .docx-Dateien verlinkt</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">N1</td><td class="tc-desc">Nicht eingeloggter Benutzer → Redirect auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N2</td><td class="tc-desc">Benutzer 2 greift auf Projekt von Benutzer 1 zu → 403</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N3</td><td class="tc-desc">GET /project/999999 → 403 (nicht existente ID)</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="recs">
+    <div class="section-header">
+      <span class="section-title">Handlungsempfehlungen</span>
+      <code class="section-file">tests/test_recommendations.py</code>
+      <span class="badge badge-frontend">Frontend</span>
+    </div>
+    <p class="section-desc">Playwright-Tests für den Empfehlungsbereich auf dem Auswertungs-Tab. Echter User-Flow: Login → Dashboard → Projekt über Sidebar anlegen → Fragen beantworten → Auswertung-Tab klicken. Kein direkter URL-Aufruf.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">R1</td><td class="tc-desc">Karte „Handlungsempfehlungen" sichtbar, wenn mind. 1 Frage mit „kaum/nicht" beantwortet</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">R2</td><td class="tc-desc">Karte bleibt versteckt bei neuem Projekt ohne niedrige Antworten</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">R3</td><td class="tc-desc">Empfehlungen werden nach Themengebiet gruppiert (mind. 1 Kategorie-Abschnitt sichtbar)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">R4</td><td class="tc-desc">Kategorie-Header zeigt Anzahl-Badge (z.B. „9 Empfehlungen")</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">R5</td><td class="tc-desc">Klick auf Kategorie-Header klappt Body ein; 2. Klick klappt wieder aus</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">R6</td><td class="tc-desc">Gesamt-Toggle-Button (↑/↓) klappt alle Empfehlungen ein und wieder aus</td><td><span class="badge badge-pos">P</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="section" id="inbox">
+    <div class="section-header">
+      <span class="section-title">Postkorb UI</span>
+      <code class="section-file">tests/test_inbox.py</code>
+      <span class="badge badge-frontend">Frontend</span>
+    </div>
+    <p class="section-desc">Playwright-Tests für den Postkorb. Echter User-Flow: Admin navigiert über den „Postkorb"-Link in der Sidebar. Kein direkter URL-Aufruf für den Happy-Path.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">I1</td><td class="tc-desc">„Postkorb"-Link ist in der Sidebar für Admins sichtbar</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">I2</td><td class="tc-desc">Admin klickt Sidebar-Link → URL /inbox, Überschrift „Postkorb" sichtbar; Antworten-Button hat data-email (wenn Nachrichten vorhanden)</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">I3</td><td class="tc-desc">„Postkorb"-Link ist in der Sidebar für normale Benutzer NICHT sichtbar</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">I4</td><td class="tc-desc">Normaler Benutzer tippt /inbox direkt → blockiert (Redirect oder 403)</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">I5</td><td class="tc-desc">Nicht eingeloggter Benutzer tippt /inbox direkt → Redirect auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── E2E LIVE ───────────────────────────────────────────────────── -->
+
+  <div class="section" id="e2e">
+    <div class="section-header">
+      <span class="section-title">Vollständiger Assessment-Workflow</span>
+      <code class="section-file">tests/e2e/test_assessment.py</code>
+      <span class="badge badge-e2e">E2E Live</span>
+    </div>
+    <p class="section-desc">End-to-End-Test gegen den Produktiv-Server auf Render (warp-5ld0.onrender.com). Simuliert den kompletten Durchlauf mit einem definierten Reifegrad-Profil über alle 137 Fragen.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Reifegrad-Profil</th></tr></thead>
+        <tbody>
+          <tr>
+            <td class="tc-id">E2E-01</td>
+            <td class="tc-desc">
+              Login als Benutzer1 → Neues Projekt anlegen → 137 Fragen mit definiertem Profil beantworten → HTML-Report öffnen → Stufe 2 und Stufe 3 im Report sichtbar
+            </td>
+            <td style="font-size:.78rem;color:var(--muted);line-height:1.5">
+              Stufe 2: 100 % (voll)<br>
+              Stufe 3: Org + Schulung 100 %, Lebenszyklus 50 %, Nicht-funktional + Peer Reviews 25 %<br>
+              Stufe 4: 25 % / 0 %<br>
+              Stufe 5: 0 % / 25 %
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── AUSFÜHRUNG ────────────────────────────────────────────────── -->
+
+  <div class="section" id="run">
+    <div class="section-header">
+      <span class="section-title">Befehle zur Testausführung</span>
+    </div>
+
+    <div class="cmd-section">
+      <div class="cmd-label">Unit-Tests (kein Browser, schnell)</div>
+      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/unit/</span> -v</code>
+      <p class="cmd-note">Kein Browser, kein laufender Server nötig. Flask-Test-Client wird intern gestartet.</p>
+    </div>
+
+    <div class="cmd-section">
+      <div class="cmd-label">Einzelne Test-Suite (Frontend)</div>
+      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/test_recommendations.py tests/test_inbox.py</span> --browser chromium -v</code>
+      <p class="cmd-note">Flask-Server auf localhost:5000 wird automatisch gestartet und am Ende gestoppt.</p>
+    </div>
+
+    <div class="cmd-section">
+      <div class="cmd-label">Alle Frontend-Tests</div>
+      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/</span> --ignore=tests/unit --ignore=tests/e2e --browser chromium -v</code>
+    </div>
+
+    <div class="cmd-section">
+      <div class="cmd-label">E2E Live-Test (gegen Render)</div>
+      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/e2e/</span> --browser chromium -v -s</code>
+      <p class="cmd-note">Erfordert aktive Internetverbindung. Render kann beim Cold-Start bis zu 30 s brauchen.</p>
+    </div>
+
+    <div class="cmd-section">
+      <div class="cmd-label">Alle Tests (Unit + Frontend)</div>
+      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/unit/ tests/test_login.py tests/test_register.py \
+      tests/test_admin.py tests/test_questionnaire.py \
+      tests/test_recommendations.py tests/test_inbox.py</span> --browser chromium -v</code>
+    </div>
+  </div>
+
+  <div class="section" id="infra">
+    <div class="section-header">
+      <span class="section-title">Test-Infrastruktur</span>
+    </div>
+    <p class="section-desc">Überblick über das verwendete Framework, die Fixtures und das Page Object Model.</p>
+
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Komponente</th><th>Beschreibung</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">Framework</td><td class="tc-desc">pytest + pytest-playwright (Chromium)</td></tr>
+          <tr><td class="tc-id">Unit-Client</td><td class="tc-desc">Flask Test Client (CSRF deaktiviert, SQLite in-memory)</td></tr>
+          <tr><td class="tc-id">Live-Server</td><td class="tc-desc">Fixture <code>live_server</code> startet Flask über <code>run.py</code> auf localhost:5000 (wird automatisch beendet)</td></tr>
+          <tr><td class="tc-id">Test-DB</td><td class="tc-desc">SQLite-Datei <code>warp.db</code> (lokal, nicht in git). Bei sauberem Start neu anlegen: Datei löschen, Flask erstellt sie mit Admin <em>admin / warp2024</em>.</td></tr>
+          <tr><td class="tc-id">Test-User</td><td class="tc-desc"><code>_pytest_user</code> / pytest_pw1 — wird per CSRF-fähigem HTTP-Request in <code>setup_test_users</code> angelegt (Session-Scope, idempotent)</td></tr>
+          <tr><td class="tc-id">Page Objects</td><td class="tc-desc"><code>DashboardPage</code>, <code>NewProjectPage</code>, <code>ProjectPage</code>, <code>InboxPage</code>, <code>LoginPage</code>, <code>AdminPage</code>, <code>RegisterPage</code>, <code>QuestionnairePage</code></td></tr>
+          <tr><td class="tc-id">Screenshots</td><td class="tc-desc">E2E-Test speichert Screenshots in <code>tests/screenshots/</code> (01_login.png, 02_new_project.png, 03_assessment_filled.png, 04_report.png)</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+(function () {
+  var links = document.querySelectorAll('.sidenav a[href^="#"]');
+  var sections = Array.from(links).map(function (a) {
+    return document.querySelector(a.getAttribute('href'));
+  });
+  function onScroll() {
+    var scrollY = window.scrollY + 60;
+    var active = sections.reduce(function (best, s, i) {
+      if (!s) return best;
+      return s.offsetTop <= scrollY ? i : best;
+    }, 0);
+    links.forEach(function (a, i) {
+      a.classList.toggle('active', i === active);
+    });
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+
+</body>
+</html>
