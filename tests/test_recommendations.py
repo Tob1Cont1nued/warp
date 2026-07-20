@@ -1,139 +1,137 @@
 """
-Handlungsempfehlungen – Frontend-Tests
-=======================================
-Testet das Recommendations-Feature auf dem Auswertungs-Tab:
+Handlungsempfehlungen – Frontend-Tests (echter User-Flow)
+==========================================================
+Jeder Test simuliert exakt das Verhalten eines echten Users:
+  Login → Dashboard → '+' klicken → Projekt anlegen →
+  Fragen beantworten → 'Auswertung'-Tab klicken → Empfehlungen prüfen
 
-  R1  Karte ist sichtbar wenn mind. 1 Frage Verbesserungspotenzial hat
-  R2  Karte bleibt versteckt wenn alle Fragen mit "voll" beantwortet sind
-  R3  Kategorien werden korrekt gruppiert (mind. 1 Kategorie sichtbar)
-  R4  Kategorie-Header zeigt Anzahl der Empfehlungen als Badge
-  R5  Klick auf Kategorie-Header klappt den Body ein und aus
-  R6  Klick auf Gesamt-Toggle-Button klappt die gesamte Liste ein und aus
-
-Hinweis: Tests laufen gegen den lokalen Flask-Server (http://127.0.0.1:5000).
+  R1  Karte sichtbar wenn mind. 1 Frage Verbesserungspotenzial hat
+  R2  Karte versteckt bei neuem Projekt (keine niedrigen Antworten)
+  R3  Kategorien korrekt gruppiert (mind. 1 Kategorie sichtbar)
+  R4  Kategorie-Header zeigt Anzahl-Badge ("… Empfehlung(en)")
+  R5  Klick auf Kategorie-Header klappt Body ein und wieder aus
+  R6  Gesamt-Toggle-Button klappt gesamte Liste ein und wieder aus
 """
 
-import pytest
 from playwright.sync_api import Page, expect
 from pages.login_page import LoginPage
-from pages.project_page import ProjectPage
+from pages.project_page import DashboardPage, ProjectPage
 from conftest import TEST_USER
 
-# Stichproben für niedrige Antworten (lösen Empfehlungen aus)
-SAMPLE_LOW_ANSWERS = {
-    "ts-1":  "nicht",   # Teststrategie – kein Treffer
-    "tp-1":  "kaum",   # Testplanung – kaum Treffer
-    "tme-1": "nicht",  # Testmetriken – kein Treffer
+# Niedrige Antworten die Empfehlungen auslösen
+LOW_ANSWERS = {
+    "ts-1":  "nicht",   # Teststrategie
+    "tp-1":  "kaum",    # Testplanung
+    "tme-1": "nicht",   # Testmetriken
 }
 
 
-@pytest.fixture
-def project_page(page: Page, base_url: str) -> ProjectPage:
-    """Eingeloggter Testbenutzer, bereit für Projekterstellung."""
+def _login_and_dashboard(page: Page, base_url: str) -> DashboardPage:
+    """Login als Testbenutzer und auf dem Dashboard ankommen."""
     LoginPage(page, base_url).login(TEST_USER["username"], TEST_USER["password"])
-    return ProjectPage(page, base_url)
+    expect(page.locator("h1", has_text="Dashboard")).to_be_visible()
+    return DashboardPage(page)
+
+
+def _setup_project_with_answers(page: Page, base_url: str,
+                                 name: str, answers: dict) -> ProjectPage:
+    """
+    Kompletter User-Flow:
+    Login → Dashboard → '+' klicken → Projekt anlegen →
+    Antworten setzen → Auswertungs-Tab öffnen.
+    Gibt die ProjectPage zurück (Auswertung bereits aktiv).
+    """
+    dashboard = _login_and_dashboard(page, base_url)
+
+    # User klickt '+' in der Sidebar
+    new_proj_page = dashboard.click_new_project()
+    expect(new_proj_page.name_input).to_be_visible()
+
+    # User trägt Projektnamen ein und klickt 'Erstellen'
+    project_page = new_proj_page.create(name)
+
+    # User beantwortet Fragen über die Dropdown-Menüs
+    for qid, val in answers.items():
+        project_page.answer_question(qid, val)
+
+    # User klickt den 'Auswertung'-Tab
+    project_page.click_auswertung_tab()
+    return project_page
 
 
 # ── R1: Karte sichtbar bei niedrigen Antworten ───────────────────────────────
 
-def test_r1_recs_card_visible_with_low_answers(project_page: ProjectPage):
-    pid = project_page.create_project("Pytest Recs - Low")
-    project_page.goto(pid)
-
-    for qid, val in SAMPLE_LOW_ANSWERS.items():
-        project_page.answer_question(qid, val)
-
-    project_page.open_auswertung_tab()
-
-    expect(project_page.recs_card).to_be_visible()
+def test_r1_recs_card_visible_with_low_answers(page: Page, base_url: str):
+    project = _setup_project_with_answers(page, base_url,
+                                          "Pytest R1 – Low Answers", LOW_ANSWERS)
+    expect(project.recs_card).to_be_visible()
 
 
-# ── R2: Karte versteckt bei neuem Projekt ohne niedrige Antworten ─────────────
+# ── R2: Karte versteckt ohne niedrige Antworten ───────────────────────────────
 
-def test_r2_recs_card_hidden_when_no_low_answers(project_page: ProjectPage):
-    """Neues Projekt, keine Fragen beantwortet → keine Empfehlungen → Karte versteckt."""
-    pid = project_page.create_project("Pytest Recs - Empty")
-    project_page.goto(pid)
-    # Keine Antworten setzen – alle Fragen auf Standard ("---")
-    project_page.open_auswertung_tab()
+def test_r2_recs_card_hidden_without_low_answers(page: Page, base_url: str):
+    """Neues Projekt, keine Antworten → Karte bleibt versteckt."""
+    dashboard = _login_and_dashboard(page, base_url)
+    new_proj_page = dashboard.click_new_project()
+    project = new_proj_page.create("Pytest R2 – No Answers")
 
-    # Karte darf nicht sichtbar sein (display:none)
-    expect(project_page.recs_card).to_be_hidden()
-
-
-# ── R3: Mind. 1 Kategorie-Abschnitt sichtbar ─────────────────────────────────
-
-def test_r3_categories_rendered(project_page: ProjectPage):
-    pid = project_page.create_project("Pytest Recs - Cats")
-    project_page.goto(pid)
-
-    for qid, val in SAMPLE_LOW_ANSWERS.items():
-        project_page.answer_question(qid, val)
-
-    project_page.open_auswertung_tab()
-
-    assert project_page.category_count() >= 1, "Mindestens 1 Kategorie muss vorhanden sein"
-    expect(project_page.cat_headers.first).to_be_visible()
+    # User klickt direkt 'Auswertung', ohne eine Frage zu beantworten
+    project.click_auswertung_tab()
+    expect(project.recs_card).to_be_hidden()
 
 
-# ── R4: Kategorie-Badge zeigt Empfehlungsanzahl ───────────────────────────────
+# ── R3: Kategorien werden angezeigt ──────────────────────────────────────────
 
-def test_r4_category_count_badge(project_page: ProjectPage):
-    pid = project_page.create_project("Pytest Recs - Badge")
-    project_page.goto(pid)
+def test_r3_categories_rendered(page: Page, base_url: str):
+    project = _setup_project_with_answers(page, base_url,
+                                          "Pytest R3 – Categories", LOW_ANSWERS)
+    assert project.category_count() >= 1, "Mindestens 1 Kategorie muss vorhanden sein"
+    expect(project.cat_headers.first).to_be_visible()
 
-    project_page.answer_question("ts-1", "nicht")
-    project_page.open_auswertung_tab()
 
-    # Badge-Text enthält "Empfehlung" (z.B. "1 Empfehlung" oder "9 Empfehlungen")
-    first_header = project_page.cat_headers.first
-    header_text = first_header.inner_text()
+# ── R4: Badge zeigt Empfehlungsanzahl ────────────────────────────────────────
+
+def test_r4_category_count_badge(page: Page, base_url: str):
+    project = _setup_project_with_answers(page, base_url,
+                                          "Pytest R4 – Badge",
+                                          {"ts-1": "nicht"})
+    header_text = project.cat_headers.first.inner_text()
     assert "Empfehlung" in header_text, (
-        f"Kategorie-Header enthält kein Zähl-Badge. Text: {header_text!r}"
+        f"Kategorie-Header enthält kein Anzahl-Badge. Gefundener Text: {header_text!r}"
     )
 
 
 # ── R5: Kategorie einklappen / ausklappen ─────────────────────────────────────
 
-def test_r5_category_toggle(project_page: ProjectPage):
-    pid = project_page.create_project("Pytest Recs - Toggle Cat")
-    project_page.goto(pid)
+def test_r5_category_toggle(page: Page, base_url: str):
+    project = _setup_project_with_answers(page, base_url,
+                                          "Pytest R5 – Category Toggle", LOW_ANSWERS)
 
-    for qid, val in SAMPLE_LOW_ANSWERS.items():
-        project_page.answer_question(qid, val)
+    # Body initial sichtbar
+    assert project.is_cat_body_visible(0), "Kategorie-Body sollte initial ausgeklappt sein"
 
-    project_page.open_auswertung_tab()
+    # User klickt Kategorie-Header → eingeklappt
+    project.toggle_category(0)
+    assert not project.is_cat_body_visible(0), "Kategorie-Body sollte nach Klick eingeklappt sein"
 
-    # Body ist initial ausgeklappt
-    assert project_page.is_cat_body_visible(0), "Kategorie-Body sollte initial sichtbar sein"
-
-    # Einklappen
-    project_page.toggle_category(0)
-    assert not project_page.is_cat_body_visible(0), "Kategorie-Body sollte nach Klick versteckt sein"
-
-    # Wieder ausklappen
-    project_page.toggle_category(0)
-    assert project_page.is_cat_body_visible(0), "Kategorie-Body sollte nach 2. Klick wieder sichtbar sein"
+    # User klickt nochmal → wieder ausgeklappt
+    project.toggle_category(0)
+    assert project.is_cat_body_visible(0), "Kategorie-Body sollte nach 2. Klick wieder sichtbar sein"
 
 
-# ── R6: Gesamt-Toggle klappt gesamte Liste ein/aus ───────────────────────────
+# ── R6: Gesamt-Toggle klappt alle Empfehlungen ein/aus ───────────────────────
 
-def test_r6_card_toggle(project_page: ProjectPage):
-    pid = project_page.create_project("Pytest Recs - Toggle Card")
-    project_page.goto(pid)
+def test_r6_card_toggle(page: Page, base_url: str):
+    project = _setup_project_with_answers(page, base_url,
+                                          "Pytest R6 – Card Toggle", LOW_ANSWERS)
 
-    for qid, val in SAMPLE_LOW_ANSWERS.items():
-        project_page.answer_question(qid, val)
+    # Empfehlungsliste initial sichtbar
+    assert project.is_recs_list_visible(), "Empfehlungsliste sollte initial sichtbar sein"
 
-    project_page.open_auswertung_tab()
+    # User klickt den Pfeil-Button oben rechts → alles eingeklappt
+    project.toggle_recs_card()
+    assert not project.is_recs_list_visible(), "Liste sollte nach Toggle eingeklappt sein"
 
-    # Liste initial sichtbar
-    assert project_page.is_recs_list_visible(), "Empfehlungsliste sollte initial sichtbar sein"
-
-    # Alles einklappen
-    project_page.toggle_recs_card()
-    assert not project_page.is_recs_list_visible(), "Liste sollte nach Toggle-Klick versteckt sein"
-
-    # Wieder ausklappen
-    project_page.toggle_recs_card()
-    assert project_page.is_recs_list_visible(), "Liste sollte nach 2. Toggle-Klick wieder sichtbar sein"
+    # User klickt nochmal → wieder ausgeklappt
+    project.toggle_recs_card()
+    assert project.is_recs_list_visible(), "Liste sollte nach 2. Toggle wieder sichtbar sein"

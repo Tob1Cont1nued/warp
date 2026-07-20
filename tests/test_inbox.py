@@ -1,86 +1,91 @@
 """
-Postkorb (/inbox) – Frontend-Tests
-====================================
-Testet den Postkorb-Bereich (nur für Admins zugänglich):
+Postkorb (/inbox) – Frontend-Tests (echter User-Flow)
+======================================================
+Simuliert echtes User-Verhalten:
+  Admin:   Login → Dashboard → 'Postkorb'-Link in Sidebar klicken
+  User:    Login → Dashboard → 'Postkorb' ist NICHT in Sidebar sichtbar
+  Kein Login: Direkt-URL /inbox → Redirect zur Login-Seite
 
-  I1  Admin kann /inbox aufrufen (200)
-  I2  Normaler Benutzer erhält 403
-  I3  Nicht eingeloggter Benutzer wird zur Login-Seite umgeleitet
-  I4  Postkorb-Seite zeigt den Seiten-Titel "Postkorb"
-  I5  "Antworten"-Button hat ein mailto:-href-Attribut (wenn Nachrichten vorhanden)
-
-Hinweis: Tests laufen gegen den lokalen Flask-Server (http://127.0.0.1:5000).
+  I1  Admin sieht 'Postkorb'-Link in der Sidebar
+  I2  Admin öffnet Postkorb per Sidebar → Überschrift + Antworten-Button korrekt
+  I3  Normaler Benutzer sieht KEINEN 'Postkorb'-Link in der Sidebar
+  I4  Normaler Benutzer kann /inbox nicht per Direktzugriff öffnen (blockiert)
+  I5  Nicht eingeloggter Benutzer wird beim Direktzugriff zu /login umgeleitet
 """
 
 import pytest
 from playwright.sync_api import Page, expect
 from pages.login_page import LoginPage
+from pages.project_page import DashboardPage, InboxPage
 from conftest import ADMIN, TEST_USER
 
 
-# ── I1: Admin-Zugriff ─────────────────────────────────────────────────────────
+# ── I1: Admin sieht Postkorb-Link in der Sidebar ─────────────────────────────
 
-def test_i1_admin_can_access_inbox(page: Page, base_url: str):
+def test_i1_admin_sees_postkorb_in_sidebar(page: Page, base_url: str):
     LoginPage(page, base_url).login(ADMIN["username"], ADMIN["password"])
-    page.goto(f"{base_url}/inbox")
-    page.wait_for_load_state("networkidle")
+    dashboard = DashboardPage(page)
+    expect(dashboard.nav_postkorb).to_be_visible()
 
+
+# ── I2: Admin öffnet Postkorb per Sidebar-Klick ───────────────────────────────
+
+def test_i2_admin_opens_inbox_via_sidebar(page: Page, base_url: str):
+    LoginPage(page, base_url).login(ADMIN["username"], ADMIN["password"])
+    dashboard = DashboardPage(page)
+
+    # User klickt 'Postkorb' in der Sidebar-Navigation
+    inbox = dashboard.click_postkorb()
+
+    # URL ist /inbox und Überschrift ist sichtbar
     expect(page).to_have_url(f"{base_url}/inbox")
-    assert page.title() != "WARP · Kein Zugriff", "Admin darf /inbox nicht mit 403 sehen"
+    expect(inbox.heading).to_contain_text("Postkorb")
+
+    # Falls Nachrichten vorhanden: Antworten-Button hat data-email-Attribut
+    if inbox.reply_buttons.count() > 0:
+        email = inbox.reply_buttons.first.get_attribute("data-email") or ""
+        assert len(email) > 0, "Antworten-Button hat kein gültiges data-email-Attribut"
 
 
-# ── I2: Normaler Benutzer → kein Zugriff auf /inbox ──────────────────────────
+# ── I3: Normaler Benutzer sieht keinen Postkorb-Link ─────────────────────────
 
-def test_i2_regular_user_denied(page: Page, base_url: str):
+def test_i3_regular_user_has_no_postkorb_link(page: Page, base_url: str):
     LoginPage(page, base_url).login(TEST_USER["username"], TEST_USER["password"])
+    dashboard = DashboardPage(page)
+
+    # 'Postkorb'-Link darf in der Sidebar nicht sichtbar sein
+    expect(dashboard.nav_postkorb).to_be_hidden()
+
+
+# ── I4: Normaler Benutzer kann /inbox nicht per URL öffnen ───────────────────
+
+def test_i4_regular_user_blocked_from_inbox(page: Page, base_url: str):
+    LoginPage(page, base_url).login(TEST_USER["username"], TEST_USER["password"])
+
+    # User tippt /inbox direkt in die Adresszeile
     page.goto(f"{base_url}/inbox")
     page.wait_for_load_state("networkidle")
 
-    # Normaler User bekommt entweder 403-Seite oder Redirect zur Login-/Dashboard-Seite
     blocked = (
-        "/inbox" not in page.url           # umgeleitet (weg von /inbox)
-        or "Kein Zugriff" in page.title()  # 403-Seite angezeigt
+        "/inbox" not in page.url            # umgeleitet (weg von /inbox)
+        or "Kein Zugriff" in page.title()   # 403-Seite angezeigt
     )
-    assert blocked, f"Normaler Benutzer darf /inbox nicht sehen. URL: {page.url}, Titel: {page.title()}"
-
-
-# ── I3: Nicht eingeloggt → Redirect zur Login-Seite ──────────────────────────
-
-def test_i3_unauthenticated_redirected_to_login(page: Page, base_url: str):
-    response = page.goto(f"{base_url}/inbox")
-    page.wait_for_load_state("networkidle")
-
-    # Entweder 401/403 oder Redirect zur Login-Seite
-    is_login_page = "/login" in page.url
-    is_blocked     = response.status in (401, 403)
-    assert is_login_page or is_blocked, (
-        f"Unauthenticated user sollte zu /login umgeleitet werden oder 401/403 erhalten. "
-        f"URL: {page.url}, Status: {response.status}"
+    assert blocked, (
+        f"Normaler Benutzer darf /inbox nicht sehen. "
+        f"URL: {page.url} | Titel: {page.title()}"
     )
 
 
-# ── I4+I5: Postkorb-Titel und Antworten-Button (ein Login) ───────────────────
+# ── I5: Nicht eingeloggt → Redirect zu /login ────────────────────────────────
 
-def test_i4_inbox_ui(page: Page, base_url: str):
-    """Admin sieht Postkorb-Heading; Antworten-Button hat data-email (wenn Meldungen da)."""
-    page.set_default_timeout(60_000)
-    LoginPage(page, base_url).login(ADMIN["username"], ADMIN["password"])
+def test_i5_unauthenticated_redirected_to_login(page: Page, base_url: str):
+    # Kein Login – User tippt /inbox direkt in die Adresszeile
     page.goto(f"{base_url}/inbox")
     page.wait_for_load_state("networkidle")
 
-    # I4: Überschrift "Postkorb" sichtbar
-    heading = page.locator("h1, h2").first
-    expect(heading).to_contain_text("Postkorb")
+    assert "/login" in page.url, (
+        f"Nicht eingeloggter User sollte zu /login umgeleitet werden. "
+        f"Tatsächliche URL: {page.url}"
+    )
 
-    # I5: Antworten-Button prüfen falls Nachrichten vorhanden
-    reply_buttons = page.locator('button.iab-btn:has-text("Antworten")')
-    if reply_buttons.count() == 0:
-        return  # kein Skip nötig – Postkorb leer ist valider Zustand
 
-    mailto_ok = page.evaluate("""
-        () => {
-            const btn = document.querySelector('button.iab-btn[onclick*="replyMail"]');
-            return btn ? (btn.dataset.email || '').length > 0 : false;
-        }
-    """)
-    assert mailto_ok, "Antworten-Button hat kein gültiges data-email-Attribut"
