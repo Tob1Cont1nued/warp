@@ -2,6 +2,7 @@
 Shared fixtures für alle WARP Playwright-Tests (Page Object Model).
 """
 
+import re
 import subprocess
 import sys
 import time
@@ -74,16 +75,28 @@ def base_url(live_server: str) -> str:
 
 # ── Test-Benutzer Setup ──────────────────────────────────────────────────────
 
+def _register_user(base_url: str, username: str, password: str, display_name: str = "") -> None:
+    """Registriert einen Benutzer mit CSRF-Token (idempotent)."""
+    session = requests.Session()
+    resp = session.get(f"{base_url}/register", timeout=5)
+    # CSRF-Token aus dem HTML-Formular lesen
+    m = re.search(r'name="csrf_token"\s+value="([^"]+)"', resp.text)
+    csrf_token = m.group(1) if m else ""
+    session.post(f"{base_url}/register", data={
+        "csrf_token":   csrf_token,
+        "username":     username,
+        "display_name": display_name,
+        "password":     password,
+        "password2":    password,
+    })
+
+
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_users(live_server: str):
     """Legt Testbenutzer einmalig an (idempotent – schlägt still fehl wenn schon vorhanden)."""
     for user in (TEST_USER, TEST_USER2):
-        requests.post(f"{live_server}/register", data={
-            "username":     user["username"],
-            "display_name": user.get("display_name", ""),
-            "password":     user["password"],
-            "password2":    user["password"],
-        })
+        _register_user(live_server, user["username"], user["password"],
+                       user.get("display_name", ""))
 
 
 # ── Page Object Fixtures ─────────────────────────────────────────────────────
