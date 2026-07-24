@@ -238,6 +238,26 @@
       </div>
     </section>
 
+    {# Kundenreport: kompakte Zusammenfassung ohne Fragenkatalog #}
+    <section class="card submit-card" style="margin-top:16px">
+      <div>
+        <h2>Kundenreport</h2>
+        <p>Kompakte 2&ndash;3-seitige Zusammenfassung für den Kunden &ndash; Gesamtergebnis, Ausblick und Handlungsempfehlungen für die nächste Stufe, <strong>ohne</strong> den vollständigen Fragenkatalog.</p>
+      </div>
+      <div class="submit-actions">
+        <form method="POST" action="{{ url_for('project_report_html', pid=project.id) }}" target="_blank">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="variant" value="customer" />
+          <button type="submit" class="btn btn-secondary">Kundenreport &ndash; Vorschau (HTML)</button>
+        </form>
+        <form method="POST" action="{{ url_for('project_report_pdf', pid=project.id) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+          <input type="hidden" name="variant" value="customer" />
+          <button type="submit" class="btn btn-primary">Kundenreport &ndash; PDF herunterladen</button>
+        </form>
+      </div>
+    </section>
+
     {# Zurück zu den Fragen #}
     <div style="margin-top:4px">
       <button onclick="switchTab('fragen')" style="background:none;border:none;color:var(--ws-blue);font-size:.88rem;font-weight:600;cursor:pointer;padding:0">

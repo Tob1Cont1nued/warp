@@ -450,6 +450,46 @@
 
     .scorecard-row { page-break-after: always; }
 
+    /* ---------- Kundenreport: Ausblick & Handlungsempfehlungen ---------- */
+    .rec-group {
+      margin-bottom: 12pt;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .rec-group h3 {
+      color: var(--ws-blue-deep);
+      border-bottom: 1pt solid var(--c-border);
+      padding-bottom: 3pt;
+      margin-bottom: 6pt;
+    }
+    .rec-item {
+      border-left: 3pt solid #E84A4A;
+      background: #FBFAFF;
+      border-radius: 0 4pt 4pt 0;
+      padding: 6pt 10pt;
+      margin-bottom: 6pt;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .rec-item-q {
+      font-size: 9.5pt;
+      font-weight: 600;
+      margin-bottom: 3pt;
+    }
+    .rec-item-a {
+      font-size: 9.5pt;
+      color: var(--c-muted);
+    }
+    .outlook-note {
+      margin-top: 14pt;
+      padding: 10pt 12pt;
+      background: var(--c-soft);
+      border-radius: 6pt;
+      font-size: 9.5pt;
+      color: var(--c-muted);
+    }
+    .outlook-note strong { color: var(--c-text); }
+
     /* ==============================================================
        SCREEN PREVIEW — Zentrierung & Padding
        WeasyPrint rendert als "print"-Medium und ignoriert @media
@@ -627,6 +667,62 @@
 
 </section>
 
+{% if customer %}
+<!-- =============== KUNDENREPORT: AUSBLICK & HANDLUNGSEMPFEHLUNGEN =============== -->
+<section class="scorecard-row">
+
+  <div class="section-banner">
+    <div class="eyebrow">Ausblick</div>
+    <h2>Wie Sie die nächste Stufe erreichen</h2>
+  </div>
+
+  {% if next_level %}
+    <p>
+      Aktuell erreicht {{ project_name }} die <strong>{{ maturity_label }}</strong>.
+      Um die nächste Stufe &ndash; <strong>{{ next_level.full_name }}</strong>
+      ({{ next_level.score }}&thinsp;% von {{ level_threshold }}&thinsp;% Zielwert)
+      &ndash; zu erreichen, sind aus unserer Sicht die folgenden Punkte entscheidend.
+      Sie basieren auf den Fragen, die aktuell mit &bdquo;Trifft nicht zu&ldquo; bewertet wurden.
+    </p>
+
+    {% if customer_recs %}
+      {% for group in customer_recs %}
+        <div class="rec-group">
+          <h3>{{ group.title }}</h3>
+          {% for item in group.entries %}
+            <div class="rec-item">
+              <div class="rec-item-q">{{ item.text }}</div>
+              <div class="rec-item-a">{{ item.recommendation }}</div>
+            </div>
+          {% endfor %}
+        </div>
+      {% endfor %}
+    {% else %}
+      <p style="color: var(--c-muted);">
+        Für {{ next_level.full_name }} liegen aktuell keine mit &bdquo;Trifft nicht zu&ldquo;
+        bewerteten Fragen vor &ndash; die Lücke zum Zielwert ergibt sich aus mehreren, nur
+        teilweise erfüllten Punkten. Eine gezielte Nachschärfung dieser Bereiche gemeinsam
+        mit dem Projektteam empfehlen wir im nächsten Schritt.
+      </p>
+    {% endif %}
+
+    <div class="outlook-note">
+      <strong>Ausblick:</strong> Mit Erreichen von {{ next_level.full_name }} rückt die
+      kontinuierliche Weiterentwicklung des Testmanagements in den Fokus &ndash; bis hin zur
+      höchsten WARP-Stufe (Optimization), in der Testprozesse laufend datenbasiert optimiert werden.
+    </div>
+  {% else %}
+    <p>
+      {{ project_name }} hat mit <strong>{{ maturity_label }}</strong> bereits die höchste
+      WARP-Stufe erreicht. Der Fokus verschiebt sich damit von der Etablierung neuer Prozesse
+      hin zur kontinuierlichen, datenbasierten Optimierung des bestehenden Testmanagements.
+    </p>
+  {% endif %}
+
+</section>
+{% endif %}
+
+{% if not customer %}
 <!-- =============== DETAIL =============== -->
 <section>
 
@@ -724,6 +820,7 @@
   </div>
 
 </section>
+{% endif %}
 
 </body>
 </html>

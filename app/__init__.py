@@ -258,7 +258,7 @@ def create_app() -> Flask:
                     out[qid] = value.strip()
         return out
 
-    def _build_report_context(form) -> Dict[str, Any]:
+    def _build_report_context(form, customer: bool = False) -> Dict[str, Any]:
         LEVEL_THRESHOLD = 70
 
         LEVEL_NUMBERS = {
@@ -357,6 +357,23 @@ def create_app() -> Flask:
         warp_level_reached = max(ld["number"] for ld in warp_levels if ld["achieved"])
         warp_level_label = next(ld["full_name"] for ld in warp_levels if ld["number"] == warp_level_reached)
 
+        # Nächste, noch nicht erreichte Stufe — Grundlage für den Kundenreport
+        # ("Ausblick & Handlungsempfehlungen: wie erreiche ich die nächste Stufe?").
+        next_level = next(
+            (ld for ld in warp_levels if ld["number"] > 1 and not ld["achieved"]),
+            None,
+        )
+        customer_recs: List[Dict[str, Any]] = []
+        if next_level:
+            for cat in next_level["categories"]:
+                entries = [
+                    {"text": q["text"], "recommendation": _REC_LOOKUP.get(q["id"], {}).get("low")}
+                    for q in cat["questions"]
+                    if q["answer_id"] == "nicht" and _REC_LOOKUP.get(q["id"], {}).get("low")
+                ]
+                if entries:
+                    customer_recs.append({"title": cat["title"], "entries": entries})
+
         return {
             "project_name": project_name,
             "project_owner": project_owner,
@@ -372,6 +389,10 @@ def create_app() -> Flask:
             "warp_level_reached": warp_level_reached,
             "level_threshold": LEVEL_THRESHOLD,
             "answer_options": ANSWER_OPTIONS,
+            "customer": customer,
+            "next_level": next_level,
+            "customer_recs": customer_recs,
+            "customer_recs_count": sum(len(c["entries"]) for c in customer_recs),
         }
 
     # ------------------------------------------------------------------
@@ -1120,13 +1141,40 @@ def create_app() -> Flask:
     @app.route("/project/<int:pid>/autofill", methods=["POST"])
     @login_required
     def autofill_project(pid: int):
-        """Testhelfer: alle Fragen zufällig befüllen."""
+        """Testhelfer: realistisches Zufallsszenario statt Gleichverteilung.
+
+        Simuliert ein typisches Assessment: Stufe 2 wird zufällig entweder
+        knapp erreicht oder knapp verfehlt (Basic), Stufe 3 ist nur ansatzweise
+        erfüllt, und Stufe 4/5 haben kaum etwas vorzuweisen — statt gleichverteiltem
+        Rauschen über alle vier Antwortoptionen.
+        """
         import random
         project = _get_project_or_403(pid)
-        questions = db.session.execute(db.select(Question)).scalars().all()
-        option_ids = [o["id"] for o in ANSWER_OPTIONS]
-        for q in questions:
-            _upsert_answer(project.id, q.id, random.choice(option_ids), None)
+
+        stufe2_erreicht = random.choice([True, False])
+        weights_by_level = {
+            "Stufe 2 - Managed": (
+                {"voll": 55, "teil": 32, "kaum": 10, "nicht": 3}
+                if stufe2_erreicht else
+                {"voll": 18, "teil": 32, "kaum": 32, "nicht": 18}
+            ),
+            "Stufe 3 - Defined": {"voll": 8, "teil": 24, "kaum": 34, "nicht": 34},
+            "Stufe 4 - Measured": {"voll": 2, "teil": 8, "kaum": 20, "nicht": 70},
+            "Stufe 5 - Optimization": {"voll": 1, "teil": 5, "kaum": 14, "nicht": 80},
+        }
+        default_weights = {"voll": 25, "teil": 25, "kaum": 25, "nicht": 25}
+
+        categories = db.session.execute(
+            db.select(Category).where(Category.catalog_type == "assessment")
+        ).scalars().all()
+
+        for cat in categories:
+            weights = weights_by_level.get(cat.parent, default_weights)
+            option_ids = list(weights.keys())
+            option_weights = list(weights.values())
+            for q in cat.questions:
+                answer_id = random.choices(option_ids, weights=option_weights, k=1)[0]
+                _upsert_answer(project.id, q.id, answer_id, None)
         db.session.commit()
         return redirect(url_for("questionnaire", pid=pid))
 
@@ -1175,7 +1223,8 @@ def create_app() -> Flask:
     @login_required
     def project_report_html(pid: int):
         project = _get_project_or_403(pid)
-        ctx = _build_report_context(project.to_form_dict())
+        customer = request.form.get("variant") == "customer"
+        ctx = _build_report_context(project.to_form_dict(), customer=customer)
         return render_template("report.html", **ctx)
 
     @app.route("/project/<int:pid>/report", methods=["POST"])
@@ -1187,10 +1236,12 @@ def create_app() -> Flask:
             abort(500, description="WeasyPrint ist nicht installiert.")
 
         project = _get_project_or_403(pid)
-        ctx = _build_report_context(project.to_form_dict())
+        customer = request.form.get("variant") == "customer"
+        ctx = _build_report_context(project.to_form_dict(), customer=customer)
         html = render_template("report.html", **ctx)
         pdf_bytes = HTML(string=html, base_url=request.host_url).write_pdf()
-        filename = f"WARP_Report_{project.name.replace(' ', '_')}_{dt.date.today().isoformat()}.pdf"
+        prefix = "WARP_Kundenreport" if customer else "WARP_Report"
+        filename = f"{prefix}_{project.name.replace(' ', '_')}_{dt.date.today().isoformat()}.pdf"
         return send_file(
             io.BytesIO(pdf_bytes),
             mimetype="application/pdf",
