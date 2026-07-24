@@ -69,31 +69,54 @@ _REC_LOOKUP: dict = {
 ROOT = Path(__file__).parent.parent
 
 
-def _donut_segments(segments: List[tuple], radius: float = 42.0) -> List[Dict[str, Any]]:
-    """Bereitet Segmente für ein SVG-Donut-Diagramm auf (stroke-dasharray-Technik).
+def _donut_segments(
+    segments: List[tuple],
+    outer_r: float = 42.0,
+    inner_r: float = 27.0,
+    cx: float = 50.0,
+    cy: float = 50.0,
+) -> List[Dict[str, Any]]:
+    """Bereitet Segmente für ein SVG-Donut-Diagramm als explizite Ring-Pfade auf.
 
     segments: Liste von (id, label, color, count)-Tupeln.
-    Gibt pro Segment dasharray/dashoffset für einen <circle> mit gegebenem
-    Radius zurück; der Kreis wird im Template um -90° gedreht, damit das
-    erste Segment bei 12 Uhr beginnt.
+    Jedes Segment bekommt ein fertiges SVG-<path>-'d'-Attribut (Ringsegment
+    zwischen innerem und äußerem Radius), berechnet über exakte Winkel im
+    Uhrzeigersinn ab 12 Uhr — bewusst über direkte Pfadgeometrie statt der
+    fehleranfälligen stroke-dasharray/rotate-Technik auf <circle>-Elementen.
     """
-    circumference = 2 * math.pi * radius
+    def point(angle_deg: float, r: float) -> tuple:
+        rad = math.radians(angle_deg)
+        return (cx + r * math.sin(rad), cy - r * math.cos(rad))
+
     total = sum(s[3] for s in segments) or 1
     out: List[Dict[str, Any]] = []
-    cumulative = 0.0
+    start_deg = 0.0
     for sid, label, color, count in segments:
         pct = count / total * 100
-        dash = pct / 100 * circumference
+        sweep_deg = min(pct / 100 * 360, 359.99)  # 360° entartet den Arc-Befehl
+        end_deg = start_deg + sweep_deg
+        path = ""
+        if sweep_deg > 0.01:
+            large_arc = 1 if sweep_deg > 180 else 0
+            ox1, oy1 = point(start_deg, outer_r)
+            ox2, oy2 = point(end_deg, outer_r)
+            ix2, iy2 = point(end_deg, inner_r)
+            ix1, iy1 = point(start_deg, inner_r)
+            path = (
+                f"M {ox1:.3f},{oy1:.3f} "
+                f"A {outer_r:.3f},{outer_r:.3f} 0 {large_arc} 1 {ox2:.3f},{oy2:.3f} "
+                f"L {ix2:.3f},{iy2:.3f} "
+                f"A {inner_r:.3f},{inner_r:.3f} 0 {large_arc} 0 {ix1:.3f},{iy1:.3f} Z"
+            )
         out.append({
             "id": sid,
             "label": label,
             "color": color,
             "pct": round(pct, 1),
             "count": count,
-            "dasharray": f"{dash:.2f} {circumference - dash:.2f}",
-            "dashoffset": f"{-cumulative:.2f}",
+            "path": path,
         })
-        cumulative += dash
+        start_deg = end_deg
     return out
 
 csrf = CSRFProtect()
