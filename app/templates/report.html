@@ -462,23 +462,19 @@
       padding-bottom: 3pt;
       margin-bottom: 6pt;
     }
-    .rec-item {
-      border-left: 3pt solid #E84A4A;
-      background: #FBFAFF;
-      border-radius: 0 4pt 4pt 0;
-      padding: 6pt 10pt;
+    .rec-gap-summary {
+      font-size: 8.5pt;
+      font-style: italic;
+      color: var(--c-faint);
+      border-left: 2pt solid #E84A4A;
+      padding-left: 8pt;
       margin-bottom: 6pt;
-      page-break-inside: avoid;
-      break-inside: avoid;
     }
-    .rec-item-q {
+    .rec-body {
       font-size: 9.5pt;
-      font-weight: 600;
-      margin-bottom: 3pt;
-    }
-    .rec-item-a {
-      font-size: 9.5pt;
-      color: var(--c-muted);
+      color: var(--c-text);
+      margin-bottom: 0;
+      text-align: justify;
     }
     .outlook-note {
       margin-top: 14pt;
@@ -489,6 +485,46 @@
       color: var(--c-muted);
     }
     .outlook-note strong { color: var(--c-text); }
+
+    /* ---------- KPI-Kuchendiagramme ---------- */
+    .kpi-row {
+      display: flex;
+      gap: 14pt;
+      margin: 10pt 0 16pt;
+    }
+    .kpi-chart {
+      flex: 1;
+      border: 1pt solid var(--c-border);
+      border-radius: 6pt;
+      padding: 12pt 14pt 14pt;
+      background: #FFF;
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+    .kpi-chart h3 { font-size: 10.5pt; margin-bottom: 8pt; }
+    .donut-svg { display: block; margin: 0 auto 8pt; }
+    .donut-center-value {
+      font-family: 'Aptos', 'Inter', sans-serif;
+      font-size: 15pt;
+      font-weight: 700;
+      fill: var(--c-text);
+    }
+    .donut-center-sub {
+      font-family: 'Aptos', 'Inter', sans-serif;
+      font-size: 6.5pt;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      fill: var(--c-faint);
+    }
+    .kpi-legend { display: flex; flex-direction: column; gap: 4pt; }
+    .kpi-legend-row {
+      display: flex;
+      align-items: center;
+      gap: 6pt;
+      font-size: 8.5pt;
+    }
+    .kpi-legend-label { flex: 1; color: var(--c-muted); }
+    .kpi-legend-pct { font-weight: 600; font-variant-numeric: tabular-nums; }
 
     /* ==============================================================
        SCREEN PREVIEW — Zentrierung & Padding
@@ -532,6 +568,25 @@
   </style>
 </head>
 <body>
+
+{% macro donut(segments, center_label='', center_sub='') %}
+<svg viewBox="0 0 100 100" width="118" height="118" class="donut-svg">
+  <circle cx="50" cy="50" r="42" fill="none" stroke="#F2F2F2" stroke-width="14"></circle>
+  <g transform="rotate(-90 50 50)">
+    {% for seg in segments %}
+      <circle cx="50" cy="50" r="42" fill="none" stroke="{{ seg.color }}" stroke-width="14"
+              stroke-dasharray="{{ seg.dasharray }}" stroke-dashoffset="{{ seg.dashoffset }}"
+              stroke-linecap="butt"></circle>
+    {% endfor %}
+  </g>
+  {% if center_label %}
+    <text x="50" y="46" text-anchor="middle" class="donut-center-value">{{ center_label }}</text>
+  {% endif %}
+  {% if center_sub %}
+    <text x="50" y="60" text-anchor="middle" class="donut-center-sub">{{ center_sub }}</text>
+  {% endif %}
+</svg>
+{% endmacro %}
 
 <!-- =============== COVER =============== -->
 <section class="cover">
@@ -668,7 +723,7 @@
 </section>
 
 {% if customer %}
-<!-- =============== KUNDENREPORT: AUSBLICK & HANDLUNGSEMPFEHLUNGEN =============== -->
+<!-- =============== KUNDENREPORT: AUSBLICK, KENNZAHLEN & HANDLUNGSEMPFEHLUNGEN =============== -->
 <section class="scorecard-row">
 
   <div class="section-banner">
@@ -678,23 +733,81 @@
 
   {% if next_level %}
     <p>
-      Aktuell erreicht {{ project_name }} die <strong>{{ maturity_label }}</strong>.
-      Um die nächste Stufe &ndash; <strong>{{ next_level.full_name }}</strong>
-      ({{ next_level.score }}&thinsp;% von {{ level_threshold }}&thinsp;% Zielwert)
-      &ndash; zu erreichen, sind aus unserer Sicht die folgenden Punkte entscheidend.
-      Sie basieren auf den Fragen, die aktuell mit &bdquo;Trifft nicht zu&ldquo; bewertet wurden.
+      Die Analyse zeichnet ein klares Bild: {{ project_name }} steht aktuell auf
+      <strong>{{ maturity_label }}</strong> und hat damit bereits ein solides Fundament im
+      Testmanagement etabliert. Um die nächste Stufe &ndash; <strong>{{ next_level.full_name }}</strong>
+      &ndash; zu erreichen, muss der Reifegrad in den zugehörigen Themengebieten von aktuell
+      {{ next_level.score }}&thinsp;% auf den Zielwert von {{ level_threshold }}&thinsp;% steigen.
+      Die folgenden Kennzahlen und Empfehlungen zeigen, wo die größten Hebel liegen.
     </p>
 
-    {% if customer_recs %}
-      {% for group in customer_recs %}
-        <div class="rec-group">
-          <h3>{{ group.title }}</h3>
-          {% for item in group.entries %}
-            <div class="rec-item">
-              <div class="rec-item-q">{{ item.text }}</div>
-              <div class="rec-item-a">{{ item.recommendation }}</div>
+    {# ---------- KPI-Kuchendiagramme ---------- #}
+    <div class="kpi-row">
+      {% if distribution_pie %}
+      <div class="kpi-chart">
+        <h3>Antwortverteilung gesamt</h3>
+        {{ donut(distribution_pie, center_label=answered_count ~ '/' ~ total_count, center_sub='beantwortet') }}
+        <div class="kpi-legend">
+          {% for seg in distribution_pie %}
+            <div class="kpi-legend-row">
+              <span class="swatch" style="background:{{ seg.color }};"></span>
+              <span class="kpi-legend-label">{{ seg.label }}</span>
+              <span class="kpi-legend-pct">{{ seg.pct }}%</span>
             </div>
           {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if next_level_pie %}
+      <div class="kpi-chart">
+        <h3>Zielerreichung {{ next_level.full_name }}</h3>
+        {{ donut(next_level_pie, center_label=next_level.score ~ '%', center_sub='aktueller Score') }}
+        <div class="kpi-legend">
+          {% for seg in next_level_pie %}
+            <div class="kpi-legend-row">
+              <span class="swatch" style="background:{{ seg.color }};"></span>
+              <span class="kpi-legend-label">{{ seg.label }}</span>
+              <span class="kpi-legend-pct">{{ seg.pct }}%</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {# ---------- Annahmen ---------- #}
+    <h3 style="margin-top: 4pt;">Annahmen zu dieser Auswertung</h3>
+    <p>
+      Grundlage der Bewertung sind die im Fragenkatalog erfassten Selbstauskünfte
+      ({{ answered_count }} von {{ total_count }} Fragen beantwortet). Eine Stufe gilt als
+      erreicht, wenn alle ihr zugeordneten Themengebiete im Durchschnitt mindestens
+      {{ level_threshold }}&thinsp;% erzielen &ndash; und alle darunterliegenden Stufen ebenfalls
+      erfüllt sind. Für {{ next_level.full_name }} sind das aktuell {{ customer_recs_count }}
+      Punkt{{ 'e' if customer_recs_count != 1 else '' }} mit klarem Nachholbedarf
+      (&bdquo;Trifft nicht zu&ldquo;)
+      {% if next_level_partial_count > 0 %}
+        sowie {{ next_level_partial_count }} weitere, bereits teilweise erfüllte Punkte, die mit
+        vergleichsweise geringem Aufwand nachgeschärft werden können
+      {% endif %}. Diese Einschätzung basiert auf einer Selbsteinschätzung und ersetzt keine
+      vertiefte Vor-Ort-Analyse, bildet aber eine belastbare Grundlage für die Priorisierung
+      der nächsten Schritte.
+    </p>
+
+    {# ---------- Handlungsempfehlungen ---------- #}
+    <h3>Handlungsempfehlungen für {{ next_level.full_name }}</h3>
+    {% if customer_recs %}
+      <p style="color: var(--c-muted); font-size: 9.5pt;">
+        Konkret abgeleitet aus den Fragen, die aktuell mit &bdquo;Trifft nicht zu&ldquo; bewertet wurden:
+      </p>
+      {% for group in customer_recs %}
+        <div class="rec-group">
+          <h3 class="rec-group-title">{{ group.title }}</h3>
+          <p class="rec-gap-summary">
+            Aktuell mit &bdquo;Trifft nicht zu&ldquo; bewertet ({{ group.count }}
+            Punkt{{ 'e' if group.count != 1 else '' }}): {{ group.gap_summary }}
+          </p>
+          <p class="rec-body">{{ group.body }}</p>
         </div>
       {% endfor %}
     {% else %}
@@ -706,10 +819,15 @@
       </p>
     {% endif %}
 
+    {# ---------- Ausblick ---------- #}
     <div class="outlook-note">
-      <strong>Ausblick:</strong> Mit Erreichen von {{ next_level.full_name }} rückt die
-      kontinuierliche Weiterentwicklung des Testmanagements in den Fokus &ndash; bis hin zur
-      höchsten WARP-Stufe (Optimization), in der Testprozesse laufend datenbasiert optimiert werden.
+      <strong>Ausblick.</strong> Mit Erreichen von {{ next_level.full_name }} verschiebt sich der
+      Fokus von der Etablierung grundlegender Strukturen hin zu deren kontinuierlicher Messung
+      und Steuerung. Die darauffolgenden Stufen bauen konsequent darauf auf: Messbarkeit und
+      quantitative Steuerung der Testaktivitäten, und schließlich die höchste WARP-Stufe
+      (Optimization), in der Testprozesse laufend datenbasiert weiterentwickelt werden. Wir
+      empfehlen, die oben genannten Punkte priorisiert und in enger Abstimmung mit dem
+      Projektteam anzugehen und den Fortschritt in einem der nächsten Assessments erneut zu spiegeln.
     </div>
   {% else %}
     <p>
@@ -717,6 +835,23 @@
       WARP-Stufe erreicht. Der Fokus verschiebt sich damit von der Etablierung neuer Prozesse
       hin zur kontinuierlichen, datenbasierten Optimierung des bestehenden Testmanagements.
     </p>
+    {% if distribution_pie %}
+    <div class="kpi-row">
+      <div class="kpi-chart">
+        <h3>Antwortverteilung gesamt</h3>
+        {{ donut(distribution_pie, center_label=answered_count ~ '/' ~ total_count, center_sub='beantwortet') }}
+        <div class="kpi-legend">
+          {% for seg in distribution_pie %}
+            <div class="kpi-legend-row">
+              <span class="swatch" style="background:{{ seg.color }};"></span>
+              <span class="kpi-legend-label">{{ seg.label }}</span>
+              <span class="kpi-legend-pct">{{ seg.pct }}%</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
   {% endif %}
 
 </section>

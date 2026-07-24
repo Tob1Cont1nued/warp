@@ -36,6 +36,7 @@ from __future__ import annotations
 
 import io
 import json as _json
+import math
 import os
 import uuid
 import datetime as dt
@@ -66,6 +67,34 @@ _REC_LOOKUP: dict = {
 }
 
 ROOT = Path(__file__).parent.parent
+
+
+def _donut_segments(segments: List[tuple], radius: float = 42.0) -> List[Dict[str, Any]]:
+    """Bereitet Segmente für ein SVG-Donut-Diagramm auf (stroke-dasharray-Technik).
+
+    segments: Liste von (id, label, color, count)-Tupeln.
+    Gibt pro Segment dasharray/dashoffset für einen <circle> mit gegebenem
+    Radius zurück; der Kreis wird im Template um -90° gedreht, damit das
+    erste Segment bei 12 Uhr beginnt.
+    """
+    circumference = 2 * math.pi * radius
+    total = sum(s[3] for s in segments) or 1
+    out: List[Dict[str, Any]] = []
+    cumulative = 0.0
+    for sid, label, color, count in segments:
+        pct = count / total * 100
+        dash = pct / 100 * circumference
+        out.append({
+            "id": sid,
+            "label": label,
+            "color": color,
+            "pct": round(pct, 1),
+            "count": count,
+            "dasharray": f"{dash:.2f} {circumference - dash:.2f}",
+            "dashoffset": f"{-cumulative:.2f}",
+        })
+        cumulative += dash
+    return out
 
 csrf = CSRFProtect()
 limiter = Limiter(key_func=get_remote_address, default_limits=[])
@@ -285,6 +314,9 @@ def create_app() -> Flask:
         categories: List[Dict[str, Any]] = []
         all_scores_sum: float = 0.0
         level_scores_sum: Dict[str, float] = {lv: 0.0 for lv in WARP_LEVEL_ORDER}
+        overall_distribution: "OrderedDict[str, int]" = OrderedDict(
+            (opt["id"], 0) for opt in ANSWER_OPTIONS
+        )
 
         for cat in db_categories:
             cat_scores_sum: float = 0.0
@@ -299,6 +331,7 @@ def create_app() -> Flask:
                 if aid:
                     answered += 1
                     distribution[aid] += 1
+                    overall_distribution[aid] += 1
                     score = score_lookup[aid]
                     cat_scores_sum += score
                     all_scores_sum += score
@@ -364,6 +397,7 @@ def create_app() -> Flask:
             None,
         )
         customer_recs: List[Dict[str, Any]] = []
+        next_level_partial_count = 0
         if next_level:
             for cat in next_level["categories"]:
                 entries = [
@@ -372,7 +406,41 @@ def create_app() -> Flask:
                     if q["answer_id"] == "nicht" and _REC_LOOKUP.get(q["id"], {}).get("low")
                 ]
                 if entries:
-                    customer_recs.append({"title": cat["title"], "entries": entries})
+                    gap_summary = "; ".join(e["text"].rstrip(".") for e in entries) + "."
+                    body = " ".join(e["recommendation"] for e in entries)
+                    customer_recs.append({
+                        "title": cat["title"],
+                        "count": len(entries),
+                        "gap_summary": gap_summary,
+                        "body": body,
+                    })
+                next_level_partial_count += sum(
+                    1 for q in cat["questions"] if q["answer_id"] in ("kaum", "teil")
+                )
+
+        # KPI-Kuchendiagramme für den Kundenreport (nur dort benötigt).
+        distribution_pie: List[Dict[str, Any]] | None = None
+        next_level_pie: List[Dict[str, Any]] | None = None
+        if customer:
+            dist_colors = {"voll": "#14B26A", "teil": "#5BC5DD", "kaum": "#F2A73B", "nicht": "#E84A4A"}
+            dist_segments = [
+                (opt["id"], opt["label"], dist_colors[opt["id"]], overall_distribution[opt["id"]])
+                for opt in ANSWER_OPTIONS
+            ]
+            unanswered = total_questions - answered_count
+            if unanswered > 0:
+                dist_segments.append(("offen", "Nicht beantwortet", "#E6E6E6", unanswered))
+            distribution_pie = _donut_segments(dist_segments)
+
+            if next_level:
+                achieved_pct = next_level["score"]
+                gap_pct = max(LEVEL_THRESHOLD - achieved_pct, 0)
+                headroom_pct = max(100 - LEVEL_THRESHOLD, 0)
+                next_level_pie = _donut_segments([
+                    ("erreicht", "Erreicht", "#451DC7", achieved_pct),
+                    ("luecke", "Lücke zum Zielwert", "#F2A73B", gap_pct),
+                    ("rest", "Darüber hinaus", "#E6E6E6", headroom_pct),
+                ])
 
         return {
             "project_name": project_name,
@@ -392,7 +460,10 @@ def create_app() -> Flask:
             "customer": customer,
             "next_level": next_level,
             "customer_recs": customer_recs,
-            "customer_recs_count": sum(len(c["entries"]) for c in customer_recs),
+            "customer_recs_count": sum(c["count"] for c in customer_recs),
+            "distribution_pie": distribution_pie,
+            "next_level_pie": next_level_pie,
+            "next_level_partial_count": next_level_partial_count,
         }
 
     # ------------------------------------------------------------------
