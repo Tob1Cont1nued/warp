@@ -138,3 +138,9 @@ Alle Fragen liegen in **`app/data/questions.py`**. Neue Kategorie:
 - **Detailauswertung** pro Kategorie: Antwort-Verteilungs-Bar + alle Fragen
   mit Bewertung, Score und Notizen.
 - Footer mit Seitenzahl auf jeder Seite.
+
+## Lizenz
+
+Alle Rechte vorbehalten © 2026 Tobias Konken. Dieses Repository ist nicht
+zur freien Nutzung, Kopie oder Weiterverbreitung freigegeben — siehe
+[LICENSE](LICENSE).
