@@ -1098,9 +1098,6 @@ def create_app() -> Flask:
     @app.route("/project/new", methods=["GET", "POST"])
     @login_required
     def new_project():
-        # Admin (ohne Superuser) hat keine eigenen Projekte – zum Postkorb
-        if current_user.is_admin and not current_user.is_superuser:
-            return redirect(url_for("inbox"))
         if request.method == "POST":
             name = request.form.get("name", "").strip() or "Neues Projekt"
             catalog_type = request.form.get("catalog_type", "assessment")
@@ -1304,8 +1301,6 @@ def create_app() -> Flask:
         )
         db.session.delete(project)
         db.session.commit()
-        if current_user.is_admin and not current_user.is_superuser:
-            return redirect(url_for("inbox"))
         if current_user.is_superuser and owner_id != current_user.id:
             return redirect(url_for("admin_overview"))
         remaining = current_user.projects

@@ -27,21 +27,17 @@
           </svg>
           Meine Projekte
         </button>
-        {% if current_user.is_superuser or not current_user.is_admin %}
         <a href="{{ url_for('new_project') }}" class="sidebar-new-btn" title="Neues Projekt">+</a>
-        {% endif %}
       </div>
       <nav class="sidebar-projects-list" id="js-proj-list">
         {% for p in projects %}
         <div class="sidebar-project-row {% if project and p.id == project.id %}active{% endif %}">
           <a href="{{ url_for('questionnaire', pid=p.id) }}" class="sidebar-project-name">{{ p.name }}</a>
-          {% if current_user.is_superuser or not current_user.is_admin %}
           <form method="POST" action="{{ url_for('delete_project', pid=p.id) }}"
                 onsubmit="return confirm('Soll das Projekt »{{ p.name }}« wirklich gelöscht werden?')">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <button type="submit" class="sidebar-project-delete" title="Löschen">&times;</button>
           </form>
-          {% endif %}
         </div>
         {% endfor %}
       </nav>
