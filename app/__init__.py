@@ -1430,6 +1430,14 @@ def create_app() -> Flask:
                     raw = raw[4:]
             return _json2.loads(raw.strip())
 
+        # Referenzdokument als Stil-/Strukturvorbild (nur Struktur/Ton/Tiefe – Inhalt kommt
+        # ausschließlich aus dem echten Assessment). Aktuell nur für 'teststrategie' hinterlegt.
+        _REFERENCE_STYLE_GUIDES = {
+            'teststrategie': ROOT / "app" / "data" / "reference_teststrategie.md",
+        }
+        ref_path = _REFERENCE_STYLE_GUIDES.get(doc_type)
+        reference_text = ref_path.read_text(encoding="utf-8") if ref_path and ref_path.exists() else None
+
         # Ein API-Call pro Kapitel – verhindert JSON-Truncation bei langen Dokumenten
         client = anthropic.Anthropic(api_key=api_key)
         content: dict = {}
@@ -1459,10 +1467,29 @@ Anführungszeichen innerhalb der Texte (stattdessen Langstriche oder Umschreibun
 Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
 {{"intro": "...", "bullets": ["...", "...", "...", "...", "..."]}}"""
 
+            if reference_text:
+                reference_block = (
+                    "REFERENZ-DOKUMENT (aus einem ANDEREN, unabhängigen Projekt):\n\n"
+                    f"{reference_text}\n\n"
+                    "WICHTIG ZUR NUTZUNG DIESER REFERENZ: Sie dient AUSSCHLIESSLICH als Vorbild für "
+                    "Struktur, Gliederungstiefe, Fachsprache, Argumentationsstil und Detailgrad der "
+                    "Ausarbeitung. Übernimm NICHT die dortigen Inhalte, Tools, Prozesse, Firmen- oder "
+                    "Teamnamen (z.B. SAP-GUI, Playwright, Jira/XRAY, Bundesbank, Feature-Teams) – "
+                    "diese gehören zu einem anderen Projekt und dürfen im erzeugten Text nicht "
+                    "auftauchen. Der tatsächliche Inhalt des Kapitels muss sich ausschließlich aus "
+                    "den unten stehenden Assessment-Ergebnissen DIESES Projekts ableiten."
+                )
+                message_content = [
+                    {"type": "text", "text": reference_block, "cache_control": {"type": "ephemeral"}},
+                    {"type": "text", "text": chapter_prompt},
+                ]
+            else:
+                message_content = chapter_prompt
+
             msg = client.messages.create(
                 model="claude-sonnet-4-6",
                 max_tokens=2048,
-                messages=[{"role": "user", "content": chapter_prompt}],
+                messages=[{"role": "user", "content": message_content}],
             )
             try:
                 content[heading] = _parse_chapter_response(msg.content[0].text)
