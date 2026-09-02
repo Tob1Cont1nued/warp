@@ -1438,10 +1438,15 @@ def create_app() -> Flask:
         ref_path = _REFERENCE_STYLE_GUIDES.get(doc_type)
         reference_text = ref_path.read_text(encoding="utf-8") if ref_path and ref_path.exists() else None
 
-        # Ein API-Call pro Kapitel – verhindert JSON-Truncation bei langen Dokumenten
+        # Ein API-Call pro Kapitel – verhindert JSON-Truncation bei langen Dokumenten.
+        # Die Kapitel sind unabhängig voneinander, daher parallel statt sequenziell
+        # (bei z.B. 8 Kapiteln sonst 8x die Einzel-Latenz, dazu Risiko eines Timeouts
+        # am vorgeschalteten Webserver).
+        import concurrent.futures
+
         client = anthropic.Anthropic(api_key=api_key)
-        content: dict = {}
-        for heading, desc in sections:
+
+        def _generate_chapter(heading: str, desc: str) -> tuple[str, dict]:
             chapter_prompt = f"""Du bist ein erfahrener Testmanagement-Berater bei Wavestone.
 Erstelle auf Basis des folgenden WARP-Assessments professionellen deutschen Fachtext \
 für das Kapitel „{heading}" eines „{_DOC_LABELS[doc_type]}"-Dokuments.
@@ -1492,9 +1497,16 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
                 messages=[{"role": "user", "content": message_content}],
             )
             try:
-                content[heading] = _parse_chapter_response(msg.content[0].text)
+                return heading, _parse_chapter_response(msg.content[0].text)
             except Exception:
-                content[heading] = {"intro": msg.content[0].text[:500], "bullets": []}
+                return heading, {"intro": msg.content[0].text[:500], "bullets": []}
+
+        content: dict = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(len(sections), 6) or 1) as executor:
+            futures = [executor.submit(_generate_chapter, heading, desc) for heading, desc in sections]
+            for future in concurrent.futures.as_completed(futures):
+                heading, chapter_data = future.result()
+                content[heading] = chapter_data
 
         # Hilfsfunktion: neuen Absatz direkt nach einem XML-Element einfügen
         def _insert_para_after(ref_p_xml, text: str, indent: bool = False):
