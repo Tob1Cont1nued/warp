@@ -38,6 +38,7 @@ import io
 import json as _json
 import math
 import os
+import threading
 import uuid
 import datetime as dt
 from pathlib import Path
@@ -46,7 +47,7 @@ from typing import Any, Dict, List
 
 from flask import (
     Flask, render_template, request, send_file, abort,
-    redirect, url_for, jsonify, flash,
+    redirect, url_for, jsonify, flash, current_app,
 )
 from flask_login import (
     LoginManager, login_required, login_user, logout_user, current_user,
@@ -1353,7 +1354,12 @@ def create_app() -> Flask:
         'stufentestkonzept': 'Stufentestkonzept',
     }
 
-    def _build_ai_document(project: Project, doc_type: str) -> tuple[io.BytesIO, str]:
+    # In-Memory-Fortschrittsspeicher für die KI-Dokumentgenerierung (Key: "<pid>:<doc_type>").
+    # Setzt einen einzelnen Gunicorn-Worker (mehrere Threads) voraus, siehe Procfile/Dockerfile –
+    # bei mehreren Workern bräuchte das einen gemeinsamen Store (z.B. Redis) statt eines Dicts.
+    _doc_gen_progress: dict = {}
+
+    def _build_ai_document(project: Project, doc_type: str, progress_key: str | None = None) -> tuple[io.BytesIO, str]:
         import json as _json2
         import anthropic
         from docx import Document as DocxDoc
@@ -1407,6 +1413,9 @@ def create_app() -> Flask:
                 cur_desc = para.text.strip()
         if cur_head:
             sections.append((cur_head, cur_desc or ''))
+
+        if progress_key is not None:
+            _doc_gen_progress[progress_key] = {"done": 0, "total": len(sections), "status": "running"}
 
         context = (
             f"Projekt: {project.name}\n"
@@ -1507,6 +1516,8 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             for future in concurrent.futures.as_completed(futures):
                 heading, chapter_data = future.result()
                 content[heading] = chapter_data
+                if progress_key is not None:
+                    _doc_gen_progress[progress_key]["done"] += 1
 
         # Hilfsfunktion: neuen Absatz direkt nach einem XML-Element einfügen
         def _insert_para_after(ref_p_xml, text: str, indent: bool = False):
@@ -1563,6 +1574,26 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         fname  = f"WARP_{label}_{project.name.replace(' ', '_')}.docx"
         return buf, fname
 
+    def _save_generated_document(pid: int, doc_type: str, file_bytes: bytes, fname: str) -> None:
+        existing = db.session.execute(
+            db.select(GeneratedDocument).where(
+                GeneratedDocument.project_id == pid,
+                GeneratedDocument.doc_type == doc_type,
+            )
+        ).scalar_one_or_none()
+        if existing:
+            existing.file_data = file_bytes
+            existing.filename = fname
+            existing.generated_at = dt.datetime.utcnow()
+        else:
+            db.session.add(GeneratedDocument(
+                project_id=pid,
+                doc_type=doc_type,
+                filename=fname,
+                file_data=file_bytes,
+            ))
+        db.session.commit()
+
     @app.route("/project/<int:pid>/generate/<doc_type>", methods=["POST"])
     @login_required
     def generate_document(pid: int, doc_type: str):
@@ -1572,25 +1603,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         try:
             buf, fname = _build_ai_document(project, doc_type)
             file_bytes = buf.getvalue()
-            # Upsert: vorhandenes Dokument ersetzen oder neu anlegen
-            existing = db.session.execute(
-                db.select(GeneratedDocument).where(
-                    GeneratedDocument.project_id == pid,
-                    GeneratedDocument.doc_type == doc_type,
-                )
-            ).scalar_one_or_none()
-            if existing:
-                existing.file_data = file_bytes
-                existing.filename = fname
-                existing.generated_at = dt.datetime.utcnow()
-            else:
-                db.session.add(GeneratedDocument(
-                    project_id=pid,
-                    doc_type=doc_type,
-                    filename=fname,
-                    file_data=file_bytes,
-                ))
-            db.session.commit()
+            _save_generated_document(pid, doc_type, file_bytes, fname)
             return send_file(
                 io.BytesIO(file_bytes),
                 mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -1603,6 +1616,52 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             import traceback
             print(traceback.format_exc())
             return render_template("error.html", message=f"Generierung fehlgeschlagen: {exc}"), 500
+
+    @app.route("/project/<int:pid>/generate/<doc_type>/start", methods=["POST"])
+    @login_required
+    def generate_document_start(pid: int, doc_type: str):
+        """Startet die KI-Dokumentgenerierung im Hintergrund und gibt sofort zurück,
+        damit das Frontend den Fortschritt per Polling anzeigen kann (siehe
+        /generate/<doc_type>/progress)."""
+        if doc_type not in _DOC_TEMPLATES:
+            abort(404)
+        _get_project_or_403(pid)
+
+        progress_key = f"{pid}:{doc_type}"
+        current_state = _doc_gen_progress.get(progress_key)
+        if current_state and current_state.get("status") == "running":
+            return jsonify({"ok": True, "already_running": True})
+
+        _doc_gen_progress[progress_key] = {"done": 0, "total": 0, "status": "running"}
+        flask_app = current_app._get_current_object()
+
+        def _run() -> None:
+            with flask_app.app_context():
+                try:
+                    proj = db.session.get(Project, pid)
+                    buf, fname = _build_ai_document(proj, doc_type, progress_key=progress_key)
+                    _save_generated_document(pid, doc_type, buf.getvalue(), fname)
+                    _doc_gen_progress[progress_key]["status"] = "done"
+                except Exception as exc:
+                    import traceback
+                    print(traceback.format_exc())
+                    _doc_gen_progress[progress_key] = {
+                        **_doc_gen_progress.get(progress_key, {}),
+                        "status": "error",
+                        "message": str(exc),
+                    }
+
+        threading.Thread(target=_run, daemon=True).start()
+        return jsonify({"ok": True})
+
+    @app.route("/project/<int:pid>/generate/<doc_type>/progress")
+    @login_required
+    def generate_document_progress(pid: int, doc_type: str):
+        _get_project_or_403(pid)
+        state = _doc_gen_progress.get(f"{pid}:{doc_type}")
+        if not state:
+            return jsonify({"status": "idle", "done": 0, "total": 0})
+        return jsonify(state)
 
     @app.route("/project/<int:pid>/document/<doc_type>")
     @login_required

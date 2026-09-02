@@ -377,7 +377,7 @@
           </div>
         </div>
         <p class="dok-item-desc">{{ desc }}</p>
-        <div class="dok-item-actions">
+        <div class="dok-item-actions js-dok-actions">
           {% if gen_date %}
           <a class="dok-btn dok-btn-dl"
              href="{{ url_for('download_generated_document', pid=project.id, doc_type=doc_type) }}">
@@ -386,31 +386,28 @@
             </svg>
             Herunterladen
           </a>
-          <form method="POST" action="{{ url_for('generate_document', pid=project.id, doc_type=doc_type) }}"
-                class="dok-gen-form">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button type="submit" class="dok-btn dok-btn-regen" title="Neu generieren">
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
-                <path d="M13.5 2.5v3h-3M2.5 13.5v-3h3"/>
-                <path d="M14 6A6 6 0 1 1 8 2"/>
-              </svg>
-            </button>
-          </form>
+          <button type="button" class="dok-btn dok-btn-regen js-doc-gen-btn" title="Neu generieren"
+                  data-pid="{{ project.id }}" data-doc-type="{{ doc_type }}">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M13.5 2.5v3h-3M2.5 13.5v-3h3"/>
+              <path d="M14 6A6 6 0 1 1 8 2"/>
+            </svg>
+          </button>
           {% else %}
-          <form method="POST" action="{{ url_for('generate_document', pid=project.id, doc_type=doc_type) }}"
-                class="dok-gen-form" style="flex:1">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
-            <button type="submit" class="dok-btn dok-btn-gen">
-              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
-                <circle cx="13" cy="3" r="2.5" fill="var(--ws-blue)" stroke="none"/>
-                <text x="13" y="4" text-anchor="middle" font-size="3.5" fill="white" font-weight="bold">✦</text>
-                <path d="M8 2v9M5 8l3 3 3-3"/>
-              </svg>
-              <span class="dok-gen-label">{{ label }} erstellen</span>
-              <span class="dok-gen-spinner" style="display:none">Generiere …</span>
-            </button>
-          </form>
+          <button type="button" class="dok-btn dok-btn-gen js-doc-gen-btn" style="flex:1"
+                  data-pid="{{ project.id }}" data-doc-type="{{ doc_type }}">
+            <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="13" cy="3" r="2.5" fill="var(--ws-blue)" stroke="none"/>
+              <text x="13" y="4" text-anchor="middle" font-size="3.5" fill="white" font-weight="bold">✦</text>
+              <path d="M8 2v9M5 8l3 3 3-3"/>
+            </svg>
+            <span class="dok-gen-label">{{ label }} erstellen</span>
+          </button>
           {% endif %}
+        </div>
+        <div class="dok-gen-progress" style="display:none;margin-top:10px">
+          <div class="ausw-prog-wrap"><div class="ausw-prog-fill" style="width:0%"></div></div>
+          <div class="dok-gen-progress-label" style="font-size:.72rem;color:var(--c-text-muted);margin-top:4px">Wird gestartet …</div>
         </div>
       </div>
       {% endfor %}
@@ -645,15 +642,64 @@ function wqToggleEdit(qid) {
   updateCounter();
 })();
 
-// ── KI-Dokument Spinner ──────────────────────────────────────────────
-document.querySelectorAll('.dok-gen-form').forEach(function (form) {
-  form.addEventListener('submit', function () {
-    var btn  = form.querySelector('.dok-btn-gen');
-    var lbl  = form.querySelector('.dok-gen-label');
-    var spin = form.querySelector('.dok-gen-spinner');
-    if (btn)  btn.classList.add('loading');
-    if (lbl)  lbl.style.display = 'none';
-    if (spin) spin.style.display = 'inline';
+// ── KI-Dokumentgenerierung mit Fortschrittsbalken (Start + Polling) ──
+document.querySelectorAll('.js-doc-gen-btn').forEach(function (btn) {
+  btn.addEventListener('click', function () {
+    var pid       = btn.dataset.pid;
+    var docType   = btn.dataset.docType;
+    var item      = btn.closest('.dok-item');
+    var actions   = item.querySelector('.js-dok-actions');
+    var progress  = item.querySelector('.dok-gen-progress');
+    var fill      = progress.querySelector('.ausw-prog-fill');
+    var label     = progress.querySelector('.dok-gen-progress-label');
+
+    actions.style.display  = 'none';
+    progress.style.display = 'block';
+    fill.style.width = '0%';
+    label.textContent = 'Wird gestartet …';
+
+    fetch('/project/' + pid + '/generate/' + docType + '/start', { method: 'POST' })
+      .then(function (r) { return r.json(); })
+      .then(function () { poll(); })
+      .catch(function () { fail('Konnte die Generierung nicht starten.'); });
+
+    var pollTimer = null;
+    function poll() {
+      fetch('/project/' + pid + '/generate/' + docType + '/progress')
+        .then(function (r) { return r.json(); })
+        .then(function (state) {
+          if (state.status === 'running') {
+            var total = state.total || 0;
+            var done  = state.done || 0;
+            var pct   = total > 0 ? Math.round(done / total * 100) : 8;
+            fill.style.width = pct + '%';
+            label.textContent = total > 0
+              ? ('Kapitel ' + done + ' / ' + total + ' fertig …')
+              : 'Vorlage wird analysiert …';
+            pollTimer = setTimeout(poll, 900);
+          } else if (state.status === 'done') {
+            fill.style.width = '100%';
+            label.textContent = 'Fertig – Download startet …';
+            var a = document.createElement('a');
+            a.href = '/project/' + pid + '/document/' + docType;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(function () { window.location.reload(); }, 500);
+          } else if (state.status === 'error') {
+            fail(state.message || 'Unbekannter Fehler bei der Generierung.');
+          } else {
+            pollTimer = setTimeout(poll, 900);
+          }
+        })
+        .catch(function () { fail('Verbindung zum Server verloren.'); });
+    }
+
+    function fail(msg) {
+      if (pollTimer) clearTimeout(pollTimer);
+      label.textContent = 'Fehler: ' + msg;
+      label.style.color = '#dc2626';
+    }
   });
 });
 
