@@ -70,27 +70,7 @@
 
   </div>{# /sidebar-scroll #}
 
-  {% if current_user.is_superuser %}
-  <a class="sidebar-admin-btn {% if active_nav == 'administration' %}active{% endif %}"
-     href="{{ url_for('admin_overview') }}">
-    <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5">
-      <circle cx="8" cy="5" r="2.5"/><path d="M2 13c0-3 2.5-5 6-5s6 2 6 5"/>
-    </svg>
-    Administration
-  </a>
-  {% endif %}
-
   <div class="sidebar-foot">
-    <div class="sidebar-foot-user">
-      <span class="sidebar-foot-username">{{ current_user.display_name or current_user.username }}</span>
-      <span style="font-size:.68rem;font-weight:700;border-radius:999px;padding:1px 8px;margin-top:2px;display:inline-block;
-        {% if current_user.is_superuser %}background:#ede9fe;color:#6d28d9
-        {% elif current_user.is_admin %}background:#fef3c7;color:#b45309
-        {% else %}background:#f0f9ff;color:#0369a1{% endif %}">
-        {% if current_user.is_superuser %}Superuser{% elif current_user.is_admin %}Admin{% else %}Benutzer{% endif %}
-      </span>
-      <a href="{{ url_for('logout') }}" class="sidebar-logout">Abmelden</a>
-    </div>
     <div class="sidebar-foot-brand">
       <span class="brand-mark"></span>
       <span class="brand-name">wavestone</span>

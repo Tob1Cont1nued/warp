@@ -1708,3 +1708,4 @@ button { cursor: pointer; }
 }
 .profile-dropdown-item:hover { background: var(--c-bg); }
 .profile-dropdown-item.danger { color: #dc2626; }
+.profile-dropdown-divider { height: 1px; background: var(--c-border-soft); margin: 6px 4px; }

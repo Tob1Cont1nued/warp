@@ -16,6 +16,10 @@
       </span>
     </div>
     <a href="{{ url_for('account') }}" class="profile-dropdown-item">Mein Konto</a>
+    {% if current_user.is_superuser %}
+    <a href="{{ url_for('admin_overview') }}" class="profile-dropdown-item">Administration</a>
+    {% endif %}
+    <div class="profile-dropdown-divider"></div>
     <a href="{{ url_for('logout') }}" class="profile-dropdown-item danger">Abmelden</a>
   </div>
 </div>
