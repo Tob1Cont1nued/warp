@@ -114,21 +114,10 @@
   sb.querySelectorAll("a").forEach(function (a) { a.addEventListener("click", closeSidebar); });
 })();
 
-// ── Postkorb-Badge per AJAX aktuell halten ───────────────────────────
-{% if current_user.is_admin %}
-(function () {
-  function refreshBadge() {
-    fetch('/api/inbox/count').then(function (r) { return r.json(); }).then(function (d) {
-      var b = document.getElementById('js-sidebar-badge');
-      if (!b) return;
-      b.textContent = d.count;
-      b.style.display = d.count > 0 ? 'inline-flex' : 'none';
-    }).catch(function () {});
-  }
-  refreshBadge();
-  setInterval(refreshBadge, 60000);
-})();
-{% endif %}
+// Hinweis: Das Postkorb-Badge (#js-sidebar-badge) wird von _profile_button.html
+// aktuell gehalten (ein gemeinsamer Poller für Glocke + Sidebar-Badge statt zwei
+// getrennter Intervalle) – dieses Partial wird auf jeder Seite mit Sidebar mit
+// eingebunden.
 
 // ── CSRF-Token für fetch-Requests ────────────────────────────────────
 (function () {

@@ -1,4 +1,15 @@
-{# Profil-Button für die Topbar (oben rechts) – Avatar mit Initiale + Dropdown. #}
+{# Profil-Button für die Topbar (oben rechts) – Avatar mit Initiale + Dropdown.
+   Enthält außerdem die Postkorb-Glocke (Admin/Superuser), damit sie auf jeder
+   Seite verfügbar ist statt nur auf einzelnen Admin-Templates. #}
+{% if current_user.is_admin %}
+<a class="topbar-bell" href="{{ url_for('inbox') }}" id="js-bell-link" title="Postkorb">
+  <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+  </svg>
+  <span class="bell-badge" id="js-bell-badge" style="display:none">0</span>
+</a>
+{% endif %}
 <div class="profile-menu" id="js-profile-menu">
   <button type="button" class="profile-btn" id="js-profile-btn" aria-haspopup="true" aria-expanded="false" title="{{ current_user.display_name or current_user.username }}">
     <span class="profile-avatar {% if current_user.is_superuser %}profile-avatar-superuser{% elif current_user.is_admin %}profile-avatar-admin{% else %}profile-avatar-user{% endif %}">
@@ -48,4 +59,21 @@
     if (e.key === 'Escape') close();
   });
 })();
+
+{% if current_user.is_admin %}
+// ── Postkorb-Badge (Glocke + Sidebar-Nav-Eintrag, falls vorhanden) aktuell halten ──
+(function () {
+  function refresh() {
+    fetch('/api/inbox/count').then(function (r) { return r.json(); }).then(function (d) {
+      var count = d.count || 0;
+      var bell = document.getElementById('js-bell-badge');
+      if (bell) { bell.textContent = count; bell.style.display = count > 0 ? 'flex' : 'none'; }
+      var sidebarBadge = document.getElementById('js-sidebar-badge');
+      if (sidebarBadge) { sidebarBadge.textContent = count; sidebarBadge.style.display = count > 0 ? 'inline-flex' : 'none'; }
+    }).catch(function () {});
+  }
+  refresh();
+  setInterval(refresh, 60000);
+})();
+{% endif %}
 </script>

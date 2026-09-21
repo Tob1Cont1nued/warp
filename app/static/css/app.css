@@ -1650,6 +1650,22 @@ button { cursor: pointer; }
 .wq-add-title { font-size: .9rem; font-weight: 700; margin: 0 0 14px; color: var(--c-text); }
 
 /* =================================================================
+   Postkorb-Glocke (Topbar) – für Admin/Superuser auf jeder Seite
+   ================================================================= */
+.topbar-bell {
+  position: relative; display: flex; align-items: center;
+  color: var(--c-text); padding: 8px 10px; flex-shrink: 0;
+  text-decoration: none; border-radius: 8px; transition: background .15s;
+}
+.topbar-bell:hover { background: var(--c-bg); }
+.bell-badge {
+  position: absolute; top: 4px; right: 4px; background: #e11d48; color: #fff;
+  font-size: 10px; font-weight: 700; border-radius: 9999px;
+  min-width: 16px; height: 16px; display: flex; align-items: center;
+  justify-content: center; padding: 0 3px; line-height: 1;
+}
+
+/* =================================================================
    Profil-Button (Topbar, oben rechts)
    ================================================================= */
 .profile-menu { position: relative; flex-shrink: 0; }
