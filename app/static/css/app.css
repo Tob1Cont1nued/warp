@@ -1648,3 +1648,63 @@ button { cursor: pointer; }
 }
 .wq-add-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--c-border-soft); }
 .wq-add-title { font-size: .9rem; font-weight: 700; margin: 0 0 14px; color: var(--c-text); }
+
+/* =================================================================
+   Profil-Button (Topbar, oben rechts)
+   ================================================================= */
+.profile-menu { position: relative; flex-shrink: 0; }
+.profile-btn {
+  width: var(--hit); height: var(--hit);
+  border-radius: 50%;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  display: flex;
+  background: transparent;
+}
+.profile-avatar {
+  width: 34px; height: 34px;
+  margin: auto;
+  border-radius: 50%;
+  color: #fff;
+  font-weight: 700;
+  font-size: .85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.profile-avatar-superuser { background: #6d28d9; }
+.profile-avatar-admin     { background: #b45309; }
+.profile-avatar-user      { background: var(--ws-blue); }
+
+.profile-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: #FFF;
+  border: 1px solid var(--c-border);
+  border-radius: 10px;
+  box-shadow: 0 8px 28px rgba(20, 20, 43, 0.14);
+  padding: 6px;
+  z-index: 50;
+}
+.profile-dropdown-head {
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--c-border-soft);
+  margin-bottom: 6px;
+}
+.profile-dropdown-name { display: block; font-weight: 700; font-size: .88rem; color: var(--c-text); }
+.profile-dropdown-role { display: inline-block; margin-top: 4px; font-size: .68rem; font-weight: 700; border-radius: 999px; padding: 1px 8px; }
+.profile-dropdown-item {
+  display: block;
+  padding: 8px 10px;
+  border-radius: 6px;
+  font-size: .86rem;
+  color: var(--c-text);
+  text-decoration: none;
+  transition: background .12s;
+}
+.profile-dropdown-item:hover { background: var(--c-bg); }
+.profile-dropdown-item.danger { color: #dc2626; }

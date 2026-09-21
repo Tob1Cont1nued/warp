@@ -19,6 +19,7 @@
     <h1>Dashboard</h1>
     <p>Willkommen, {{ current_user.display_name or current_user.username }}</p>
   </div>
+  {% include '_profile_button.html' %}
 </header>
 
 {% set active_nav = 'dashboard' %}

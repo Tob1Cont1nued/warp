@@ -24,6 +24,7 @@
     <span class="progress-value"><span id="js-answered">0</span> / {{ total_questions }}</span>
     <div class="progress-bar"><div class="progress-bar-fill" id="js-progress-bar"></div></div>
   </div>
+  {% include '_profile_button.html' %}
 </header>
 
 {% set active_nav = 'workshop' if project.catalog_type == 'workshop' else 'fragenkatalog' %}

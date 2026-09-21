@@ -112,7 +112,7 @@
 
     .topbar-bell {
       position: relative; display: flex; align-items: center;
-      color: var(--c-text); margin-left: auto; padding: 8px 10px;
+      color: var(--c-text); padding: 8px 10px;
       text-decoration: none; border-radius: 8px; transition: background .15s;
     }
     .topbar-bell:hover { background: var(--c-bg); }
@@ -148,6 +148,7 @@
     </svg>
     <span class="bell-badge" id="js-bell-badge" style="display:none">0</span>
   </a>
+  {% include '_profile_button.html' %}
 </header>
 
 <div class="sidebar-backdrop" id="js-backdrop"></div>
