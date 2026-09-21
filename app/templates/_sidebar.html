@@ -55,6 +55,11 @@
         <span class="dot"></span>Vorlagen
       </a>
 
+      <a class="sidebar-nav-item {% if active_nav == 'account' %}active{% endif %}"
+         href="{{ url_for('account') }}">
+        <span class="dot"></span>Mein Konto
+      </a>
+
       {% if current_user.is_admin %}
       <div class="sidebar-nav-divider"></div>
       <a class="sidebar-nav-item {% if active_nav == 'postkorb' %}active{% endif %}"

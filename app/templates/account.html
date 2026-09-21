@@ -1,0 +1,93 @@
+{# WARP – Mein Konto #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; Mein Konto</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>Mein Konto</h1>
+    <p>Zugangsdaten verwalten</p>
+  </div>
+</header>
+
+{% set active_nav = 'account' %}
+{% include '_sidebar.html' %}
+
+<main class="main">
+
+  <div class="card" style="margin-bottom:16px">
+    <h2 style="margin:0 0 4px">{{ current_user.display_name or current_user.username }}</h2>
+    <p style="color:var(--c-text-muted);margin:0;font-size:.88rem">
+      @{{ current_user.username }} &middot; {{ current_user.email or "keine E-Mail hinterlegt" }}
+    </p>
+  </div>
+
+  {% if error %}
+  <div class="login-error" style="margin-bottom:16px">{{ error }}</div>
+  {% endif %}
+  {% if success %}
+  <ul class="flash-list" style="margin-bottom:16px"><li class="flash-success">{{ success }}</li></ul>
+  {% endif %}
+
+  {# ── E-Mail-Adresse ändern ────────────────────────────────────────── #}
+  <div class="card" style="margin-bottom:16px">
+    <h2 style="margin:0 0 6px">E-Mail-Adresse ändern</h2>
+    <p style="color:var(--c-text-muted);margin:0 0 16px;font-size:.85rem">
+      Wird für Benachrichtigungen und zum Zurücksetzen des Passworts verwendet.
+    </p>
+    <form method="POST" action="{{ url_for('account') }}" style="display:flex;flex-direction:column;gap:14px;max-width:380px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="action" value="change_email" />
+      <div class="field">
+        <label for="new_email">Neue E-Mail-Adresse</label>
+        <input type="email" id="new_email" name="new_email" required
+               value="{{ current_user.email or '' }}" autocomplete="email" />
+      </div>
+      <div class="field">
+        <label for="current_password_email">Aktuelles Passwort zur Bestätigung</label>
+        <input type="password" id="current_password_email" name="current_password" required autocomplete="current-password" />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 24px">E-Mail-Adresse speichern</button>
+    </form>
+  </div>
+
+  {# ── Passwort ändern ──────────────────────────────────────────────── #}
+  <div class="card">
+    <h2 style="margin:0 0 6px">Passwort ändern</h2>
+    <p style="color:var(--c-text-muted);margin:0 0 16px;font-size:.85rem">
+      Mindestens 6 Zeichen.
+    </p>
+    <form method="POST" action="{{ url_for('account') }}" style="display:flex;flex-direction:column;gap:14px;max-width:380px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+      <input type="hidden" name="action" value="change_password" />
+      <div class="field">
+        <label for="current_password_pw">Aktuelles Passwort</label>
+        <input type="password" id="current_password_pw" name="current_password" required autocomplete="current-password" />
+      </div>
+      <div class="field">
+        <label for="new_password">Neues Passwort</label>
+        <input type="password" id="new_password" name="new_password" required autocomplete="new-password" />
+      </div>
+      <div class="field">
+        <label for="new_password2">Neues Passwort bestätigen</label>
+        <input type="password" id="new_password2" name="new_password2" required autocomplete="new-password" />
+      </div>
+      <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 24px">Passwort speichern</button>
+    </form>
+  </div>
+
+</main>
+
+</body>
+</html>

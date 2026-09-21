@@ -11,6 +11,7 @@ class RegisterPage:
         self.brand_name: Locator = page.locator(".login-brand-name")
         self.username: Locator = page.locator("#username")
         self.display_name: Locator = page.locator("#display_name")
+        self.email: Locator = page.locator("#email")
         self.password: Locator = page.locator("#password")
         self.password2: Locator = page.locator("#password2")
         self.submit_btn: Locator = page.locator("button[type=submit]")
@@ -27,11 +28,13 @@ class RegisterPage:
         password: str,
         display_name: str = "",
         password2: Optional[str] = None,
+        email: Optional[str] = None,
     ) -> None:
         self.goto()
         self.username.fill(username)
         if display_name:
             self.display_name.fill(display_name)
+        self.email.fill(email if email is not None else f"{username}@example.com")
         self.password.fill(password)
         self.password2.fill(password2 if password2 is not None else password)
         self.submit_btn.click()

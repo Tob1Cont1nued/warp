@@ -14,6 +14,16 @@
       <span class="login-brand-tagline">Wavestone Assessment Risk Planner</span>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <ul class="flash-list">
+      {% for cat, msg in messages %}
+      <li class="flash-{{ cat }}">{{ msg }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
     {% if error %}
     <div class="login-error">{{ error }}</div>
     {% endif %}
@@ -36,6 +46,7 @@
       </div>
       <button type="submit" class="btn btn-primary login-btn">Anmelden</button>
     </form>
+    <a href="{{ url_for('forgot_password') }}" class="login-switch-link" style="margin-top:-6px">Passwort vergessen?</a>
 <script>
 function togglePw(btn) {
   var inp = btn.previousElementSibling;

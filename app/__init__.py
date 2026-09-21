@@ -38,12 +38,17 @@ import io
 import json as _json
 import math
 import os
+import secrets
 import threading
 import uuid
 import datetime as dt
 from pathlib import Path
 from collections import OrderedDict
 from typing import Any, Dict, List
+
+import requests
+from dotenv import load_dotenv
+load_dotenv()  # liest .env im Projektroot, falls vorhanden (lokal) - setzt keine bereits gesetzten Vars
 
 from flask import (
     Flask, render_template, request, send_file, abort,
@@ -199,6 +204,21 @@ def create_app() -> Flask:
 
     with app.app_context():
         db.create_all()
+
+        # Nachträglich ergänzte Spalten auf bestehenden Installationen (SQLite & Postgres) –
+        # db.create_all() legt nur fehlende TABELLEN an, keine fehlenden SPALTEN auf schon
+        # vorhandenen Tabellen. Idempotent: schlägt auf einer Spalte, die schon existiert,
+        # einfach fehl und wird übersprungen.
+        for _col_sql in (
+            "ALTER TABLE \"user\" ADD COLUMN email VARCHAR(200)",
+            "ALTER TABLE \"user\" ADD COLUMN reset_token VARCHAR(100)",
+            "ALTER TABLE \"user\" ADD COLUMN reset_token_expires TIMESTAMP",
+        ):
+            try:
+                db.session.execute(db.text(_col_sql))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
 
         try:
             admin_user = db.session.execute(
@@ -491,6 +511,34 @@ def create_app() -> Flask:
         }
 
     # ------------------------------------------------------------------
+    # E-Mail-Versand (Resend API)
+    # ------------------------------------------------------------------
+
+    def _send_email(to_email: str, subject: str, html_body: str) -> bool:
+        """Verschickt eine E-Mail über die Resend-API (https://resend.com).
+        Gibt False zurück statt zu werfen, wenn RESEND_API_KEY fehlt oder der
+        Versand fehlschlägt — Aufrufer entscheiden selbst, wie kritisch das ist."""
+        api_key = os.environ.get("RESEND_API_KEY", "")
+        mail_from = os.environ.get("MAIL_FROM", "WARP Tool <onboarding@resend.dev>")
+        if not api_key:
+            print(f"[WARP] E-Mail-Versand übersprungen (RESEND_API_KEY fehlt): '{subject}' -> {to_email}")
+            return False
+        try:
+            resp = requests.post(
+                "https://api.resend.com/emails",
+                headers={"Authorization": f"Bearer {api_key}"},
+                json={"from": mail_from, "to": [to_email], "subject": subject, "html": html_body},
+                timeout=10,
+            )
+            if resp.status_code >= 400:
+                print(f"[WARP] E-Mail-Versand fehlgeschlagen ({resp.status_code}): {resp.text[:300]}")
+                return False
+            return True
+        except Exception as exc:
+            print(f"[WARP] E-Mail-Versand fehlgeschlagen: {exc}")
+            return False
+
+    # ------------------------------------------------------------------
     # Auth Routes
     # ------------------------------------------------------------------
 
@@ -502,10 +550,13 @@ def create_app() -> Flask:
         if request.method == "POST":
             username = request.form.get("username", "").strip()
             display_name = request.form.get("display_name", "").strip()
+            email = request.form.get("email", "").strip().lower()
             password = request.form.get("password", "")
             password2 = request.form.get("password2", "")
             if not username:
                 error = "Benutzername darf nicht leer sein."
+            elif not email or "@" not in email:
+                error = "Bitte eine gültige E-Mail-Adresse angeben."
             elif len(password) < 6:
                 error = "Passwort muss mindestens 6 Zeichen haben."
             elif password != password2:
@@ -514,16 +565,124 @@ def create_app() -> Flask:
                 existing = db.session.execute(
                     db.select(User).where(User.username == username)
                 ).scalar_one_or_none()
+                existing_email = db.session.execute(
+                    db.select(User).where(User.email == email)
+                ).scalar_one_or_none()
                 if existing:
                     error = f"Benutzername '{username}' ist bereits vergeben."
+                elif existing_email:
+                    error = "Diese E-Mail-Adresse ist bereits registriert."
                 else:
-                    u = User(username=username, display_name=display_name or None)
+                    u = User(username=username, display_name=display_name or None, email=email)
                     u.set_password(password)
                     db.session.add(u)
                     db.session.commit()
+
+                    # Alle Superuser über den bestehenden Postkorb benachrichtigen
+                    db.session.add(InboxMessage(
+                        source="Registrierung",
+                        user_name=display_name or username,
+                        user_email=email,
+                        recommendation=f"Neue Benutzerregistrierung: {display_name or username} (@{username})",
+                    ))
+                    db.session.commit()
+
                     login_user(u)
                     return redirect(url_for("index"))
         return render_template("register.html", error=error)
+
+    @app.route("/forgot-password", methods=["GET", "POST"])
+    @limiter.limit("5 per minute")
+    def forgot_password():
+        if current_user.is_authenticated:
+            return redirect(url_for("index"))
+        sent = False
+        if request.method == "POST":
+            email = request.form.get("email", "").strip().lower()
+            user = (
+                db.session.execute(db.select(User).where(User.email == email)).scalar_one_or_none()
+                if email else None
+            )
+            if user:
+                token = secrets.token_urlsafe(32)
+                user.reset_token = token
+                user.reset_token_expires = dt.datetime.utcnow() + dt.timedelta(hours=1)
+                db.session.commit()
+                reset_url = url_for("reset_password", token=token, _external=True)
+                _send_email(
+                    user.email,
+                    "WARP – Passwort zurücksetzen",
+                    f"""<p>Hallo {user.display_name or user.username},</p>
+<p>klicken Sie auf den folgenden Link, um Ihr WARP-Passwort zurückzusetzen. Der Link ist eine Stunde gültig:</p>
+<p><a href="{reset_url}">{reset_url}</a></p>
+<p>Wenn Sie das nicht angefordert haben, können Sie diese E-Mail ignorieren.</p>""",
+                )
+            # Immer dieselbe Meldung, unabhängig davon ob die E-Mail existiert (kein User-Enumeration)
+            sent = True
+        return render_template("forgot_password.html", sent=sent)
+
+    @app.route("/reset-password/<token>", methods=["GET", "POST"])
+    def reset_password(token: str):
+        if current_user.is_authenticated:
+            return redirect(url_for("index"))
+        user = db.session.execute(
+            db.select(User).where(User.reset_token == token)
+        ).scalar_one_or_none()
+        if not user or not user.reset_token_expires or user.reset_token_expires < dt.datetime.utcnow():
+            return render_template("reset_password.html", invalid=True)
+        error = None
+        if request.method == "POST":
+            password = request.form.get("password", "")
+            password2 = request.form.get("password2", "")
+            if len(password) < 6:
+                error = "Passwort muss mindestens 6 Zeichen haben."
+            elif password != password2:
+                error = "Passwörter stimmen nicht überein."
+            else:
+                user.set_password(password)
+                user.reset_token = None
+                user.reset_token_expires = None
+                db.session.commit()
+                flash("Passwort erfolgreich geändert. Bitte melden Sie sich an.", "success")
+                return redirect(url_for("login"))
+        return render_template("reset_password.html", invalid=False, error=error)
+
+    @app.route("/account", methods=["GET", "POST"])
+    @login_required
+    def account():
+        error = None
+        success = None
+        if request.method == "POST":
+            action = request.form.get("action")
+            current_password = request.form.get("current_password", "")
+            if not current_user.check_password(current_password):
+                error = "Aktuelles Passwort ist falsch."
+            elif action == "change_password":
+                new_password = request.form.get("new_password", "")
+                new_password2 = request.form.get("new_password2", "")
+                if len(new_password) < 6:
+                    error = "Neues Passwort muss mindestens 6 Zeichen haben."
+                elif new_password != new_password2:
+                    error = "Neue Passwörter stimmen nicht überein."
+                else:
+                    current_user.set_password(new_password)
+                    db.session.commit()
+                    success = "Passwort erfolgreich geändert."
+            elif action == "change_email":
+                new_email = request.form.get("new_email", "").strip().lower()
+                if not new_email or "@" not in new_email:
+                    error = "Bitte eine gültige E-Mail-Adresse angeben."
+                else:
+                    existing = db.session.execute(
+                        db.select(User).where(User.email == new_email, User.id != current_user.id)
+                    ).scalar_one_or_none()
+                    if existing:
+                        error = "Diese E-Mail-Adresse wird bereits verwendet."
+                    else:
+                        current_user.email = new_email
+                        db.session.commit()
+                        success = "E-Mail-Adresse erfolgreich geändert."
+        return render_template("account.html", error=error, success=success)
 
     @app.route("/login", methods=["GET", "POST"])
     @limiter.limit("20 per minute")
@@ -781,6 +940,7 @@ def create_app() -> Flask:
             abort(403)
         username = request.form.get("username", "").strip()
         display_name = request.form.get("display_name", "").strip()
+        email = request.form.get("email", "").strip().lower()
         password = request.form.get("password", "").strip()
         role = request.form.get("role", "user")
         if role not in ('user', 'admin', 'superuser'):
@@ -790,19 +950,27 @@ def create_app() -> Flask:
             error = "Benutzername und Passwort sind erforderlich."
         elif len(password) < 6:
             error = "Passwort muss mindestens 6 Zeichen haben."
+        elif email and "@" not in email:
+            error = "Bitte eine gültige E-Mail-Adresse angeben (oder leer lassen)."
         else:
             existing = db.session.execute(
                 db.select(User).where(User.username == username)
             ).scalar_one_or_none()
+            existing_email = (
+                db.session.execute(db.select(User).where(User.email == email)).scalar_one_or_none()
+                if email else None
+            )
             if existing:
                 error = f"Benutzername '{username}' ist bereits vergeben."
+            elif existing_email:
+                error = "Diese E-Mail-Adresse ist bereits vergeben."
         if error:
             users = db.session.execute(
                 db.select(User).where(User.id != current_user.id).order_by(User.id)
             ).scalars().all()
             return render_template("admin.html", users=users,
                                    total_questions=_db_question_count(), error=error)
-        u = User(username=username, display_name=display_name or None, role=role)
+        u = User(username=username, display_name=display_name or None, email=email or None, role=role)
         u.set_password(password)
         db.session.add(u)
         db.session.commit()

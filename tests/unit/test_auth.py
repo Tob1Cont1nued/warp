@@ -61,6 +61,7 @@ class TestRegisterSeite:
             data={
                 "username": "admin",
                 "display_name": "Duplikat",
+                "email": "duplikat_username@example.com",
                 "password": "sicher123",
                 "password2": "sicher123",
             },
@@ -76,6 +77,7 @@ class TestRegisterSeite:
             data={
                 "username": "_unit_pw_mismatch",
                 "display_name": "Test",
+                "email": "_unit_pw_mismatch@example.com",
                 "password": "passwort1",
                 "password2": "passwort2",
             },
@@ -91,6 +93,7 @@ class TestRegisterSeite:
             data={
                 "username": "_unit_short_pw",
                 "display_name": "Test",
+                "email": "_unit_short_pw@example.com",
                 "password": "abc",
                 "password2": "abc",
             },
@@ -99,6 +102,21 @@ class TestRegisterSeite:
         assert r.status_code == 200
         text = r.data.decode("utf-8", errors="replace").lower()
         assert any(kw in text for kw in ("zeichen", "kurz", "short", "least", "mindest"))
+
+    def test_tc_auth_12_fehlende_email_gibt_fehler(self, client):
+        r = client.post(
+            "/register",
+            data={
+                "username": "_unit_no_email",
+                "display_name": "Test",
+                "password": "sicher123",
+                "password2": "sicher123",
+            },
+            follow_redirects=True,
+        )
+        assert r.status_code == 200
+        text = r.data.decode("utf-8", errors="replace").lower()
+        assert any(kw in text for kw in ("e-mail", "email"))
 
 
 class TestZugriffskontrolle:

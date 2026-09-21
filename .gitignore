@@ -1,0 +1,22 @@
+# Secrets / lokale Konfiguration
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Lokale Datenbank
+warp.db
+
+# Test-/Tool-Artefakte
+.pytest_cache/
+tests/screenshots/
+.playwright-mcp/
+
+# Editor / MCP
+.vscode/
+.idea/
+.mcp.json

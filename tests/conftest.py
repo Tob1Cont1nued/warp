@@ -86,6 +86,7 @@ def _register_user(base_url: str, username: str, password: str, display_name: st
         "csrf_token":   csrf_token,
         "username":     username,
         "display_name": display_name,
+        "email":        f"{username}@example.com",
         "password":     password,
         "password2":    password,
     })
