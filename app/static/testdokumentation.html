@@ -268,6 +268,7 @@
       margin-bottom: 28px;
     }
     .runner-banner.show { display: flex; }
+    .runner-banner a { color: var(--amber); font-weight: 700; text-decoration: underline; }
     .tc-run-cell { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
     .play-btn {
       border: 0; flex: none; width: 24px; height: 24px; border-radius: 50%;
@@ -497,7 +498,7 @@
 
   <div class="runner-banner" id="runner-banner">
     <span>▶</span>
-    <span>Play-Buttons sind nur auf dem lokalen Dev-Server verfügbar (<code>python run.py</code>, als Admin eingeloggt). Hier siehst du nur das zuletzt aufgezeichnete Ergebnis.</span>
+    <span id="runner-banner-text">Play-Buttons sind nur auf dem lokalen Dev-Server verfügbar (<code>python run.py</code>, als Admin eingeloggt). Hier siehst du nur das zuletzt aufgezeichnete Ergebnis.</span>
   </div>
 
   <!-- ── UNIT TESTS ─────────────────────────────────────────────────── -->
@@ -1125,9 +1126,41 @@
 
   // ── Init ──
   buildRunnerUI();
-  fetch('/admin/tests/state')
-    .then(function (r) { return r.ok ? r.json() : { enabled: false, results: {} }; })
+  function showBanner(html) {
+    setButtonsDisabled(true);
+    var banner = document.getElementById('runner-banner');
+    var textEl = document.getElementById('runner-banner-text');
+    if (textEl) textEl.innerHTML = html;
+    if (banner) banner.classList.add('show');
+  }
+
+  var LOGIN_HINT = 'Nicht als Admin eingeloggt auf diesem lokalen Server. '
+    + '<a href="/login">Jetzt einloggen</a> und die Seite neu laden, dann funktionieren die Play-Buttons.';
+  var NOT_LOCAL_HINT = 'Play-Buttons sind nur auf dem lokalen Dev-Server verfügbar '
+    + '(<code>python run.py</code>, siehe Abschnitt „Befehle zur Testausführung"). Hier siehst du nur das zuletzt aufgezeichnete Ergebnis.';
+  var UNREACHABLE_HINT = 'Konnte den lokalen Server unter dieser Adresse nicht erreichen (oder er läuft nicht). '
+    + 'Play-Buttons bleiben deaktiviert, bis <code>python run.py</code> läuft und diese Seite neu geladen wird.';
+
+  fetch('/admin/tests/state', { redirect: 'manual' })
+    .then(function (r) {
+      // redirect: 'manual' liefert bei einem Redirect (z.B. zu /login, weil nicht
+      // eingeloggt) einen opaqueredirect-Response statt ihm zu folgen – so lässt
+      // sich "nicht eingeloggt" von "kein JSON"/"nicht lokal" unterscheiden.
+      if (r.type === 'opaqueredirect' || r.status === 0) {
+        showBanner(LOGIN_HINT);
+        return null;
+      }
+      if (r.status === 403) {
+        return r.json().catch(function () { return {}; }).then(function (data) {
+          showBanner(data.error ? data.error : NOT_LOCAL_HINT);
+          return null;
+        });
+      }
+      if (!r.ok) { showBanner(NOT_LOCAL_HINT); return null; }
+      return r.json();
+    })
     .then(function (data) {
+      if (!data) return;
       runner.enabled = !!data.enabled;
       runner.results = {};
       Object.keys(data.results || {}).forEach(function (key) {
@@ -1136,16 +1169,10 @@
         applyResult(parts[0], parts[1], data.results[key]);
       });
       RUNNABLE_SECTIONS.forEach(updateSectionSummary);
-      if (!runner.enabled) {
-        setButtonsDisabled(true);
-        var banner = document.getElementById('runner-banner');
-        if (banner) banner.classList.add('show');
-      }
+      if (!runner.enabled) showBanner(NOT_LOCAL_HINT);
     })
     .catch(function () {
-      setButtonsDisabled(true);
-      var banner = document.getElementById('runner-banner');
-      if (banner) banner.classList.add('show');
+      showBanner(UNREACHABLE_HINT);
     });
 })();
 </script>

@@ -2400,7 +2400,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
     @login_required
     def admin_tests_state():
         if not current_user.is_admin:
-            abort(403)
+            return jsonify(error="Nur für Admins verfügbar.", enabled=False), 403
         return jsonify(enabled=_test_runner_enabled(app), results=_load_test_results())
 
     @app.route("/admin/tests/run", methods=["POST"])
@@ -2409,7 +2409,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
     @login_required
     def admin_tests_run():
         if not current_user.is_admin:
-            abort(403)
+            return jsonify(error="Nur für Admins verfügbar."), 403
         if not _test_runner_enabled(app):
             return jsonify(error="Testausführung ist nur auf dem lokalen Dev-Server verfügbar."), 403
 
