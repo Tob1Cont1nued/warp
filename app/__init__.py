@@ -2436,7 +2436,9 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         if len(func_names) < len(reg["tests"]):
             cmd += ["-k", " or ".join(func_names)]
         if reg["browser"]:
-            cmd += ["--browser", "chromium"]
+            # --headed: der Play-Button soll den Testlauf sichtbar im Browser zeigen,
+            # nicht headless im Hintergrund (nur relevant lokal, siehe _test_runner_enabled).
+            cmd += ["--browser", "chromium", "--headed"]
 
         started_at = dt.datetime.now(dt.timezone.utc)
         timeout_s = (40 + 25 * len(func_names)) if reg["browser"] else (15 + 8 * len(func_names))
