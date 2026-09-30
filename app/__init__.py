@@ -342,7 +342,11 @@ def _save_test_results(results: Dict[str, Any]) -> None:
 def create_app() -> Flask:
     app = Flask(__name__, template_folder="templates", static_folder="static")
 
-    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "warp-dev-secret-key-change-in-production")
+    # "or" statt .get(..., default): eine leere SECRET_KEY=-Zeile in der lokalen
+    # .env (siehe .env.example) setzt die Variable auf "" statt sie wegzulassen -
+    # .get() würde dann fälschlich "" statt des Dev-Defaults verwenden und Flask
+    # bricht mit "no secret key was set" ab, sobald eine Session gebraucht wird.
+    app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or "warp-dev-secret-key-change-in-production"
 
     db_url = os.environ.get("DATABASE_URL", f"sqlite:///{ROOT / 'warp.db'}")
     if db_url.startswith("postgres://"):
