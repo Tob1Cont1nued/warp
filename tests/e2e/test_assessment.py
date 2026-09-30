@@ -180,9 +180,17 @@ def test_assessment_full_workflow(page: Page) -> None:
     # ------------------------------------------------------------------
     # 4. HTML-Report aufrufen und prüfen
     # ------------------------------------------------------------------
-    print("\n→ Öffne HTML-Vorschau …")
+    # Die Seite ist tab-basiert; die Report-Buttons liegen im "Auswertung"-Tab,
+    # der nicht standardmäßig aktiv ist - erst hinklicken, sonst ist der Button
+    # unsichtbar (Timeout). Zusätzlich gibt es seit dem Kundenreport-Feature
+    # zwei Buttons mit "Vorschau" im Text ("Vorschau (HTML)" und "Kundenreport
+    # – Vorschau (HTML)") - exakter Name statt Teilstring-Suche nötig.
+    print("\n→ Öffne Auswertung-Tab …")
+    page.click('button[data-tab="auswertung"]')
+
+    print("→ Öffne HTML-Vorschau …")
     with page.expect_popup() as popup_info:
-        page.click('button:has-text("Vorschau")')
+        page.get_by_role("button", name="Vorschau (HTML)", exact=True).click()
     report = popup_info.value
     report.wait_for_load_state("networkidle")
     report.screenshot(path=str(SCREENSHOTS / "04_report.png"), full_page=True)
