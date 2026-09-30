@@ -848,6 +848,20 @@
     </div>
 
     <div class="cmd-section">
+      <div class="cmd-label">Lokalen Server starten (venv + Server)</div>
+      <code class="cmd"><span class="kw">cd</span> <span class="arg">warp-main</span>
+.venv\Scripts\activate
+<span class="kw">python</span> <span class="arg">run.py</span></code>
+      <p class="cmd-note">
+        Startet auf <code>http://127.0.0.1:5000</code> (Admin: <em>admin / warp2024</em>, per Debug-Reloader neu geladen bei Codeänderungen).
+        Erforderlich für: alle Frontend-/E2E-Tests (Fixture <code>live_server</code> startet den Server sonst selbst,
+        wiederverwendet ihn aber, falls er schon läuft) <strong>und</strong> für die Play-Buttons in dieser Doku –
+        die laufen laut <code>_test_runner_enabled()</code> nur, wenn dieser Server lokal mit <code>debug=True</code> aktiv ist.
+        macOS/Linux: <code>source .venv/bin/activate</code> statt <code>.venv\Scripts\activate</code>.
+      </p>
+    </div>
+
+    <div class="cmd-section">
       <div class="cmd-label">Unit-Tests (kein Browser, schnell)</div>
       <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/unit/</span> -v</code>
       <p class="cmd-note">Kein Browser, kein laufender Server nötig. Flask-Test-Client wird intern gestartet.</p>
