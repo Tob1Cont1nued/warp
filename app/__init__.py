@@ -39,8 +39,13 @@ import json as _json
 import math
 import os
 import secrets
+import subprocess
+import sys
+import tempfile
 import threading
+import time
 import uuid
+import xml.etree.ElementTree as ET
 import datetime as dt
 from pathlib import Path
 from collections import OrderedDict
@@ -162,6 +167,176 @@ def _seed_questions_if_needed() -> None:
     db.session.commit()
     q_total = sum(len(c["questions"]) for c in PY_CATS)
     print(f"[WARP] Fragenkatalog ({q_total} Fragen, {len(PY_CATS)} Kategorien) in DB geladen.")
+
+
+# ---------------------------------------------------------------------------
+# Testdokumentation: Registry für die Play-Buttons (app/static/testdokumentation.html)
+#
+# Bildet jede in der Doku sichtbare Test-ID auf ihre pytest-Testfunktion ab.
+# Dient als serverseitige Whitelist für /admin/tests/run – es wird nie ein
+# von außen übergebener Datei- oder Funktionsname ausgeführt, nur IDs, die
+# hier eingetragen sind. Läuft ausschließlich lokal, siehe _test_runner_enabled().
+# ---------------------------------------------------------------------------
+TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
+    "auth": {
+        "file": "tests/unit/test_auth.py", "browser": False,
+        "tests": {
+            "TC-AUTH-01": "test_tc_auth_01_login_seite_erreichbar",
+            "TC-AUTH-02": "test_tc_auth_02_register_seite_erreichbar",
+            "TC-AUTH-03": "test_tc_auth_03_gueltiger_login_redirected",
+            "TC-AUTH-04": "test_tc_auth_04_ungueltiges_passwort_bleibt_auf_login",
+            "TC-AUTH-05": "test_tc_auth_05_logout_redirected",
+            "TC-AUTH-06": "test_tc_auth_06_dashboard_ohne_login_redirected",
+            "TC-AUTH-07": "test_tc_auth_07_admin_ohne_login_redirected",
+            "TC-AUTH-08": "test_tc_auth_08_admin_als_user_gibt_403",
+            "TC-AUTH-09": "test_tc_auth_09_doppelter_username_gibt_fehler",
+            "TC-AUTH-10": "test_tc_auth_10_passwort_mismatch_gibt_fehler",
+            "TC-AUTH-11": "test_tc_auth_11_passwort_zu_kurz_gibt_fehler",
+            "TC-AUTH-12": "test_tc_auth_12_fehlende_email_gibt_fehler",
+        },
+    },
+    "sec": {
+        "file": "tests/unit/test_security.py", "browser": False,
+        "tests": {
+            "TC-SEC-01": "test_tc_sec_01_sql_injection_im_login",
+            "TC-SEC-02": "test_tc_sec_02_xss_in_projektname_wird_escaped",
+            "TC-SEC-03": "test_tc_sec_03_csrf_extension_registriert",
+            "TC-SEC-03b": "test_tc_sec_03b_csrf_blockiert_post_ohne_token",
+            "TC-SEC-04": "test_tc_sec_04_flask_login_initialisiert",
+            "TC-SEC-05": "test_tc_sec_05_path_traversal_blockiert",
+            "TC-SEC-06": "test_tc_sec_06_wiederholte_fehlanmeldungen_stabil",
+            "TC-SEC-07": "test_tc_sec_07_fremdes_projekt_gibt_403",
+            "TC-SEC-08": "test_tc_sec_08_sicherheits_header_vorhanden",
+            "TC-SEC-09": "test_tc_sec_09_api_key_nicht_in_response",
+            "TC-SEC-10": "test_tc_sec_10_geschuetzte_routen_erfordern_login",
+            "TC-SEC-11": "test_tc_sec_11_admin_routen_fuer_user_gesperrt",
+        },
+    },
+    "proj": {
+        "file": "tests/unit/test_projects.py", "browser": False,
+        "tests": {
+            "TC-PROJ-01": "test_tc_proj_01_neues_projekt_wird_angelegt",
+            "TC-PROJ-02": "test_tc_proj_02_fragenkatalog_erreichbar",
+            "TC-PROJ-03": "test_tc_proj_03_antwort_wird_gespeichert",
+            "TC-PROJ-04": "test_tc_proj_04_antwort_upsert_kein_duplikat",
+            "TC-PROJ-05": "test_tc_proj_05_projektinfos_werden_aktualisiert",
+            "TC-PROJ-06": "test_tc_proj_06_fremdes_projekt_gibt_403",
+            "TC-PROJ-07": "test_tc_proj_07_nicht_existentes_projekt_gibt_403",
+            "TC-PROJ-08": "test_tc_proj_08_dashboard_erreichbar",
+            "TC-PROJ-09": "test_tc_proj_09_html_report_wird_generiert",
+            "TC-PROJ-10": "test_tc_proj_10_neue_projekt_formular",
+            "TC-PROJ-11": "test_tc_proj_11_projekt_als_abgeschlossen_markieren",
+        },
+    },
+    "api": {
+        "file": "tests/unit/test_api.py", "browser": False,
+        "tests": {
+            "TC-API-01": "test_tc_api_01_gueltiger_api_key_erstellt_nachricht",
+            "TC-API-02": "test_tc_api_02_falscher_api_key_gibt_401",
+            "TC-API-03": "test_tc_api_03_fehlendes_pflichtfeld_gibt_400",
+            "TC-API-04": "test_tc_api_04_count_fuer_admin",
+            "TC-API-05": "test_tc_api_05_count_ohne_login_redirected",
+            "TC-API-06": "test_tc_api_06_inbox_fuer_admin_erreichbar",
+            "TC-API-07": "test_tc_api_07_inbox_fuer_user_gibt_403",
+            "TC-API-08": "test_tc_api_08_questions_fuer_superuser",
+            "TC-API-09": "test_tc_api_09_coverage_matrix_oeffentlich",
+        },
+    },
+    "login": {
+        "file": "tests/test_login.py", "browser": True,
+        "tests": {
+            "P1": "test_p1_login_seite_elemente_sichtbar",
+            "P2": "test_p2_admin_login_leitet_auf_admin_weiter",
+            "P3": "test_p3_user_login_leitet_auf_projekt_weiter",
+            "N1": "test_n1_falsches_passwort_zeigt_fehler",
+            "N2": "test_n2_unbekannter_benutzer_zeigt_fehler",
+            "N3": "test_n3_gesperrter_benutzer_zeigt_spezifische_meldung",
+        },
+    },
+    "register": {
+        "file": "tests/test_register.py", "browser": True,
+        "tests": {
+            "P1": "test_p1_register_seite_elemente_sichtbar",
+            "P2": "test_p2_neuer_benutzer_wird_angelegt_und_weitergeleitet",
+            "P3": "test_p3_anmelden_link_navigiert_zur_login_seite",
+            "N1": "test_n1_doppelter_benutzername_zeigt_fehler",
+            "N2": "test_n2_passwort_mismatch_zeigt_fehler",
+            "N3": "test_n3_passwort_zu_kurz_zeigt_fehler",
+        },
+    },
+    "admin": {
+        "file": "tests/test_admin.py", "browser": True,
+        "tests": {
+            "P1": "test_p1_admin_seite_elemente_sichtbar",
+            "P2": "test_p2_admin_legt_benutzer_an",
+            "P3": "test_p3_admin_sperrt_benutzer",
+            "N1": "test_n1_normaler_benutzer_kann_admin_nicht_aufrufen",
+            "N2": "test_n2_nicht_eingeloggter_benutzer_wird_umgeleitet",
+            "N3": "test_n3_admin_kann_kein_neues_projekt_anlegen",
+        },
+    },
+    "questionnaire": {
+        "file": "tests/test_questionnaire.py", "browser": True,
+        "tests": {
+            "P1": "test_p1_questionnaire_elemente_sichtbar",
+            "P2": "test_p2_antwort_wird_nach_reload_gespeichert",
+            "P3": "test_p3_download_buttons_vorhanden_und_verlinkt",
+            "N1": "test_n1_nicht_eingeloggter_benutzer_wird_umgeleitet",
+            "N2": "test_n2_fremdes_projekt_liefert_403",
+            "N3": "test_n3_nicht_existierende_projekt_id_liefert_403",
+        },
+    },
+    "recs": {
+        "file": "tests/test_recommendations.py", "browser": True,
+        "tests": {
+            "R1": "test_r1_recs_card_visible_with_low_answers",
+            "R2": "test_r2_recs_card_hidden_without_low_answers",
+            "R3": "test_r3_categories_rendered",
+            "R4": "test_r4_category_count_badge",
+            "R5": "test_r5_category_toggle",
+            "R6": "test_r6_card_toggle",
+        },
+    },
+    "inbox": {
+        "file": "tests/test_inbox.py", "browser": True,
+        "tests": {
+            "I1": "test_i1_admin_sees_postkorb_in_sidebar",
+            "I2": "test_i2_admin_opens_inbox_via_sidebar",
+            "I3": "test_i3_regular_user_has_no_postkorb_link",
+            "I4": "test_i4_regular_user_blocked_from_inbox",
+            "I5": "test_i5_unauthenticated_redirected_to_login",
+        },
+    },
+    "e2e": {
+        "file": "tests/e2e/test_assessment.py", "browser": True,
+        "tests": {
+            "E2E-01": "test_assessment_full_workflow",
+        },
+    },
+}
+
+# JSON-Datei mit dem Ergebnis des letzten Laufs je Test-ID (lokal, nicht in git).
+_TEST_RESULTS_PATH = Path(__file__).resolve().parent.parent / "tests" / ".test_results.json"
+
+
+def _test_runner_enabled(flask_app: Flask) -> bool:
+    """Play-Buttons laufen nie auf Render/Produktion – nur im lokalen Debug-Server
+    (python run.py, app.run(debug=True)) und wenn kein RENDER-Env gesetzt ist."""
+    return bool(flask_app.debug) and not os.environ.get("RENDER")
+
+
+def _load_test_results() -> Dict[str, Any]:
+    if not _TEST_RESULTS_PATH.exists():
+        return {}
+    try:
+        return _json.loads(_TEST_RESULTS_PATH.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {}
+
+
+def _save_test_results(results: Dict[str, Any]) -> None:
+    _TEST_RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
+    _TEST_RESULTS_PATH.write_text(_json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def create_app() -> Flask:
@@ -2213,6 +2388,109 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             total_unit=total_unit,
         )
 
+    # ------------------------------------------------------------------
+    # Testdokumentation: Play-Buttons (nur lokal, siehe _test_runner_enabled)
+    # ------------------------------------------------------------------
+
+    @app.route("/admin/tests/state")
+    @login_required
+    def admin_tests_state():
+        if not current_user.is_admin:
+            abort(403)
+        return jsonify(enabled=_test_runner_enabled(app), results=_load_test_results())
+
+    @app.route("/admin/tests/run", methods=["POST"])
+    @csrf.exempt  # statische Doku-Seite (kein Jinja-Template) hat keinen csrf_token(); Endpoint ist ohnehin
+    # nur lokal aktiv (_test_runner_enabled) und erfordert eine eingeloggte Admin-Session.
+    @login_required
+    def admin_tests_run():
+        if not current_user.is_admin:
+            abort(403)
+        if not _test_runner_enabled(app):
+            return jsonify(error="Testausführung ist nur auf dem lokalen Dev-Server verfügbar."), 403
+
+        payload = request.get_json(silent=True) or {}
+        section = payload.get("section")
+        reg = TEST_REGISTRY.get(section)
+        if not reg:
+            return jsonify(error="Unbekannter Testabschnitt."), 400
+
+        requested_ids = payload.get("ids") or list(reg["tests"].keys())
+        unknown = [i for i in requested_ids if i not in reg["tests"]]
+        if unknown:
+            return jsonify(error=f"Unbekannte Test-ID(s): {', '.join(unknown)}"), 400
+
+        repo_root = Path(__file__).resolve().parent.parent
+        func_names = [reg["tests"][i] for i in requested_ids]
+        junit_fd, junit_path = tempfile.mkstemp(suffix=".xml", prefix="warp_testrun_")
+        os.close(junit_fd)
+        cmd = [
+            sys.executable, "-m", "pytest", reg["file"],
+            "-v", "--tb=short", "--color=no", "-p", "no:cacheprovider",
+            f"--junitxml={junit_path}",
+        ]
+        if len(func_names) < len(reg["tests"]):
+            cmd += ["-k", " or ".join(func_names)]
+        if reg["browser"]:
+            cmd += ["--browser", "chromium"]
+
+        started_at = dt.datetime.now(dt.timezone.utc)
+        timeout_s = (40 + 25 * len(func_names)) if reg["browser"] else (15 + 8 * len(func_names))
+        try:
+            proc = subprocess.run(
+                cmd, cwd=str(repo_root), capture_output=True,
+                text=True, encoding="utf-8", errors="replace", timeout=timeout_s,
+            )
+            output = (proc.stdout or "") + "\n" + (proc.stderr or "")
+            overall = "pass" if proc.returncode == 0 else "fail"
+        except subprocess.TimeoutExpired as exc:
+            output = (exc.stdout or "") + "\n" + (exc.stderr or "") + f"\n[Abgebrochen nach {timeout_s}s Timeout]"
+            overall = "timeout"
+        except OSError as exc:
+            output = str(exc)
+            overall = "error"
+        duration_ms = int((dt.datetime.now(dt.timezone.utc) - started_at).total_seconds() * 1000)
+        ran_at = started_at.isoformat()
+
+        # Einzelstatus je Funktion aus dem JUnit-XML-Report lesen (robust
+        # gegenüber der Konsolen-Verbosity, die pytest.ini per addopts=-q
+        # ohnehin überschreibt) statt die stdout-Textausgabe zu parsen.
+        per_func_status: Dict[str, str] = {}
+        try:
+            root = ET.parse(junit_path).getroot()
+            for case in root.iter("testcase"):
+                name = case.get("name", "")
+                base = name.split("[", 1)[0]
+                if case.find("failure") is not None or case.find("error") is not None:
+                    per_func_status[base] = "fail"
+                elif case.find("skipped") is not None:
+                    per_func_status[base] = "error"
+                else:
+                    per_func_status[base] = "pass"
+        except (ET.ParseError, OSError):
+            pass
+        finally:
+            try:
+                os.unlink(junit_path)
+            except OSError:
+                pass
+
+        results = _load_test_results()
+        run_results: Dict[str, Any] = {}
+        for tc_id, func in zip(requested_ids, func_names):
+            per_status = per_func_status.get(func, overall)
+            entry = {
+                "status": per_status,
+                "ranAt": ran_at,
+                "durationMs": duration_ms,
+                "output": output[-6000:],
+            }
+            key = f"{section}:{tc_id}"
+            results[key] = entry
+            run_results[key] = entry
+        _save_test_results(results)
+        return jsonify(results=run_results, overall=overall)
+
     return app
 
 
@@ -2220,4 +2498,4 @@ app = create_app()
 
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, threaded=True)

@@ -14,6 +14,7 @@ warp.db
 # Test-/Tool-Artefakte
 .pytest_cache/
 tests/screenshots/
+tests/.test_results.json
 .playwright-mcp/
 
 # Editor / MCP

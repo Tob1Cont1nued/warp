@@ -240,6 +240,7 @@
     .badge-frontend { background: var(--amber-lite);  color: var(--amber); }
     .badge-pos      { background: #E6F7EE; color: #077040; }
     .badge-neg      { background: #FEE2E2; color: #B91C1C; }
+    .badge-pending  { background: transparent; border: 1px dashed var(--muted); color: var(--muted); }
     @media (prefers-color-scheme: dark) {
       .badge-pos { background: #0A2E1C; color: #4ADE80; }
       .badge-neg { background: #2D1010; color: #F87171; }
@@ -252,6 +253,77 @@
     :root[data-theme="dark"] .badge-unit     { background: #2A2350; color: #A78BFA; }
     :root[data-theme="dark"] .badge-e2e      { background: #0A2E1C; color: #34D399; }
     :root[data-theme="dark"] .badge-frontend { background: #2D1E07; color: #FCD34D; }
+
+    /* ── Test-Runner (Play-Buttons) ─────────────────────────────────── */
+    .runner-banner {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: .8rem;
+      color: var(--amber);
+      background: var(--amber-lite);
+      border: 1px solid var(--amber);
+      border-radius: var(--r);
+      padding: 8px 14px;
+      margin-bottom: 28px;
+    }
+    .runner-banner.show { display: flex; }
+    .tc-run-cell { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+    .play-btn {
+      border: 0; flex: none; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--purple-mid); color: #fff; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-size: .62rem; padding: 0 0 0 1px; line-height: 1;
+      transition: background .15s;
+    }
+    .play-btn:hover:not(:disabled) { background: var(--purple); }
+    .play-btn:disabled { opacity: .3; cursor: not-allowed; }
+    .run-status-dot {
+      width: 9px; height: 9px; border-radius: 50%; flex: none;
+      background: var(--muted); opacity: .35; cursor: default;
+    }
+    .run-status-dot.pass { background: #16A34A; opacity: 1; }
+    .run-status-dot.fail, .run-status-dot.timeout, .run-status-dot.error { background: #DC2626; opacity: 1; cursor: pointer; }
+    .run-status-dot.running { background: var(--amber); opacity: 1; animation: run-pulse 1s ease-in-out infinite; }
+    @keyframes run-pulse { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+    .run-date { font-size: .66rem; color: var(--muted); font-family: 'Courier New', monospace; }
+    .section-run-btn {
+      margin-left: auto;
+      display: inline-flex; align-items: center; gap: 6px;
+      border: 1px solid var(--purple-mid); background: transparent; color: var(--purple-mid);
+      border-radius: 6px; padding: 4px 11px; font-size: .72rem; font-weight: 700;
+      cursor: pointer; white-space: nowrap;
+    }
+    .section-run-btn:hover:not(:disabled) { background: var(--purple-lite); }
+    .section-run-btn:disabled { opacity: .35; cursor: not-allowed; }
+    .section-run-summary { font-size: .72rem; color: var(--muted); white-space: nowrap; }
+    tr.run-details-row td { padding: 10px 12px; background: var(--purple); }
+    tr.run-details-row pre {
+      margin: 0; max-height: 220px; overflow: auto; white-space: pre-wrap;
+      font-family: 'Courier New', monospace; font-size: .72rem; line-height: 1.5;
+      color: #E2D9FF;
+    }
+
+    /* ── Pending / gap list ─────────────────────────────────────────── */
+    .gap-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+    .gap-list li {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 10px 14px;
+      font-size: .83rem;
+      line-height: 1.5;
+    }
+    .gap-list code {
+      font-family: 'Courier New', monospace;
+      font-size: .76rem;
+      background: var(--purple-lite);
+      color: var(--purple-mid);
+      padding: 1px 5px;
+      border-radius: 4px;
+    }
+    @media (prefers-color-scheme: dark) { .gap-list code { background: #2A2350; color: #A78BFA; } }
+    :root[data-theme="dark"] .gap-list code { background: #2A2350; color: #A78BFA; }
 
     /* ── Table ───────────────────────────────────────────────────────── */
     .table-wrap { overflow-x: auto; border-radius: var(--r); border: 1px solid var(--border); }
@@ -366,11 +438,17 @@
   <span class="sidenav-section-label">E2E Live</span>
   <a href="#e2e">Vollständiger Workflow</a>
 
+  <span class="sidenav-section-label">Noch offen</span>
+  <a href="#account">Konto &amp; Passwort</a>
+  <a href="#report">Kundenreport</a>
+  <a href="#docgen">KI-Dokumente</a>
+  <a href="#profile">Profil &amp; Benachrichtigungen</a>
+
   <span class="sidenav-section-label">Ausführung</span>
   <a href="#run">Befehle</a>
   <a href="#infra">Infrastruktur</a>
 
-  <div class="sidenav-footer">Stand: Juli 2026</div>
+  <div class="sidenav-footer">Stand: September 2026</div>
 </nav>
 
 <!-- Main Content -->
@@ -380,17 +458,17 @@
   <div class="page-header">
     <div class="page-eyebrow">Quality Assurance</div>
     <h1 class="page-title">WARP – Testdokumentation</h1>
-    <p class="page-meta">Wavestone Assessment Risk Planner &nbsp;·&nbsp; Branch: <code>dev</code> &nbsp;·&nbsp; Stand Juli 2026</p>
+    <p class="page-meta">Wavestone Assessment Risk Planner &nbsp;·&nbsp; Branch: <code>dev</code> &nbsp;·&nbsp; Stand September 2026</p>
   </div>
 
   <!-- Stats -->
   <div class="stats-row">
     <div class="stat-card">
-      <span class="stat-value">78</span>
+      <span class="stat-value">80</span>
       <span class="stat-label">Tests gesamt</span>
     </div>
     <div class="stat-card">
-      <span class="stat-value">42</span>
+      <span class="stat-value">44</span>
       <span class="stat-label">Unit-Tests</span>
     </div>
     <div class="stat-card">
@@ -403,7 +481,7 @@
     </div>
     <div class="stat-card amber">
       <span class="stat-value">4</span>
-      <span class="stat-label">Test-Suiten</span>
+      <span class="stat-label">Offene Testlücken</span>
     </div>
   </div>
 
@@ -414,6 +492,12 @@
     <div class="legend-item"><span class="badge badge-e2e">E2E Live</span> Playwright, Render-Produktiv</div>
     <div class="legend-item"><span class="badge badge-pos">P</span> Positiv-Test (Happy Path)</div>
     <div class="legend-item"><span class="badge badge-neg">N</span> Negativ-Test (Fehlerfall)</div>
+    <div class="legend-item"><span class="badge badge-pending">Offen</span> Feature vorhanden, noch kein automatisierter Test</div>
+  </div>
+
+  <div class="runner-banner" id="runner-banner">
+    <span>▶</span>
+    <span>Play-Buttons sind nur auf dem lokalen Dev-Server verfügbar (<code>python run.py</code>, als Admin eingeloggt). Hier siehst du nur das zuletzt aufgezeichnete Ergebnis.</span>
   </div>
 
   <!-- ── UNIT TESTS ─────────────────────────────────────────────────── -->
@@ -440,6 +524,7 @@
           <tr><td class="tc-id">TC-AUTH-09</td><td class="tc-desc">POST /register mit doppeltem Benutzernamen → Fehlermeldung</td><td><span class="badge badge-neg">N</span></td></tr>
           <tr><td class="tc-id">TC-AUTH-10</td><td class="tc-desc">POST /register mit nicht übereinstimmenden Passwörtern → Fehlermeldung</td><td><span class="badge badge-neg">N</span></td></tr>
           <tr><td class="tc-id">TC-AUTH-11</td><td class="tc-desc">POST /register mit Passwort unter 6 Zeichen → Fehlermeldung</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-AUTH-12</td><td class="tc-desc">POST /register ohne E-Mail-Adresse → Fehlermeldung, E-Mail ist Pflichtfeld</td><td><span class="badge badge-neg">N</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -688,6 +773,73 @@
     </div>
   </div>
 
+  <!-- ── NOCH OFFEN ─────────────────────────────────────────────────── -->
+
+  <div class="section" id="account">
+    <div class="section-header">
+      <span class="section-title">Konto &amp; Passwort</span>
+      <code class="section-file">app/__init__.py: /forgot-password, /reset-password/&lt;token&gt;, /account</code>
+      <span class="badge badge-pending">Offen</span>
+    </div>
+    <p class="section-desc">Registrierung mit Pflicht-E-Mail (TC-AUTH-12 deckt das ab), Passwort-Reset per Mail-Link (Resend) und Konto-Einstellungen (Passwort &amp; E-Mail ändern) sind implementiert, aber noch nicht mit eigenen Tests abgesichert. Manuelle Prüfschritte bis dahin:</p>
+    <ul class="gap-list">
+      <li>Registrierung → als Superuser prüfen, dass im Postkorb eine Nachricht mit <code>source="Registrierung"</code> erscheint.</li>
+      <li><code>/forgot-password</code> mit bekannter Adresse → Mail über Resend erhalten (im Sandbox-Modus nur an die verifizierte Absenderadresse), Link führt zu <code>/reset-password/&lt;token&gt;</code>.</li>
+      <li>Abgelaufener oder bereits benutzter Reset-Token → Fehlermeldung statt Passwortformular.</li>
+      <li><code>/account</code>: Passwort ändern verlangt korrektes aktuelles Passwort; falsches aktuelles Passwort → Fehlermeldung, keine Änderung.</li>
+      <li><code>/account</code>: E-Mail auf eine bereits vergebene Adresse ändern → Fehlermeldung "wird bereits verwendet".</li>
+    </ul>
+    <p class="cmd-note" style="margin-top:10px">Geplant: <code>tests/unit/test_account.py</code> (Flask-Test-Client, analog zu <code>test_auth.py</code>) für Reset-Token-Ablauf und Konto-Formulare.</p>
+  </div>
+
+  <div class="section" id="report">
+    <div class="section-header">
+      <span class="section-title">Kundenreport</span>
+      <code class="section-file">app/__init__.py: _build_report_context(), /project/&lt;id&gt;/report(/html)?variant=customer</code>
+      <span class="badge badge-pending">Offen</span>
+    </div>
+    <p class="section-desc">Der Kundenreport ist eine reduzierte Variante des Reports: kein Fragenkatalog, dafür KPI-Kuchendiagramme (Antwortverteilung, Verteilung bis zur nächsten Stufe) und je Kategorie ein zusammenhängender Fließtext mit Ausblick/Empfehlung statt der internen Einzelfragen-Tabelle. Ausgelöst über die beiden Buttons auf dem Dashboard ("Kundenreport – Vorschau" / "– PDF herunterladen"), die serverseitig <code>variant=customer</code> setzen.</p>
+    <ul class="gap-list">
+      <li>Kundenreport-Vorschau öffnen → Fragenkatalog/Einzelantworten dürfen im HTML nicht vorkommen, auch nicht im Markup (nicht nur per CSS versteckt).</li>
+      <li>Donut-Charts zeigen Segmentgrößen, die zur tatsächlichen Antwortverteilung passen (Regressionstest für den 50a98b7-Fix).</li>
+      <li>Kundenreport-PDF (<code>WARP_Kundenreport_*.pdf</code>) lässt sich für ein Projekt ohne beantwortete Fragen ohne Fehler erzeugen.</li>
+      <li>Normaler internes Report (ohne <code>variant=customer</code>) zeigt weiterhin den vollständigen Fragenkatalog.</li>
+    </ul>
+    <p class="cmd-note" style="margin-top:10px">Geplant: Erweiterung von <code>tests/unit/test_projects.py</code> um TC-PROJ-12/13 für <code>variant=customer</code>.</p>
+  </div>
+
+  <div class="section" id="docgen">
+    <div class="section-header">
+      <span class="section-title">KI-Dokumente &amp; Fortschrittsbalken</span>
+      <code class="section-file">app/__init__.py: _build_ai_document(), /generate/&lt;doc_type&gt;/start, /generate/&lt;doc_type&gt;/progress</code>
+      <span class="badge badge-pending">Offen</span>
+    </div>
+    <p class="section-desc">Teststrategie, Mastertestkonzept und Stufentestkonzept werden über die Anthropic-API kapitelweise parallel generiert (ThreadPoolExecutor, referenziert die Konzern-Teststrategie als Struktur-/Stilvorbild). Das Frontend pollt <code>/generate/&lt;doc_type&gt;/progress</code> alle 900&nbsp;ms für den Fortschrittsbalken. Bisher nur manuell gegen die echte API getestet, kein gemockter Unit-Test.</p>
+    <ul class="gap-list">
+      <li>Generierung starten → Fortschrittsbalken bewegt sich sichtbar von 0 bis 100 % statt nur "wird generiert" anzuzeigen.</li>
+      <li>Generiertes Teststrategie-Dokument folgt der Kapitelgliederung der Referenz (Regressionstest für 1cbb48a).</li>
+      <li>Abbruch/Fehler bei der API (z. B. Rate-Limit) → verständliche Fehlermeldung statt hängendem Fortschrittsbalken.</li>
+      <li>Gunicorn-Timeout (120&nbsp;s, siehe Procfile) reicht auch bei allen drei Dokumenttypen nacheinander.</li>
+    </ul>
+    <p class="cmd-note" style="margin-top:10px">Geplant: Unit-Test mit gemocktem <code>anthropic</code>-Modul (wie in den manuellen Verifikationen dieser Session) statt Live-API-Aufrufen.</p>
+  </div>
+
+  <div class="section" id="profile">
+    <div class="section-header">
+      <span class="section-title">Profil &amp; Benachrichtigungen</span>
+      <code class="section-file">app/templates/_profile_button.html</code>
+      <span class="badge badge-pending">Offen</span>
+    </div>
+    <p class="section-desc">Name, Rolle, Administration und Abmelden liegen jetzt im Profil-Dropdown oben rechts statt im Sidebar-Footer. Die Postkorb-Glocke ist auf jeder Seite vorhanden (nicht mehr nur auf drei Admin-Templates) und pollt <code>/api/inbox/count</code> alle 60 Sekunden für Badge und Sidebar-Zähler gemeinsam.</p>
+    <ul class="gap-list">
+      <li>Profil-Button oben rechts sichtbar auf allen Seiten, nicht nur im Dashboard.</li>
+      <li>Dropdown zeigt "Administration" nur für Superuser, nicht für einfache Admins.</li>
+      <li>Glocke zeigt einen Badge, sobald eine neue Postkorb-Nachricht eintrifft, ohne Seiten-Reload (Polling-Intervall abwarten oder Intervall im Test verkürzen).</li>
+      <li>Glocke ist für normale Benutzer (kein Admin) nicht sichtbar.</li>
+    </ul>
+    <p class="cmd-note" style="margin-top:10px">Geplant: <code>tests/test_profile.py</code> (Playwright) für Dropdown-Sichtbarkeit je Rolle und Badge-Update.</p>
+  </div>
+
   <!-- ── AUSFÜHRUNG ────────────────────────────────────────────────── -->
 
   <div class="section" id="run">
@@ -768,6 +920,219 @@
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   onScroll();
+})();
+</script>
+
+<!-- ── Test-Runner: Play-Buttons (nur lokaler Dev-Server, siehe /admin/tests/*) ── -->
+<script>
+(function () {
+  var RUNNABLE_SECTIONS = ['auth', 'sec', 'proj', 'api', 'login', 'register', 'admin', 'questionnaire', 'recs', 'inbox', 'e2e'];
+  var runner = { enabled: false, results: {} };
+
+  function statusLabel(s) {
+    return { pass: 'bestanden', fail: 'fehlgeschlagen', timeout: 'Timeout', error: 'Fehler' }[s] || 'noch nicht ausgeführt';
+  }
+  function fmtDateTime(iso) {
+    if (!iso) return '';
+    try {
+      return new Date(iso).toLocaleString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' });
+    } catch (e) { return ''; }
+  }
+  function sectionIds(section) {
+    return Array.from(document.querySelectorAll('#' + section + ' td.tc-id')).map(function (td) {
+      return td.textContent.trim();
+    });
+  }
+
+  // ── DOM aufbauen: 4. Spalte "Ausführung" in jede lauffähige Test-Tabelle ──
+  function buildRunnerUI() {
+    RUNNABLE_SECTIONS.forEach(function (section) {
+      var sec = document.getElementById(section);
+      if (!sec) return;
+      var headRow = sec.querySelector('table thead tr');
+      if (headRow && !headRow.querySelector('.th-run')) {
+        var th = document.createElement('th');
+        th.className = 'th-run';
+        th.textContent = 'Ausführung';
+        headRow.appendChild(th);
+      }
+      sec.querySelectorAll('table tbody tr').forEach(function (tr) {
+        if (tr.querySelector('.tc-run-cell')) return;
+        var idCell = tr.querySelector('td.tc-id');
+        if (!idCell) return;
+        var id = idCell.textContent.trim();
+        var td = document.createElement('td');
+        var wrap = document.createElement('div');
+        wrap.className = 'tc-run-cell';
+
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'play-btn';
+        btn.setAttribute('aria-label', 'Test ' + id + ' ausführen');
+        btn.textContent = '▶';
+        btn.dataset.section = section;
+        btn.dataset.id = id;
+        btn.addEventListener('click', function () { runTests(section, [id]); });
+
+        var dot = document.createElement('span');
+        dot.className = 'run-status-dot';
+        dot.dataset.key = section + '::' + id;
+        dot.title = 'noch nicht ausgeführt';
+        dot.addEventListener('click', function () { toggleDetails(tr, section, id); });
+
+        var dateEl = document.createElement('span');
+        dateEl.className = 'run-date';
+        dateEl.dataset.dateKey = section + '::' + id;
+
+        wrap.appendChild(btn);
+        wrap.appendChild(dot);
+        wrap.appendChild(dateEl);
+        td.appendChild(wrap);
+        tr.appendChild(td);
+      });
+
+      // Abschnitts-Header: "Testset ausführen" + Zusammenfassung
+      var header = sec.querySelector('.section-header');
+      if (header && !header.querySelector('.section-run-btn')) {
+        var summary = document.createElement('span');
+        summary.className = 'section-run-summary';
+        summary.dataset.summaryFor = section;
+
+        var runBtn = document.createElement('button');
+        runBtn.type = 'button';
+        runBtn.className = 'section-run-btn';
+        runBtn.dataset.section = section;
+        runBtn.innerHTML = '▶ Testset ausführen';
+        runBtn.addEventListener('click', function () { runTests(section, sectionIds(section)); });
+
+        header.appendChild(summary);
+        header.appendChild(runBtn);
+      }
+    });
+  }
+
+  function toggleDetails(tr, section, id) {
+    var key = section + '::' + id;
+    var entry = runner.results[key];
+    var existing = tr.nextElementSibling;
+    if (existing && existing.classList.contains('run-details-row') && existing.dataset.for === key) {
+      existing.remove();
+      return;
+    }
+    document.querySelectorAll('.run-details-row').forEach(function (r) { r.remove(); });
+    if (!entry) return;
+    var colCount = tr.children.length;
+    var detailTr = document.createElement('tr');
+    detailTr.className = 'run-details-row';
+    detailTr.dataset.for = key;
+    var td = document.createElement('td');
+    td.colSpan = colCount;
+    var pre = document.createElement('pre');
+    pre.textContent = (entry.output || '').trim() || '(keine Ausgabe aufgezeichnet)';
+    td.appendChild(pre);
+    detailTr.appendChild(td);
+    tr.parentNode.insertBefore(detailTr, tr.nextSibling);
+  }
+
+  // ── Ergebnisse anzeigen ──
+  function applyResult(section, id, entry) {
+    var key = section + '::' + id;
+    if (entry) runner.results[key] = entry;
+    var dot = document.querySelector('.run-status-dot[data-key="' + key + '"]');
+    if (dot) {
+      dot.className = 'run-status-dot' + (entry ? ' ' + entry.status : '');
+      dot.title = statusLabel(entry && entry.status);
+    }
+    var dateEl = document.querySelector('.run-date[data-date-key="' + key + '"]');
+    if (dateEl) dateEl.textContent = entry ? fmtDateTime(entry.ranAt) : '';
+  }
+
+  function updateSectionSummary(section) {
+    var ids = sectionIds(section);
+    var known = ids.map(function (id) { return runner.results[section + '::' + id]; }).filter(Boolean);
+    var el = document.querySelector('.section-run-summary[data-summary-for="' + section + '"]');
+    if (!el) return;
+    if (!known.length) { el.textContent = ''; return; }
+    var passed = known.filter(function (e) { return e.status === 'pass'; }).length;
+    var newest = known.reduce(function (a, b) { return (a.ranAt > b.ranAt) ? a : b; });
+    el.textContent = passed + '/' + known.length + ' bestanden · zuletzt ' + fmtDateTime(newest.ranAt);
+  }
+
+  function setButtonsDisabled(disabled) {
+    document.querySelectorAll('.play-btn, .section-run-btn').forEach(function (b) {
+      b.disabled = disabled;
+      if (disabled) b.title = 'Nur auf dem lokalen Dev-Server verfügbar (python run.py, als Admin)';
+    });
+  }
+
+  function setRunning(section, ids, on) {
+    ids.forEach(function (id) {
+      var key = section + '::' + id;
+      var dot = document.querySelector('.run-status-dot[data-key="' + key + '"]');
+      if (dot) dot.classList.toggle('running', on);
+      var btn = document.querySelector('.play-btn[data-section="' + section + '"][data-id="' + CSS.escape(id) + '"]');
+      if (btn) btn.disabled = on;
+    });
+    var sectionBtn = document.querySelector('.section-run-btn[data-section="' + section + '"]');
+    if (sectionBtn) sectionBtn.disabled = on;
+  }
+
+  function showSectionError(section, message) {
+    var el = document.querySelector('.section-run-summary[data-summary-for="' + section + '"]');
+    if (el) { el.textContent = message; el.style.color = '#DC2626'; }
+  }
+
+  function runTests(section, ids) {
+    if (!runner.enabled || !ids.length) return;
+    setRunning(section, ids, true);
+    fetch('/admin/tests/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ section: section, ids: ids }),
+    })
+      .then(function (r) { return r.json().then(function (data) { return { ok: r.ok, data: data }; }); })
+      .then(function (res) {
+        setRunning(section, ids, false);
+        if (!res.ok || res.data.error) {
+          showSectionError(section, res.data.error || 'Fehler bei der Ausführung.');
+          return;
+        }
+        Object.keys(res.data.results || {}).forEach(function (key) {
+          var parts = key.split(':');
+          applyResult(parts[0], parts[1], res.data.results[key]);
+        });
+        updateSectionSummary(section);
+      })
+      .catch(function () {
+        setRunning(section, ids, false);
+        showSectionError(section, 'Netzwerkfehler beim Ausführen.');
+      });
+  }
+
+  // ── Init ──
+  buildRunnerUI();
+  fetch('/admin/tests/state')
+    .then(function (r) { return r.ok ? r.json() : { enabled: false, results: {} }; })
+    .then(function (data) {
+      runner.enabled = !!data.enabled;
+      runner.results = {};
+      Object.keys(data.results || {}).forEach(function (key) {
+        var parts = key.split(':');
+        runner.results[parts[0] + '::' + parts[1]] = data.results[key];
+        applyResult(parts[0], parts[1], data.results[key]);
+      });
+      RUNNABLE_SECTIONS.forEach(updateSectionSummary);
+      if (!runner.enabled) {
+        setButtonsDisabled(true);
+        var banner = document.getElementById('runner-banner');
+        if (banner) banner.classList.add('show');
+      }
+    })
+    .catch(function () {
+      setButtonsDisabled(true);
+      var banner = document.getElementById('runner-banner');
+      if (banner) banner.classList.add('show');
+    });
 })();
 </script>
 
