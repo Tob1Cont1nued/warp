@@ -19,12 +19,26 @@ Aufruf:
 
 import re
 import os
+import sys
 from pathlib import Path
 from playwright.sync_api import Page, expect
 
+# Die print()-Zeilen unten enthalten →/✓/⚠/✅. Auf Windows ist die Konsole
+# standardmäßig cp1252 (nicht UTF-8) - ohne das hier bricht der Test schon
+# bei der ersten print()-Zeile mit UnicodeEncodeError ab, bevor überhaupt
+# etwas gegen den Server läuft.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 BASE_URL = "https://warp-5ld0.onrender.com"
-USERNAME = "Benutzer1"
-PASSWORD = "warp2024"
+# Per Env-Variable überschreibbar statt eines fest einprogrammierten Passworts
+# im Repo. Die Defaults unten stimmen aktuell NICHT mit dem Produktiv-Account
+# überein (Login schlägt mit "Ungültiger Benutzername oder Passwort" fehl) -
+# vor dem nächsten Lauf WARP_E2E_USERNAME/WARP_E2E_PASSWORD lokal setzen:
+#   WARP_E2E_USERNAME=... WARP_E2E_PASSWORD=... pytest tests/e2e/ -v -s
+USERNAME = os.environ.get("WARP_E2E_USERNAME", "Benutzer1")
+PASSWORD = os.environ.get("WARP_E2E_PASSWORD", "warp2024")
 PROJECT_NAME = "Playwright Test – Maturity-Profil"
 
 SCREENSHOTS = Path(__file__).parent.parent / "screenshots"
@@ -114,6 +128,14 @@ def test_assessment_full_workflow(page: Page) -> None:
     page.screenshot(path=str(SCREENSHOTS / "01_login.png"))
     page.click('button[type="submit"]')
     page.wait_for_load_state("networkidle")
+
+    # Klarer Fehlschlag hier statt eines kryptischen Timeouts drei Schritte
+    # später, falls Login/Passwort nicht (mehr) stimmen.
+    login_error = page.locator(".login-error")
+    assert login_error.count() == 0, (
+        f"Login als {USERNAME} fehlgeschlagen: {login_error.inner_text() if login_error.count() else '?'} "
+        "- WARP_E2E_USERNAME/WARP_E2E_PASSWORD prüfen bzw. setzen."
+    )
     print(f"  ✓ Eingeloggt als {USERNAME} → {page.url}")
 
     # ------------------------------------------------------------------

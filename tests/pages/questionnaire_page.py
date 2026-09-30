@@ -13,13 +13,18 @@ class QuestionnairePage:
         self.brand_tagline: Locator = page.locator(".sidebar-brand-tagline")
         self.projects_sidebar: Locator = page.locator(".sidebar-projects")
         self.new_project_btn: Locator = page.locator(".sidebar-new-btn")
-        self.logout_link: Locator = page.locator(".sidebar-logout")
-        self.download_buttons: Locator = page.locator(".sidebar-download-btn")
+        # Abmelden sitzt seit dem Profil-Dropdown-Umbau oben rechts in der
+        # Topbar statt in der Sidebar - Button + (versteckter) Menüpunkt.
+        self.profile_btn: Locator = page.locator("#js-profile-btn")
+        self.logout_link: Locator = page.locator(".profile-dropdown-item.danger")
         # Hauptinhalt
         self.answer_selects: Locator = page.locator(".js-answer")
         self.note_textareas: Locator = page.locator(".js-note")
         self.progress_bar: Locator = page.locator(".progress-bar")
-        self.auswertung_section: Locator = page.locator("#auswertung-section")
+        # Die Seite ist jetzt tab-basiert (Fragen/Auswertung/Dokumente/Verwalten);
+        # der Auswertung-Inhalt (#tab-auswertung) ist erst nach Klick auf den
+        # Tab-Button sichtbar, der Button selbst aber immer.
+        self.auswertung_tab_btn: Locator = page.locator('button[data-tab="auswertung"]')
 
     def goto(self, project_id: int) -> "QuestionnairePage":
         self.page.goto(f"{self.base_url}/project/{project_id}")

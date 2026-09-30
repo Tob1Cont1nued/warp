@@ -221,7 +221,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
             "TC-PROJ-04": "test_tc_proj_04_antwort_upsert_kein_duplikat",
             "TC-PROJ-05": "test_tc_proj_05_projektinfos_werden_aktualisiert",
             "TC-PROJ-06": "test_tc_proj_06_fremdes_projekt_gibt_403",
-            "TC-PROJ-07": "test_tc_proj_07_nicht_existentes_projekt_gibt_403",
+            "TC-PROJ-07": "test_tc_proj_07_nicht_existentes_projekt_gibt_404",
             "TC-PROJ-08": "test_tc_proj_08_dashboard_erreichbar",
             "TC-PROJ-09": "test_tc_proj_09_html_report_wird_generiert",
             "TC-PROJ-10": "test_tc_proj_10_neue_projekt_formular",
@@ -270,9 +270,9 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
             "P1": "test_p1_admin_seite_elemente_sichtbar",
             "P2": "test_p2_admin_legt_benutzer_an",
             "P3": "test_p3_admin_sperrt_benutzer",
+            "P4": "test_p4_admin_kann_eigenes_projekt_anlegen",
             "N1": "test_n1_normaler_benutzer_kann_admin_nicht_aufrufen",
             "N2": "test_n2_nicht_eingeloggter_benutzer_wird_umgeleitet",
-            "N3": "test_n3_admin_kann_kein_neues_projekt_anlegen",
         },
     },
     "questionnaire": {
@@ -283,7 +283,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
             "P3": "test_p3_download_buttons_vorhanden_und_verlinkt",
             "N1": "test_n1_nicht_eingeloggter_benutzer_wird_umgeleitet",
             "N2": "test_n2_fremdes_projekt_liefert_403",
-            "N3": "test_n3_nicht_existierende_projekt_id_liefert_403",
+            "N3": "test_n3_nicht_existierende_projekt_id_liefert_404",
         },
     },
     "recs": {
@@ -2309,14 +2309,14 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             {"id": "TC-ADMIN-P3", "area": "Administration", "type": "E2E", "desc": "Admin kann Benutzer sperren – Badge erscheint"},
             {"id": "TC-ADMIN-N1", "area": "Administration", "type": "E2E", "desc": "Normaler Benutzer kann /admin nicht aufrufen (403)"},
             {"id": "TC-ADMIN-N2", "area": "Administration", "type": "E2E", "desc": "Nicht eingeloggter Benutzer wird zu /login umgeleitet"},
-            {"id": "TC-ADMIN-N3", "area": "Administration", "type": "E2E", "desc": "Admin kann kein neues Projekt anlegen"},
+            {"id": "TC-ADMIN-P4", "area": "Administration", "type": "E2E", "desc": "Admin kann ein eigenes Projekt anlegen"},
             # Questionnaire
             {"id": "TC-QUEST-P1", "area": "Fragenkatalog", "type": "E2E", "desc": "Alle UI-Elemente des Fragenkatalogs sichtbar"},
             {"id": "TC-QUEST-P2", "area": "Fragenkatalog", "type": "E2E", "desc": "Antwort wird gespeichert (AJAX) und bleibt nach Reload"},
             {"id": "TC-QUEST-P3", "area": "Fragenkatalog", "type": "E2E", "desc": "Download-Buttons für Vorlagen vorhanden und verlinkt"},
             {"id": "TC-QUEST-N1", "area": "Fragenkatalog", "type": "E2E", "desc": "Nicht eingeloggter Benutzer wird zu /login umgeleitet"},
             {"id": "TC-QUEST-N2", "area": "Fragenkatalog", "type": "E2E", "desc": "Fremdes Projekt liefert 403"},
-            {"id": "TC-QUEST-N3", "area": "Fragenkatalog", "type": "E2E", "desc": "Nicht existierende Projekt-ID liefert 403"},
+            {"id": "TC-QUEST-N3", "area": "Fragenkatalog", "type": "E2E", "desc": "Nicht existierende Projekt-ID liefert 404"},
         ]
 
         # Unit-Testfälle (Flask Test Client)
@@ -2338,7 +2338,7 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
             {"id": "TC-PROJ-04", "area": "Projekte", "type": "Unit", "desc": "POST /project/<id>/answer erneut → Upsert"},
             {"id": "TC-PROJ-05", "area": "Projekte", "type": "Unit", "desc": "POST /project/<id>/info → Infos aktualisiert"},
             {"id": "TC-PROJ-06", "area": "Projekte", "type": "Unit", "desc": "GET fremdes Projekt → 403"},
-            {"id": "TC-PROJ-07", "area": "Projekte", "type": "Unit", "desc": "GET /project/999999 → 403"},
+            {"id": "TC-PROJ-07", "area": "Projekte", "type": "Unit", "desc": "GET /project/999999 → 404"},
             {"id": "TC-PROJ-08", "area": "Projekte", "type": "Unit", "desc": "GET /dashboard eingeloggt → 200"},
             {"id": "TC-PROJ-09", "area": "Projekte", "type": "Unit", "desc": "POST /project/<id>/report/html → HTML-Report 200"},
             {"id": "TC-PROJ-10", "area": "Projekte", "type": "Unit", "desc": "GET /project/new → Formular 200"},

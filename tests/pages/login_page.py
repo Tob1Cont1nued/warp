@@ -12,7 +12,10 @@ class LoginPage:
         self.username: Locator = page.locator("#username")
         self.password: Locator = page.locator("#password")
         self.submit_btn: Locator = page.locator("button[type=submit]")
-        self.switch_link: Locator = page.locator("a.login-switch-link")
+        # Seit dem Passwort-Reset-Feature gibt es zwei a.login-switch-link
+        # (Registrieren + Passwort vergessen) - per Linktext disambiguieren.
+        self.switch_link: Locator = page.get_by_role("link", name="Noch kein Konto? Registrieren")
+        self.forgot_password_link: Locator = page.get_by_role("link", name="Passwort vergessen?")
         self.error: Locator = page.locator(".login-error")
 
     def goto(self) -> "LoginPage":

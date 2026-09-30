@@ -576,7 +576,7 @@
           <tr><td class="tc-id">TC-PROJ-04</td><td class="tc-desc">Antwort erneut speichern → Upsert, kein Duplikat-Fehler</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">TC-PROJ-05</td><td class="tc-desc">POST /project/&lt;id&gt;/info → Projektname/Owner/Datum aktualisiert (200)</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">TC-PROJ-06</td><td class="tc-desc">GET /project/&lt;id&gt; als fremder Benutzer → 403</td><td><span class="badge badge-neg">N</span></td></tr>
-          <tr><td class="tc-id">TC-PROJ-07</td><td class="tc-desc">GET /project/999999 → 403 (nicht existente ID)</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-07</td><td class="tc-desc">GET /project/999999 → 404 (nicht existente ID)</td><td><span class="badge badge-neg">N</span></td></tr>
           <tr><td class="tc-id">TC-PROJ-08</td><td class="tc-desc">GET /dashboard eingeloggt → 200, "Dashboard" im Body</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">TC-PROJ-09</td><td class="tc-desc">POST /project/&lt;id&gt;/report/html → HTML-Report generiert (200)</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">TC-PROJ-10</td><td class="tc-desc">GET /project/new → Formular sichtbar (200)</td><td><span class="badge badge-pos">P</span></td></tr>
@@ -625,8 +625,8 @@
         <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
         <tbody>
           <tr><td class="tc-id">P1</td><td class="tc-desc">Alle UI-Elemente der Login-Seite sind sichtbar (Logo, Felder, Button, Link)</td><td><span class="badge badge-pos">P</span></td></tr>
-          <tr><td class="tc-id">P2</td><td class="tc-desc">Admin-Login → Weiterleitung auf /admin</td><td><span class="badge badge-pos">P</span></td></tr>
-          <tr><td class="tc-id">P3</td><td class="tc-desc">Benutzer-Login → Weiterleitung auf /project/…</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P2</td><td class="tc-desc">Admin-Login → Weiterleitung auf /dashboard</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P3</td><td class="tc-desc">Benutzer-Login → Weiterleitung auf /dashboard</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">N1</td><td class="tc-desc">Falsches Passwort → Fehlermeldung im DOM sichtbar</td><td><span class="badge badge-neg">N</span></td></tr>
           <tr><td class="tc-id">N2</td><td class="tc-desc">Nicht existenter Benutzername → Fehlermeldung im DOM sichtbar</td><td><span class="badge badge-neg">N</span></td></tr>
           <tr><td class="tc-id">N3</td><td class="tc-desc">Gesperrter Benutzer → Fehlermeldung enthält "gesperrt", bleibt auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
@@ -647,7 +647,7 @@
         <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
         <tbody>
           <tr><td class="tc-id">P1</td><td class="tc-desc">Alle UI-Elemente sichtbar (Felder: Benutzername, Anzeigename, Passwort, Bestätigung)</td><td><span class="badge badge-pos">P</span></td></tr>
-          <tr><td class="tc-id">P2</td><td class="tc-desc">Neuer Benutzer wird angelegt → Weiterleitung auf /project/…</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P2</td><td class="tc-desc">Neuer Benutzer wird angelegt → Weiterleitung auf /dashboard</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">P3</td><td class="tc-desc">„Bereits registriert?"-Link → Weiterleitung auf /login</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">N1</td><td class="tc-desc">Bereits vergebener Benutzername → Fehlermeldung "vergeben"</td><td><span class="badge badge-neg">N</span></td></tr>
           <tr><td class="tc-id">N2</td><td class="tc-desc">Passwörter stimmen nicht überein → Fehlermeldung "überein"</td><td><span class="badge badge-neg">N</span></td></tr>
@@ -671,9 +671,9 @@
           <tr><td class="tc-id">P1</td><td class="tc-desc">Alle UI-Elemente der Admin-Seite sichtbar (Formular, Benutzerliste)</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">P2</td><td class="tc-desc">Admin legt neuen Benutzer an → erscheint anschließend in der Liste</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">P3</td><td class="tc-desc">Admin sperrt Benutzer → "gesperrt"-Badge in der Benutzerkarte sichtbar</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P4</td><td class="tc-desc">Admin kann ein eigenes Projekt anlegen → Redirect auf /project/&lt;id&gt;</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">N1</td><td class="tc-desc">Normaler Benutzer ruft /admin auf → 403</td><td><span class="badge badge-neg">N</span></td></tr>
           <tr><td class="tc-id">N2</td><td class="tc-desc">Nicht eingeloggter Benutzer → Redirect auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
-          <tr><td class="tc-id">N3</td><td class="tc-desc">Admin kann kein neues Projekt anlegen (POST /project/new → Redirect /admin)</td><td><span class="badge badge-neg">N</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -692,10 +692,10 @@
         <tbody>
           <tr><td class="tc-id">P1</td><td class="tc-desc">Alle UI-Elemente sichtbar (Sidebar, Dropdowns, Notizen, Fortschrittsbalken)</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">P2</td><td class="tc-desc">Antwort wird per AJAX gespeichert → Selektion bleibt nach Seitenreload erhalten</td><td><span class="badge badge-pos">P</span></td></tr>
-          <tr><td class="tc-id">P3</td><td class="tc-desc">3 Download-Buttons für Vorlagen vorhanden und auf .docx-Dateien verlinkt</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P3</td><td class="tc-desc">3 Download-Buttons für Vorlagen (auf /vorlagen) vorhanden und auf .docx-Dateien verlinkt</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">N1</td><td class="tc-desc">Nicht eingeloggter Benutzer → Redirect auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
           <tr><td class="tc-id">N2</td><td class="tc-desc">Benutzer 2 greift auf Projekt von Benutzer 1 zu → 403</td><td><span class="badge badge-neg">N</span></td></tr>
-          <tr><td class="tc-id">N3</td><td class="tc-desc">GET /project/999999 → 403 (nicht existente ID)</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N3</td><td class="tc-desc">GET /project/999999 → 404 (nicht existente ID)</td><td><span class="badge badge-neg">N</span></td></tr>
         </tbody>
       </table>
     </div>

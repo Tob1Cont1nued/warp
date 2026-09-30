@@ -8,7 +8,7 @@ TC-PROJ-03  POST /project/<id>/answer       → Antwort gespeichert (200 JSON)
 TC-PROJ-04  POST /project/<id>/answer erneut → Upsert (kein Duplikat-Fehler)
 TC-PROJ-05  POST /project/<id>/info         → Projektinfos aktualisiert (200)
 TC-PROJ-06  GET  /project/<id> fremdes Proj → 403
-TC-PROJ-07  GET  /project/999999            → 403
+TC-PROJ-07  GET  /project/999999            → 404
 TC-PROJ-08  GET  /dashboard (eingeloggt)    → 200
 TC-PROJ-09  POST /project/<id>/report/html  → HTML-Report generiert (200)
 TC-PROJ-10  GET  /project/new              → Formular sichtbar (200)
@@ -50,9 +50,13 @@ class TestFragenkatalog:
         # Admin darf lesen (is_admin = True erlaubt Zugriff)
         assert r.status_code in (200, 403)
 
-    def test_tc_proj_07_nicht_existentes_projekt_gibt_403(self, user_client):
+    def test_tc_proj_07_nicht_existentes_projekt_gibt_404(self, user_client):
+        # _get_project_or_403 gibt bewusst 404 (nicht 403) für eine nicht
+        # existente ID zurück - 403 ist reserviert für "existiert, gehört
+        # aber jemand anderem" (siehe TC-SEC-07), das unterscheidet ein
+        # Client sonst nicht von "existiert nicht".
         r = user_client.get("/project/999999", follow_redirects=False)
-        assert r.status_code == 403
+        assert r.status_code == 404
 
 
 class TestAntworten:

@@ -4,12 +4,12 @@ Fragenkatalog-Seite (/project/<id>) – Oberflächentests (Page Object Model)
 Positiv:
   P1  Alle UI-Elemente auf der Questionnaire-Seite sind sichtbar
   P2  Antwort wird gespeichert (AJAX auto-save) – Selektion bleibt nach Reload
-  P3  Download-Buttons für Vorlagen sind vorhanden und verlinkt
+  P3  Download-Buttons für Vorlagen (auf /vorlagen) sind vorhanden und verlinkt
 
 Negativ:
   N1  Nicht eingeloggter Benutzer wird zur Login-Seite umgeleitet
   N2  Benutzer kann nicht auf ein fremdes Projekt zugreifen (403)
-  N3  Zugriff auf nicht existierende Projekt-ID liefert 403
+  N3  Zugriff auf nicht existierende Projekt-ID liefert 404
 """
 
 import re
@@ -26,11 +26,17 @@ def test_p1_questionnaire_elemente_sichtbar(user_page):
     expect(user_page.brand_tagline).to_be_visible()
     expect(user_page.projects_sidebar).to_be_visible()
     expect(user_page.new_project_btn).to_be_visible()
+    # Abmelden steckt im Profil-Dropdown oben rechts - Button öffnen und
+    # prüfen, dass der Menüpunkt dann erscheint, statt nur den (versteckten)
+    # Link direkt anzusprechen.
+    expect(user_page.profile_btn).to_be_visible()
+    user_page.profile_btn.click()
     expect(user_page.logout_link).to_be_visible()
+    user_page.profile_btn.click()
     expect(user_page.answer_selects.first).to_be_visible()
     expect(user_page.note_textareas.first).to_be_visible()
     expect(user_page.progress_bar).to_be_visible()
-    expect(user_page.auswertung_section).to_be_visible()
+    expect(user_page.auswertung_tab_btn).to_be_visible()
 
 
 def test_p2_antwort_wird_nach_reload_gespeichert(user_page):
@@ -41,8 +47,11 @@ def test_p2_antwort_wird_nach_reload_gespeichert(user_page):
     assert user_page.answer_selects.first.input_value() == value
 
 
-def test_p3_download_buttons_vorhanden_und_verlinkt(user_page):
-    btns = user_page.download_buttons.all()
+def test_p3_download_buttons_vorhanden_und_verlinkt(user_page, base_url):
+    """Die 3 generischen Vorlagen-Downloads leben auf der eigenen /vorlagen-Seite,
+    nicht mehr in der Fragenkatalog-Sidebar."""
+    user_page.page.goto(f"{base_url}/vorlagen")
+    btns = user_page.page.locator(".dok-btn-dl").all()
     assert len(btns) == 3, f"Erwartet 3 Download-Buttons, gefunden: {len(btns)}"
     for btn in btns:
         href = btn.get_attribute("href") or ""
@@ -71,6 +80,6 @@ def test_n2_fremdes_projekt_liefert_403(user_page, base_url, setup_test_users):
     assert response.status == 403
 
 
-def test_n3_nicht_existierende_projekt_id_liefert_403(user_page, base_url):
+def test_n3_nicht_existierende_projekt_id_liefert_404(user_page, base_url):
     response = user_page.page.goto(f"{base_url}/project/999999")
-    assert response.status == 403
+    assert response.status == 404

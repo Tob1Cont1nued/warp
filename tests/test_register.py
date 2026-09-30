@@ -3,7 +3,7 @@ Registrierungs-Seite (/register) – Oberflächentests (Page Object Model)
 ========================================================================
 Positiv:
   P1  Alle UI-Elemente der Registrierungs-Seite sind sichtbar
-  P2  Neuer Benutzer wird angelegt und landet auf Projekt-Seite
+  P2  Neuer Benutzer wird angelegt und landet auf dem Dashboard
   P3  Link „Bereits registriert?" navigiert zur Login-Seite
 
 Negativ:
@@ -36,7 +36,7 @@ def test_p1_register_seite_elemente_sichtbar(register_page):
 
 def test_p2_neuer_benutzer_wird_angelegt_und_weitergeleitet(register_page):
     register_page.register(_unique_user(), "sicher123", display_name="Playwright User")
-    assert "/project" in register_page.page.url
+    assert "/dashboard" in register_page.page.url
 
 
 def test_p3_anmelden_link_navigiert_zur_login_seite(register_page, base_url):

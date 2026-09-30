@@ -3,8 +3,8 @@ Login-Seite (/login) – Oberflächentests (Page Object Model)
 ===========================================================
 Positiv:
   P1  Alle UI-Elemente der Login-Seite sind sichtbar
-  P2  Admin-Login leitet auf /admin weiter
-  P3  User-Login leitet auf /project/... weiter
+  P2  Admin-Login leitet auf /dashboard weiter
+  P3  User-Login leitet auf /dashboard weiter
 
 Negativ:
   N1  Falsches Passwort → Fehlermeldung
@@ -33,13 +33,14 @@ def test_p1_login_seite_elemente_sichtbar(login_page):
 
 
 def test_p2_admin_login_leitet_auf_admin_weiter(login_page, base_url):
+    """Admins landen wie alle anderen zuerst auf /dashboard, nicht direkt auf /admin."""
     login_page.login(ADMIN["username"], ADMIN["password"])
-    expect(login_page.page).to_have_url(f"{base_url}/admin")
+    expect(login_page.page).to_have_url(f"{base_url}/dashboard")
 
 
 def test_p3_user_login_leitet_auf_projekt_weiter(login_page):
     login_page.login(TEST_USER["username"], TEST_USER["password"])
-    assert "/project" in login_page.page.url
+    assert "/dashboard" in login_page.page.url
 
 
 # ── Negativ-Tests ────────────────────────────────────────────────────────────
@@ -64,7 +65,7 @@ def test_n3_gesperrter_benutzer_zeigt_spezifische_meldung(login_page, base_url):
     """Legt einen Benutzer via Admin-UI an, sperrt ihn, prüft Login-Fehlermeldung."""
     # Als Admin einloggen, Konto anlegen und sperren
     login_page.login(ADMIN["username"], ADMIN["password"])
-    admin = AdminPage(login_page.page, base_url)
+    admin = AdminPage(login_page.page, base_url).goto()
     admin.create_user(LOCKED_USER, LOCKED_PW)
     admin.lock_user(LOCKED_USER)
 

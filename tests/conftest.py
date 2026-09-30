@@ -116,16 +116,31 @@ def register_page(page: Page, base_url: str) -> RegisterPage:
 
 @pytest.fixture
 def admin_page(page: Page, base_url: str) -> AdminPage:
-    """AdminPage-Objekt – bereits als Admin eingeloggt, Seite /admin."""
+    """AdminPage-Objekt – bereits als Admin eingeloggt, Seite /admin.
+
+    Login landet seit der Dashboard-Umstellung immer auf /dashboard, auch für
+    Admins - also explizit zu /admin navigieren statt uns auf die alte
+    Redirect-auf-/admin-Annahme zu verlassen.
+    """
     LoginPage(page, base_url).login(ADMIN["username"], ADMIN["password"])
-    return AdminPage(page, base_url)
+    return AdminPage(page, base_url).goto()
 
 
 @pytest.fixture
 def user_page(page: Page, base_url: str) -> QuestionnairePage:
-    """QuestionnairePage-Objekt – als Testbenutzer eingeloggt."""
+    """QuestionnairePage-Objekt – als Testbenutzer eingeloggt, auf einem Projekt.
+
+    Login landet auf /dashboard statt (wie früher) direkt auf /project/new.
+    Ein vorhandenes Projekt wird wiederverwendet (verhindert, dass jeder
+    Testlauf ein weiteres Projekt für _pytest_user anhäuft); nur wenn keins
+    existiert, wird eins über "+ Neues Projekt" angelegt.
+    """
     LoginPage(page, base_url).login(TEST_USER["username"], TEST_USER["password"])
-    qp = QuestionnairePage(page, base_url)
-    if "project/new" in page.url:
-        qp.create_first_project("Pytest Testprojekt")
-    return qp
+    existing = page.locator(".dash-project-name").first
+    if existing.count() > 0:
+        existing.click()
+        page.wait_for_load_state("networkidle")
+    else:
+        page.goto(f"{base_url}/project/new")
+        QuestionnairePage(page, base_url).create_first_project("Pytest Testprojekt")
+    return QuestionnairePage(page, base_url)
