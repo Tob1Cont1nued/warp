@@ -316,7 +316,7 @@ button { cursor: pointer; }
   font-weight: 600;
   color: var(--ws-blue-deep);
 }
-.field input {
+.field input, .field select {
   font-size: 16px;
   min-height: var(--hit);
   border: 1px solid var(--c-border);
@@ -326,7 +326,7 @@ button { cursor: pointer; }
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
-.field input:focus {
+.field input:focus, .field select:focus {
   border-color: var(--ws-blue);
   box-shadow: 0 0 0 3px rgba(69,29,199,0.15);
 }
@@ -984,11 +984,17 @@ button { cursor: pointer; }
 .admin-new-user-card h2 { margin-bottom: 14px; }
 .admin-new-user-form {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr auto;
-  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 16px 20px;
   align-items: end;
 }
-@media (max-width: 900px) {
+.admin-new-user-form .btn-primary {
+  grid-column: 1 / -1;
+  justify-self: start;
+  width: auto;
+  padding: 10px 24px;
+}
+@media (max-width: 640px) {
   .admin-new-user-form { grid-template-columns: 1fr; }
 }
 .label-optional { font-weight: 400; color: var(--c-text-muted); font-size: 12px; }

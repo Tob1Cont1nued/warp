@@ -31,18 +31,20 @@
       <span class="sidebar-brand-tagline">Wavestone Assessment Risk Planner</span>
     </div>
   </div>
-  <nav class="sidebar-nav">
-    <a class="sidebar-nav-item active" href="{{ url_for('admin_overview') }}">
-      <span class="dot"></span>Benutzerverwaltung
-    </a>
-    <a class="sidebar-nav-item" href="{{ url_for('admin_questions') }}">
-      <span class="dot"></span>Fragenkatalog bearbeiten
-    </a>
-    <div class="sidebar-nav-divider"></div>
-    <a class="sidebar-nav-item" href="{{ url_for('index') }}">
-      <span class="dot"></span>Zum Assessment
-    </a>
-  </nav>
+  <div class="sidebar-scroll">
+    <nav class="sidebar-nav">
+      <a class="sidebar-nav-item active" href="{{ url_for('admin_overview') }}">
+        <span class="dot"></span>Benutzerverwaltung
+      </a>
+      <a class="sidebar-nav-item" href="{{ url_for('admin_questions') }}">
+        <span class="dot"></span>Fragenkatalog bearbeiten
+      </a>
+      <div class="sidebar-nav-divider"></div>
+      <a class="sidebar-nav-item" href="{{ url_for('index') }}">
+        <span class="dot"></span>Zum Assessment
+      </a>
+    </nav>
+  </div>
   <div class="sidebar-foot">
     <div class="sidebar-foot-brand">
       <span class="brand-mark"></span>
@@ -86,13 +88,13 @@
       </div>
       <div class="field">
         <label for="role">Rolle</label>
-        <select id="role" name="role" style="padding:8px 10px;border:1px solid var(--c-border);border-radius:8px;font-size:.9rem;width:100%">
+        <select id="role" name="role">
           <option value="user">Benutzer — kann Assessments durchführen</option>
           <option value="admin">Admin — kann Postkorb sehen &amp; bearbeiten</option>
           <option value="superuser">Superuser — voller Zugriff</option>
         </select>
       </div>
-      <button type="submit" class="btn btn-primary" style="width:auto;padding:10px 24px">Benutzer anlegen</button>
+      <button type="submit" class="btn btn-primary">Benutzer anlegen</button>
     </form>
   </section>
 
