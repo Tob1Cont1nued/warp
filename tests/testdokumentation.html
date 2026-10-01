@@ -325,6 +325,98 @@
       color: #E2D9FF;
     }
 
+    /* ── Szenario-Baukasten ─────────────────────────────────────────── */
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+    .builder-layout {
+      display: grid;
+      grid-template-columns: minmax(260px, 1fr) minmax(320px, 1.3fr);
+      gap: 20px;
+      align-items: start;
+    }
+    .builder-layout[hidden] { display: none; }
+    @media (max-width: 860px) {
+      .builder-layout { grid-template-columns: 1fr; }
+    }
+    .builder-catalog, .builder-scenario {
+      background: var(--bg-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--r);
+      padding: 14px;
+    }
+    #builder-search {
+      width: 100%; font: inherit; font-size: .85rem;
+      padding: 8px 10px; border-radius: 6px; border: 1px solid var(--border);
+      background: var(--bg); color: var(--text); margin-bottom: 10px;
+    }
+    .builder-tabs { display: flex; gap: 6px; margin-bottom: 10px; flex-wrap: wrap; }
+    .builder-tab {
+      border: 1px solid var(--border); background: var(--bg); color: var(--muted);
+      border-radius: 20px; padding: 5px 12px; font-size: .75rem; font-weight: 700;
+      cursor: pointer;
+    }
+    .builder-tab.active { background: var(--purple-mid); border-color: var(--purple-mid); color: #fff; }
+    .builder-tab-count { opacity: .75; font-weight: 500; }
+    .builder-step-list { max-height: 480px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+    .builder-step-item {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px;
+    }
+    .builder-step-main { flex: 1; min-width: 0; }
+    .builder-step-text { font-size: .8rem; line-height: 1.4; }
+    .builder-step-text code { font-family: 'Courier New', monospace; background: var(--purple-lite); color: var(--purple-mid); padding: 0 3px; border-radius: 3px; }
+    .builder-step-meta { font-size: .68rem; color: var(--muted); margin-top: 3px; font-family: 'Courier New', monospace; }
+    .builder-step-produces { color: #077040; }
+    .builder-add-btn {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; border: 0;
+      background: var(--purple-mid); color: #fff; font-size: 1rem; line-height: 1; cursor: pointer;
+    }
+    .builder-add-btn:hover { background: var(--purple); }
+    .builder-no-results { font-size: .8rem; color: var(--muted); padding: 10px 4px; }
+
+    .builder-chosen-list { display: flex; flex-direction: column; gap: 6px; margin: 10px 0 16px; min-height: 40px; }
+    .builder-empty-hint { font-size: .8rem; color: var(--muted); margin: 0; }
+    .builder-chosen-item {
+      background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+      padding: 8px 10px; display: flex; gap: 8px; align-items: flex-start;
+    }
+    .builder-chosen-item.has-warning { border-color: var(--amber); }
+    .builder-chosen-keyword {
+      flex-shrink: 0; font-size: .68rem; font-weight: 800; text-transform: uppercase;
+      color: var(--purple-mid); min-width: 68px; padding-top: 2px;
+    }
+    .builder-chosen-body { flex: 1; min-width: 0; }
+    .builder-chosen-text { font-size: .82rem; line-height: 1.5; }
+    .builder-chosen-text input {
+      font: inherit; font-size: .8rem; border: 1px solid var(--border); border-radius: 4px;
+      padding: 1px 5px; width: 9em; background: var(--bg-alt); color: var(--text);
+    }
+    .builder-chosen-warning { font-size: .7rem; color: var(--amber); margin-top: 3px; }
+    .builder-chosen-controls { flex-shrink: 0; display: flex; gap: 2px; }
+    .builder-chosen-controls button {
+      width: 22px; height: 22px; border-radius: 5px; border: 1px solid var(--border);
+      background: var(--bg-alt); color: var(--muted); cursor: pointer; font-size: .7rem; line-height: 1;
+    }
+    .builder-chosen-controls button:hover { color: var(--text); }
+    .builder-chosen-controls button.remove:hover { color: #B91C1C; border-color: #B91C1C; }
+
+    .builder-preview {
+      font-family: 'Courier New', monospace; font-size: .78rem; line-height: 1.6;
+      background: var(--purple); color: #E2D9FF; border-radius: 8px; padding: 14px 16px;
+      white-space: pre-wrap; margin: 0;
+    }
+    .builder-actions { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+    .builder-btn {
+      border: 1px solid var(--border); background: var(--bg); color: var(--text);
+      border-radius: 6px; padding: 7px 14px; font-size: .8rem; font-weight: 600; cursor: pointer;
+    }
+    .builder-btn-primary { background: var(--purple-mid); border-color: var(--purple-mid); color: #fff; }
+    .builder-btn-primary:hover { background: var(--purple); }
+    .builder-copy-feedback { font-size: .75rem; color: #077040; font-weight: 600; }
+
     /* ── Pending / gap list ─────────────────────────────────────────── */
     .gap-list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
     .gap-list li {
@@ -461,6 +553,9 @@
 
   <span class="sidenav-section-label">E2E Live</span>
   <a href="#e2e"><span class="dot"></span>Vollständiger Workflow</a>
+
+  <span class="sidenav-section-label">Werkzeuge</span>
+  <a href="#builder"><span class="dot"></span>Szenario-Baukasten</a>
 
   <span class="sidenav-section-label">Ausführung</span>
   <a href="#run"><span class="dot"></span>Befehle</a>
@@ -880,6 +975,61 @@
     </div>
   </div>
 
+  <!-- ── WERKZEUGE ──────────────────────────────────────────────────── -->
+
+  <div class="section" id="builder">
+    <div class="section-header">
+      <span class="section-title">Szenario-Baukasten</span>
+      <code class="section-file">tests/step_defs/*.py</code>
+      <span class="badge badge-bdd">Gherkin</span>
+    </div>
+    <p class="section-desc">
+      Setzt aus den vorhandenen Angenommen/Wenn/Dann-Sätzen (siehe alle Frontend-Abschnitte oben) ein neues Szenario
+      zusammen und erzeugt fertigen Gherkin-Text zum Einfügen in eine <code>.feature</code>-Datei.
+      <strong>Nicht jede Kombination ergibt automatisch einen lauffähigen Test:</strong> viele Wenn/Dann-Sätze
+      brauchen eine Fixture (z.&nbsp;B. <code>current_page</code>), die erst ein vorheriger Schritt erzeugt hat –
+      solche Sätze werden im Baukasten mit ⚠ markiert, sobald sie an der falschen Stelle stehen. Schreibt keine
+      Dateien, nur Text zum Kopieren.
+    </p>
+
+    <div class="runner-banner" id="builder-banner">
+      <span>▶</span>
+      <span id="builder-banner-text">Lädt…</span>
+    </div>
+
+    <div class="builder-layout" id="builder-layout" hidden>
+      <div class="builder-catalog">
+        <label class="sr-only" for="builder-search">Schritte durchsuchen</label>
+        <input type="text" id="builder-search" placeholder="Schritte durchsuchen…" autocomplete="off" />
+        <div class="builder-tabs" role="tablist">
+          <button type="button" class="builder-tab active" data-type="given">Angenommen <span class="builder-tab-count" id="count-given"></span></button>
+          <button type="button" class="builder-tab" data-type="when">Wenn <span class="builder-tab-count" id="count-when"></span></button>
+          <button type="button" class="builder-tab" data-type="then">Dann <span class="builder-tab-count" id="count-then"></span></button>
+        </div>
+        <div class="builder-step-list" id="builder-step-list"></div>
+      </div>
+
+      <div class="builder-scenario">
+        <div class="field">
+          <label for="builder-scenario-name">Szenario-Name</label>
+          <input type="text" id="builder-scenario-name" placeholder="z. B. Benutzer sieht eigene Projekte nach Login" />
+        </div>
+        <div class="builder-chosen-list" id="builder-chosen-list">
+          <p class="builder-empty-hint">Noch keine Schritte ausgewählt – links auf „+" klicken, um loszulegen.</p>
+        </div>
+        <div class="field">
+          <label>Gherkin-Vorschau</label>
+          <pre class="builder-preview" id="builder-preview"># Noch kein Szenario zusammengestellt</pre>
+        </div>
+        <div class="builder-actions">
+          <button type="button" class="builder-btn builder-btn-primary" id="builder-copy">In Zwischenablage kopieren</button>
+          <button type="button" class="builder-btn" id="builder-clear">Zurücksetzen</button>
+          <span class="builder-copy-feedback" id="builder-copy-feedback" aria-live="polite"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── AUSFÜHRUNG ────────────────────────────────────────────────── -->
 
   <div class="section" id="run">
@@ -1213,6 +1363,269 @@
     .catch(function () {
       showBanner(UNREACHABLE_HINT);
     });
+})();
+</script>
+
+<!-- ── Szenario-Baukasten ───────────────────────────────────────────── -->
+<script>
+(function () {
+  var KEYWORDS = { given: 'Angenommen', when: 'Wenn', then: 'Dann' };
+
+  var state = {
+    catalog: [],          // alle Schritte vom Server
+    ambient: [],          // Fixtures, die immer verfügbar sind
+    activeTab: 'given',
+    search: '',
+    chosen: [],            // [{step, values: {placeholder: text}}]
+  };
+
+  var els = {};
+  ['builder-banner', 'builder-banner-text', 'builder-layout', 'builder-search',
+   'builder-step-list', 'builder-chosen-list', 'builder-scenario-name',
+   'builder-preview', 'builder-copy', 'builder-clear', 'builder-copy-feedback'
+  ].forEach(function (id) {
+    els[id.replace(/-([a-z])/g, function (_, c) { return c.toUpperCase(); })] = document.getElementById(id);
+  });
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function showBuilderBanner(html) {
+    var banner = document.getElementById('builder-banner');
+    var textEl = document.getElementById('builder-banner-text');
+    if (textEl) textEl.innerHTML = html;
+    if (banner) banner.classList.add('show');
+    els.builderLayout.hidden = true;
+  }
+
+  var LOGIN_HINT = 'Nicht als Admin eingeloggt auf diesem Server. '
+    + '<a href="/login">Jetzt einloggen</a> und die Seite neu laden.';
+  var FORBIDDEN_HINT = 'Der Szenario-Baukasten ist nur für Admins verfügbar.';
+  var UNREACHABLE_HINT = 'Konnte den Schritt-Katalog nicht laden (Server nicht erreichbar).';
+
+  // ── Katalog laden ──────────────────────────────────────────────────
+  fetch('/admin/tests/steps', { redirect: 'manual' })
+    .then(function (r) {
+      if (r.type === 'opaqueredirect' || r.status === 0) { showBuilderBanner(LOGIN_HINT); return null; }
+      if (r.status === 403) { showBuilderBanner(FORBIDDEN_HINT); return null; }
+      if (!r.ok) { showBuilderBanner(UNREACHABLE_HINT); return null; }
+      return r.json();
+    })
+    .then(function (data) {
+      if (!data) return;
+      state.catalog = data.steps || [];
+      state.ambient = data.ambient_fixtures || [];
+      els.builderLayout.hidden = false;
+      document.getElementById('builder-banner').classList.remove('show');
+      updateTabCounts();
+      renderCatalog();
+      renderChosen();
+    })
+    .catch(function () { showBuilderBanner(UNREACHABLE_HINT); });
+
+  function updateTabCounts() {
+    ['given', 'when', 'then'].forEach(function (t) {
+      var n = state.catalog.filter(function (s) { return s.type === t; }).length;
+      var el = document.getElementById('count-' + t);
+      if (el) el.textContent = '(' + n + ')';
+    });
+  }
+
+  // ── Katalog rendern (links) ───────────────────────────────────────
+  function renderCatalog() {
+    var q = state.search.trim().toLowerCase();
+    var items = state.catalog.filter(function (s) { return s.type === state.activeTab; });
+    if (q) {
+      items = items.filter(function (s) {
+        return s.text.toLowerCase().indexOf(q) !== -1 || s.file.toLowerCase().indexOf(q) !== -1;
+      });
+    }
+    if (!items.length) {
+      els.builderStepList.innerHTML = '<div class="builder-no-results">Keine Schritte gefunden.</div>';
+      return;
+    }
+    els.builderStepList.innerHTML = items.map(function (s, idx) {
+      var textHtml = escapeHtml(s.text).replace(/\{(\w+)\}/g, '<code>{$1}</code>');
+      var fileShort = s.file.replace('tests/step_defs/', '').replace('test_', '').replace('_steps.py', '').replace('.py', '');
+      var meta = fileShort;
+      if (s.produces) meta += ' <span class="builder-step-produces">→ ' + escapeHtml(s.produces) + '</span>';
+      return '' +
+        '<div class="builder-step-item">' +
+          '<div class="builder-step-main">' +
+            '<div class="builder-step-text">' + textHtml + '</div>' +
+            '<div class="builder-step-meta">' + meta + '</div>' +
+          '</div>' +
+          '<button type="button" class="builder-add-btn" data-idx="' + state.catalog.indexOf(s) + '" title="Zum Szenario hinzufügen">+</button>' +
+        '</div>';
+    }).join('');
+    els.builderStepList.querySelectorAll('.builder-add-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        addStep(state.catalog[parseInt(btn.dataset.idx, 10)]);
+      });
+    });
+  }
+
+  document.querySelectorAll('.builder-tab').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      document.querySelectorAll('.builder-tab').forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      state.activeTab = tab.dataset.type;
+      renderCatalog();
+    });
+  });
+  if (els.builderSearch) {
+    els.builderSearch.addEventListener('input', function () {
+      state.search = els.builderSearch.value;
+      renderCatalog();
+    });
+  }
+
+  // ── Ausgewähltes Szenario (rechts) ─────────────────────────────────
+  function addStep(step) {
+    var values = {};
+    (step.placeholders || []).forEach(function (p) { values[p] = ''; });
+    state.chosen.push({ step: step, values: values });
+    renderChosen();
+  }
+
+  function availableFixturesBefore(index) {
+    var set = {};
+    state.ambient.forEach(function (f) { set[f] = true; });
+    for (var i = 0; i < index; i++) {
+      var produces = state.chosen[i].step.produces;
+      if (produces) set[produces] = true;
+    }
+    return set;
+  }
+
+  function renderChosen() {
+    if (!state.chosen.length) {
+      els.builderChosenList.innerHTML = '<p class="builder-empty-hint">Noch keine Schritte ausgewählt – links auf „+" klicken, um loszulegen.</p>';
+      updatePreview();
+      return;
+    }
+    var prevType = null;
+    els.builderChosenList.innerHTML = state.chosen.map(function (entry, index) {
+      var step = entry.step;
+      var keyword = (step.type === prevType) ? 'Und' : KEYWORDS[step.type];
+      prevType = step.type;
+
+      var available = availableFixturesBefore(index);
+      var missing = (step.requires || []).filter(function (r) { return !available[r]; });
+      var warningHtml = missing.length
+        ? '<div class="builder-chosen-warning">⚠ benötigt ' + missing.map(escapeHtml).join(', ') + ' – von keinem vorherigen Schritt erzeugt</div>'
+        : '';
+
+      var textHtml = escapeHtml(step.text).replace(/\{(\w+)\}/g, function (_, name) {
+        var val = entry.values[name] || '';
+        return '<input type="text" data-idx="' + index + '" data-placeholder="' + escapeHtml(name) + '" value="' + escapeHtml(val) + '" placeholder="' + escapeHtml(name) + '" />';
+      });
+
+      return '' +
+        '<div class="builder-chosen-item' + (missing.length ? ' has-warning' : '') + '">' +
+          '<span class="builder-chosen-keyword">' + keyword + '</span>' +
+          '<div class="builder-chosen-body">' +
+            '<div class="builder-chosen-text">' + textHtml + '</div>' +
+            warningHtml +
+          '</div>' +
+          '<div class="builder-chosen-controls">' +
+            '<button type="button" class="up" data-idx="' + index + '" title="Nach oben" ' + (index === 0 ? 'disabled' : '') + '>↑</button>' +
+            '<button type="button" class="down" data-idx="' + index + '" title="Nach unten" ' + (index === state.chosen.length - 1 ? 'disabled' : '') + '>↓</button>' +
+            '<button type="button" class="remove" data-idx="' + index + '" title="Entfernen">×</button>' +
+          '</div>' +
+        '</div>';
+    }).join('');
+
+    els.builderChosenList.querySelectorAll('input[data-placeholder]').forEach(function (input) {
+      input.addEventListener('input', function () {
+        var idx = parseInt(input.dataset.idx, 10);
+        state.chosen[idx].values[input.dataset.placeholder] = input.value;
+        updatePreview();
+      });
+    });
+    els.builderChosenList.querySelectorAll('.up').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = parseInt(btn.dataset.idx, 10);
+        if (i > 0) {
+          var tmp = state.chosen[i - 1]; state.chosen[i - 1] = state.chosen[i]; state.chosen[i] = tmp;
+          renderChosen();
+        }
+      });
+    });
+    els.builderChosenList.querySelectorAll('.down').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var i = parseInt(btn.dataset.idx, 10);
+        if (i < state.chosen.length - 1) {
+          var tmp = state.chosen[i + 1]; state.chosen[i + 1] = state.chosen[i]; state.chosen[i] = tmp;
+          renderChosen();
+        }
+      });
+    });
+    els.builderChosenList.querySelectorAll('.remove').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        state.chosen.splice(parseInt(btn.dataset.idx, 10), 1);
+        renderChosen();
+      });
+    });
+
+    updatePreview();
+  }
+
+  function fillPlaceholders(step, values) {
+    return step.text.replace(/\{(\w+)\}/g, function (_, name) {
+      var v = (values[name] || '').trim();
+      return v ? v : '{' + name + '}';
+    });
+  }
+
+  function updatePreview() {
+    var name = (els.builderScenarioName.value || '').trim() || 'Mein neues Szenario';
+    if (!state.chosen.length) {
+      els.builderPreview.textContent = '# Noch kein Szenario zusammengestellt';
+      return;
+    }
+    var prevType = null;
+    var lines = ['Szenario: ' + name];
+    state.chosen.forEach(function (entry) {
+      var step = entry.step;
+      var keyword = (step.type === prevType) ? 'Und' : KEYWORDS[step.type];
+      prevType = step.type;
+      lines.push('  ' + keyword + ' ' + fillPlaceholders(step, entry.values));
+    });
+    els.builderPreview.textContent = lines.join('\n');
+  }
+
+  if (els.builderScenarioName) {
+    els.builderScenarioName.addEventListener('input', updatePreview);
+  }
+
+  if (els.builderClear) {
+    els.builderClear.addEventListener('click', function () {
+      state.chosen = [];
+      els.builderScenarioName.value = '';
+      renderChosen();
+    });
+  }
+
+  if (els.builderCopy) {
+    els.builderCopy.addEventListener('click', function () {
+      var text = els.builderPreview.textContent;
+      var done = function () {
+        els.builderCopyFeedback.textContent = 'Kopiert!';
+        setTimeout(function () { els.builderCopyFeedback.textContent = ''; }, 2000);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(done).catch(function () {
+          els.builderCopyFeedback.textContent = 'Kopieren fehlgeschlagen – bitte Text manuell markieren.';
+        });
+      } else {
+        els.builderCopyFeedback.textContent = 'Kopieren wird hier nicht unterstützt – bitte Text manuell markieren.';
+      }
+    });
+  }
 })();
 </script>
 

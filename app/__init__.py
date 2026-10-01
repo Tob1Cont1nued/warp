@@ -34,10 +34,12 @@ Routes:
 
 from __future__ import annotations
 
+import ast
 import io
 import json as _json
 import math
 import os
+import re
 import secrets
 import subprocess
 import sys
@@ -379,6 +381,83 @@ def _load_test_results() -> Dict[str, Any]:
 def _save_test_results(results: Dict[str, Any]) -> None:
     _TEST_RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
     _TEST_RESULTS_PATH.write_text(_json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# Szenario-Baukasten: liest alle @given/@when/@then-Schritte aus
+# tests/step_defs/*.py statisch aus (ast, kein Import, keine Ausführung) und
+# stellt sie der Testdokumentation als Katalog zur Verfügung, aus dem sich
+# neue Gherkin-Szenarien zusammenklicken lassen.
+# ---------------------------------------------------------------------------
+
+# Pytest-Fixtures, die jedem Schritt ohne vorherigen "Erzeuger"-Schritt zur
+# Verfügung stehen (pytest-playwright/pytest-base-url bzw. tests/conftest.py) -
+# alles andere muss über target_fixture eines vorangehenden Schritts entstehen.
+_AMBIENT_BDD_FIXTURES = [
+    "page", "context", "browser", "base_url",
+    "live_server", "setup_test_users",
+    "login_page", "register_page", "admin_page", "user_page",
+]
+
+
+def _extract_step_text(arg_node: ast.expr) -> str | None:
+    """Liest den Schritt-Text aus dem ersten @given/@when/@then-Argument:
+    entweder ein String-Literal oder parsers.parse("...")."""
+    if isinstance(arg_node, ast.Constant) and isinstance(arg_node.value, str):
+        return arg_node.value
+    if isinstance(arg_node, ast.Call):
+        fn = arg_node.func
+        is_parsers_parse = (
+            isinstance(fn, ast.Attribute) and fn.attr == "parse"
+            and isinstance(fn.value, ast.Name) and fn.value.id == "parsers"
+        )
+        if is_parsers_parse and arg_node.args and isinstance(arg_node.args[0], ast.Constant):
+            value = arg_node.args[0].value
+            return value if isinstance(value, str) else None
+    return None
+
+
+def _parse_bdd_steps() -> List[Dict[str, Any]]:
+    step_dir = ROOT / "tests" / "step_defs"
+    steps: List[Dict[str, Any]] = []
+    if not step_dir.is_dir():
+        return steps
+    for py_file in sorted(step_dir.glob("*.py")):
+        try:
+            source = py_file.read_text(encoding="utf-8")
+            tree = ast.parse(source, filename=str(py_file))
+        except (OSError, SyntaxError, UnicodeDecodeError):
+            continue
+        rel_file = py_file.relative_to(ROOT).as_posix()
+        for node in tree.body:
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            for dec in node.decorator_list:
+                if not isinstance(dec, ast.Call) or not isinstance(dec.func, ast.Name):
+                    continue
+                dec_name = dec.func.id
+                if dec_name not in ("given", "when", "then") or not dec.args:
+                    continue
+                text = _extract_step_text(dec.args[0])
+                if text is None:
+                    continue
+                target_fixture = None
+                for kw in dec.keywords:
+                    if kw.arg == "target_fixture" and isinstance(kw.value, ast.Constant):
+                        target_fixture = kw.value.value
+                requires = [a.arg for a in node.args.args if a.arg != target_fixture]
+                steps.append({
+                    "type": dec_name,
+                    "text": text,
+                    "placeholders": re.findall(r"\{(\w+)\}", text),
+                    "function": node.name,
+                    "file": rel_file,
+                    "line": node.lineno,
+                    "requires": requires,
+                    "produces": target_fixture,
+                })
+                break  # ein Schritt-Dekorator pro Funktion reicht
+    return steps
 
 
 def create_app() -> Flask:
@@ -2444,6 +2523,15 @@ Antworte AUSSCHLIESSLICH mit diesem JSON, ohne Erklärungen:
         if not current_user.is_admin:
             return jsonify(error="Nur für Admins verfügbar.", enabled=False), 403
         return jsonify(enabled=_test_runner_enabled(app), results=_load_test_results())
+
+    @app.route("/admin/tests/steps")
+    @login_required
+    def admin_tests_steps():
+        """Szenario-Baukasten: liest nur Quelltext (ast), führt nichts aus -
+        anders als /admin/tests/run deshalb auch auf Render verfügbar."""
+        if not current_user.is_admin:
+            return jsonify(error="Nur für Admins verfügbar."), 403
+        return jsonify(steps=_parse_bdd_steps(), ambient_fixtures=_AMBIENT_BDD_FIXTURES)
 
     @app.route("/admin/tests/run", methods=["POST"])
     @csrf.exempt  # statische Doku-Seite (kein Jinja-Template) hat keinen csrf_token(); Endpoint ist ohnehin
