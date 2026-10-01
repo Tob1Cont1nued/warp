@@ -12,6 +12,7 @@ class AdminPage:
         self.username_input: Locator = page.locator(".admin-new-user-form #username")
         self.display_name_input: Locator = page.locator(".admin-new-user-form #display_name")
         self.password_input: Locator = page.locator(".admin-new-user-form #password")
+        self.role_select: Locator = page.locator(".admin-new-user-form #role")
         self.submit_btn: Locator = page.locator(".admin-new-user-form button[type=submit]")
         # Benutzerliste
         self.user_cards: Locator = page.locator(".admin-user-card")
@@ -20,11 +21,13 @@ class AdminPage:
         self.page.goto(f"{self.base_url}/admin")
         return self
 
-    def create_user(self, username: str, password: str, display_name: str = "") -> None:
+    def create_user(self, username: str, password: str, display_name: str = "", role: str = "user") -> None:
         if display_name:
             self.display_name_input.fill(display_name)
         self.username_input.fill(username)
         self.password_input.fill(password)
+        if role != "user":
+            self.role_select.select_option(role)
         self.submit_btn.click()
         self.page.wait_for_load_state("networkidle")
 

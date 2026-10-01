@@ -13,6 +13,8 @@ TC-PROJ-08  GET  /dashboard (eingeloggt)    → 200
 TC-PROJ-09  POST /project/<id>/report/html  → HTML-Report generiert (200)
 TC-PROJ-10  GET  /project/new              → Formular sichtbar (200)
 TC-PROJ-11  POST /project/<id>/complete     → Status gewechselt
+TC-PROJ-12  POST /project/<id>/report/html?variant=customer → kein Fragenkatalog im HTML
+TC-PROJ-13  POST /project/<id>/report/html (normal)         → Fragenkatalog weiterhin enthalten
 """
 
 import json
@@ -106,6 +108,31 @@ class TestReport:
             follow_redirects=True,
         )
         assert r.status_code == 200
+
+    def test_tc_proj_12_kundenreport_ohne_fragenkatalog(self, user_client, test_project_id):
+        """variant=customer blendet den vollständigen Fragenkatalog aus - die Detail-
+        Sektion mit allen Einzelfragen darf im HTML nicht vorkommen, auch nicht
+        versteckt im Markup (das wird hier getestet, nicht nur per CSS verdeckt)."""
+        r = user_client.post(
+            f"/project/{test_project_id}/report/html",
+            data={"variant": "customer"},
+            follow_redirects=True,
+        )
+        assert r.status_code == 200
+        text = r.data.decode("utf-8", errors="replace")
+        assert "Detailauswertung" not in text
+        assert "Kategorien &amp; Fragen nach WARP-Stufe" not in text
+
+    def test_tc_proj_13_normaler_report_enthaelt_fragenkatalog(self, user_client, test_project_id):
+        """Regressionstest zu TC-PROJ-12: ohne variant=customer bleibt der volle
+        Fragenkatalog im internen Report erhalten."""
+        r = user_client.post(
+            f"/project/{test_project_id}/report/html",
+            follow_redirects=True,
+        )
+        assert r.status_code == 200
+        text = r.data.decode("utf-8", errors="replace")
+        assert "Detailauswertung" in text
 
 
 class TestProjektStatus:

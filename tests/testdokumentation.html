@@ -426,6 +426,8 @@
   <a href="#auth">Authentifizierung</a>
   <a href="#sec">Sicherheit</a>
   <a href="#proj">Projektverwaltung</a>
+  <a href="#account">Konto &amp; Passwort</a>
+  <a href="#aidocs">KI-Dokumente</a>
   <a href="#api">API &amp; Postkorb</a>
 
   <span class="sidenav-section-label">Frontend-Tests</span>
@@ -435,21 +437,16 @@
   <a href="#questionnaire">Fragenkatalog</a>
   <a href="#recs">Handlungsempfehlungen</a>
   <a href="#inbox">Postkorb UI</a>
+  <a href="#profile">Profil &amp; Benachrichtigungen</a>
 
   <span class="sidenav-section-label">E2E Live</span>
   <a href="#e2e">Vollständiger Workflow</a>
-
-  <span class="sidenav-section-label">Noch offen</span>
-  <a href="#account">Konto &amp; Passwort</a>
-  <a href="#report">Kundenreport</a>
-  <a href="#docgen">KI-Dokumente</a>
-  <a href="#profile">Profil &amp; Benachrichtigungen</a>
 
   <span class="sidenav-section-label">Ausführung</span>
   <a href="#run">Befehle</a>
   <a href="#infra">Infrastruktur</a>
 
-  <div class="sidenav-footer">Stand: September 2026</div>
+  <div class="sidenav-footer">Stand: Oktober 2026</div>
 </nav>
 
 <!-- Main Content -->
@@ -459,21 +456,21 @@
   <div class="page-header">
     <div class="page-eyebrow">Quality Assurance</div>
     <h1 class="page-title">WARP – Testdokumentation</h1>
-    <p class="page-meta">Wavestone Assessment Risk Planner &nbsp;·&nbsp; Branch: <code>dev</code> &nbsp;·&nbsp; Stand September 2026</p>
+    <p class="page-meta">Wavestone Assessment Risk Planner &nbsp;·&nbsp; Branch: <code>dev</code> &nbsp;·&nbsp; Stand Oktober 2026</p>
   </div>
 
   <!-- Stats -->
   <div class="stats-row">
     <div class="stat-card">
-      <span class="stat-value">80</span>
+      <span class="stat-value">107</span>
       <span class="stat-label">Tests gesamt</span>
     </div>
     <div class="stat-card">
-      <span class="stat-value">44</span>
+      <span class="stat-value">65</span>
       <span class="stat-label">Unit-Tests</span>
     </div>
     <div class="stat-card">
-      <span class="stat-value">35</span>
+      <span class="stat-value">41</span>
       <span class="stat-label">Frontend-Tests</span>
     </div>
     <div class="stat-card green">
@@ -481,8 +478,8 @@
       <span class="stat-label">E2E Live</span>
     </div>
     <div class="stat-card amber">
-      <span class="stat-value">4</span>
-      <span class="stat-label">Offene Testlücken</span>
+      <span class="stat-value">14</span>
+      <span class="stat-label">Test-Suiten</span>
     </div>
   </div>
 
@@ -493,7 +490,6 @@
     <div class="legend-item"><span class="badge badge-e2e">E2E Live</span> Playwright, Render-Produktiv</div>
     <div class="legend-item"><span class="badge badge-pos">P</span> Positiv-Test (Happy Path)</div>
     <div class="legend-item"><span class="badge badge-neg">N</span> Negativ-Test (Fehlerfall)</div>
-    <div class="legend-item"><span class="badge badge-pending">Offen</span> Feature vorhanden, noch kein automatisierter Test</div>
   </div>
 
   <div class="runner-banner" id="runner-banner">
@@ -565,7 +561,7 @@
       <code class="section-file">tests/unit/test_projects.py</code>
       <span class="badge badge-unit">Unit</span>
     </div>
-    <p class="section-desc">Testet CRUD-Operationen für Projekte, das Speichern von Antworten per AJAX, den HTML-Report sowie den Zugriffschutz auf Projekt-Ebene.</p>
+    <p class="section-desc">Testet CRUD-Operationen für Projekte, das Speichern von Antworten per AJAX, den HTML-Report (inkl. Kundenreport-Variante ohne Fragenkatalog) sowie den Zugriffschutz auf Projekt-Ebene.</p>
     <div class="table-wrap">
       <table>
         <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
@@ -581,6 +577,8 @@
           <tr><td class="tc-id">TC-PROJ-09</td><td class="tc-desc">POST /project/&lt;id&gt;/report/html → HTML-Report generiert (200)</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">TC-PROJ-10</td><td class="tc-desc">GET /project/new → Formular sichtbar (200)</td><td><span class="badge badge-pos">P</span></td></tr>
           <tr><td class="tc-id">TC-PROJ-11</td><td class="tc-desc">POST /project/&lt;id&gt;/complete → Projektstatus auf "abgeschlossen" gesetzt</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-12</td><td class="tc-desc">Kundenreport (variant=customer) → Fragenkatalog/Detailauswertung fehlt komplett im HTML</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-PROJ-13</td><td class="tc-desc">Normaler Report (ohne variant) → Fragenkatalog weiterhin enthalten (Regression zu TC-PROJ-12)</td><td><span class="badge badge-pos">P</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -774,71 +772,77 @@
     </div>
   </div>
 
-  <!-- ── NOCH OFFEN ─────────────────────────────────────────────────── -->
-
   <div class="section" id="account">
     <div class="section-header">
       <span class="section-title">Konto &amp; Passwort</span>
-      <code class="section-file">app/__init__.py: /forgot-password, /reset-password/&lt;token&gt;, /account</code>
-      <span class="badge badge-pending">Offen</span>
+      <code class="section-file">tests/unit/test_account.py</code>
+      <span class="badge badge-unit">Unit</span>
     </div>
-    <p class="section-desc">Registrierung mit Pflicht-E-Mail (TC-AUTH-12 deckt das ab), Passwort-Reset per Mail-Link (Resend) und Konto-Einstellungen (Passwort &amp; E-Mail ändern) sind implementiert, aber noch nicht mit eigenen Tests abgesichert. Manuelle Prüfschritte bis dahin:</p>
-    <ul class="gap-list">
-      <li>Registrierung → als Superuser prüfen, dass im Postkorb eine Nachricht mit <code>source="Registrierung"</code> erscheint.</li>
-      <li><code>/forgot-password</code> mit bekannter Adresse → Mail über Resend erhalten (im Sandbox-Modus nur an die verifizierte Absenderadresse), Link führt zu <code>/reset-password/&lt;token&gt;</code>.</li>
-      <li>Abgelaufener oder bereits benutzter Reset-Token → Fehlermeldung statt Passwortformular.</li>
-      <li><code>/account</code>: Passwort ändern verlangt korrektes aktuelles Passwort; falsches aktuelles Passwort → Fehlermeldung, keine Änderung.</li>
-      <li><code>/account</code>: E-Mail auf eine bereits vergebene Adresse ändern → Fehlermeldung "wird bereits verwendet".</li>
-    </ul>
-    <p class="cmd-note" style="margin-top:10px">Geplant: <code>tests/unit/test_account.py</code> (Flask-Test-Client, analog zu <code>test_auth.py</code>) für Reset-Token-Ablauf und Konto-Formulare.</p>
+    <p class="section-desc">Prüft Registrierung-Folgeprozesse: Passwort-Reset per Mail-Link (Resend; im Unit-Test ohne RESEND_API_KEY, also ohne echten Versand), abgelaufene/ungültige Reset-Token sowie Passwort- und E-Mail-Änderung über /account.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">TC-ACC-01</td><td class="tc-desc">GET /forgot-password → HTTP 200</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-02</td><td class="tc-desc">POST /forgot-password bekannte E-Mail → Reset-Token wird in der DB gesetzt</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-03</td><td class="tc-desc">POST /forgot-password unbekannte E-Mail → dieselbe Erfolgsmeldung (kein Enumeration-Leak)</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-04</td><td class="tc-desc">GET /reset-password/&lt;gültiges Token&gt; → Formular sichtbar</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-05</td><td class="tc-desc">GET /reset-password/&lt;ungültiges Token&gt; → Fehlermeldung statt Formular</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-06</td><td class="tc-desc">POST /reset-password/&lt;token&gt; neues Passwort → gesetzt, Login damit funktioniert</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-07</td><td class="tc-desc">POST /reset-password/&lt;abgelaufenes Token&gt; → Fehlermeldung statt Formular</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-08</td><td class="tc-desc">POST /reset-password/&lt;token&gt; Passwort &lt; 6 Zeichen → Fehlermeldung</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-09</td><td class="tc-desc">GET /account ohne Login → Redirect auf /login</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-10</td><td class="tc-desc">POST /account change_password mit falschem aktuellem Passwort → Fehlermeldung, kein Change</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-11</td><td class="tc-desc">POST /account change_password korrekt → Passwort geändert</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-12</td><td class="tc-desc">POST /account change_email auf bereits vergebene Adresse → Fehlermeldung</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-ACC-13</td><td class="tc-desc">POST /account change_email erfolgreich → E-Mail geändert</td><td><span class="badge badge-pos">P</span></td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
-  <div class="section" id="report">
+  <div class="section" id="aidocs">
     <div class="section-header">
-      <span class="section-title">Kundenreport</span>
-      <code class="section-file">app/__init__.py: _build_report_context(), /project/&lt;id&gt;/report(/html)?variant=customer</code>
-      <span class="badge badge-pending">Offen</span>
+      <span class="section-title">KI-Dokumente &amp; Fortschritt</span>
+      <code class="section-file">tests/unit/test_ai_documents.py</code>
+      <span class="badge badge-unit">Unit</span>
     </div>
-    <p class="section-desc">Der Kundenreport ist eine reduzierte Variante des Reports: kein Fragenkatalog, dafür KPI-Kuchendiagramme (Antwortverteilung, Verteilung bis zur nächsten Stufe) und je Kategorie ein zusammenhängender Fließtext mit Ausblick/Empfehlung statt der internen Einzelfragen-Tabelle. Ausgelöst über die beiden Buttons auf dem Dashboard ("Kundenreport – Vorschau" / "– PDF herunterladen"), die serverseitig <code>variant=customer</code> setzen.</p>
-    <ul class="gap-list">
-      <li>Kundenreport-Vorschau öffnen → Fragenkatalog/Einzelantworten dürfen im HTML nicht vorkommen, auch nicht im Markup (nicht nur per CSS versteckt).</li>
-      <li>Donut-Charts zeigen Segmentgrößen, die zur tatsächlichen Antwortverteilung passen (Regressionstest für den 50a98b7-Fix).</li>
-      <li>Kundenreport-PDF (<code>WARP_Kundenreport_*.pdf</code>) lässt sich für ein Projekt ohne beantwortete Fragen ohne Fehler erzeugen.</li>
-      <li>Normaler internes Report (ohne <code>variant=customer</code>) zeigt weiterhin den vollständigen Fragenkatalog.</li>
-    </ul>
-    <p class="cmd-note" style="margin-top:10px">Geplant: Erweiterung von <code>tests/unit/test_projects.py</code> um TC-PROJ-12/13 für <code>variant=customer</code>.</p>
-  </div>
-
-  <div class="section" id="docgen">
-    <div class="section-header">
-      <span class="section-title">KI-Dokumente &amp; Fortschrittsbalken</span>
-      <code class="section-file">app/__init__.py: _build_ai_document(), /generate/&lt;doc_type&gt;/start, /generate/&lt;doc_type&gt;/progress</code>
-      <span class="badge badge-pending">Offen</span>
+    <p class="section-desc">Teststrategie, Mastertestkonzept und Stufentestkonzept werden kapitelweise parallel generiert und per <code>/generate/&lt;typ&gt;/progress</code> gepollt. Der Test ersetzt das <code>anthropic</code>-Modul durch ein Fake (<code>sys.modules</code>-Injektion) – schnell, deterministisch, kein API-Guthaben nötig.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">TC-DOC-01</td><td class="tc-desc">POST /project/&lt;id&gt;/generate/teststrategie → 200, gültige .docx-Datei</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-DOC-02</td><td class="tc-desc">GET /project/&lt;id&gt;/document/teststrategie → erneuter Download aus der DB klappt</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-DOC-03</td><td class="tc-desc">POST /project/&lt;id&gt;/generate/&lt;unbekannter Typ&gt; → 404</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">TC-DOC-04</td><td class="tc-desc">POST .../generate/&lt;typ&gt;/start + Progress-Polling → Fortschritt läuft bis "done"</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-DOC-05</td><td class="tc-desc">GET .../generate/&lt;typ&gt;/progress ohne vorherigen Start → status "idle"</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">TC-DOC-06</td><td class="tc-desc">Fehlender ANTHROPIC_API_KEY → 500 mit verständlicher Fehlermeldung statt Absturz</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
     </div>
-    <p class="section-desc">Teststrategie, Mastertestkonzept und Stufentestkonzept werden über die Anthropic-API kapitelweise parallel generiert (ThreadPoolExecutor, referenziert die Konzern-Teststrategie als Struktur-/Stilvorbild). Das Frontend pollt <code>/generate/&lt;doc_type&gt;/progress</code> alle 900&nbsp;ms für den Fortschrittsbalken. Bisher nur manuell gegen die echte API getestet, kein gemockter Unit-Test.</p>
-    <ul class="gap-list">
-      <li>Generierung starten → Fortschrittsbalken bewegt sich sichtbar von 0 bis 100 % statt nur "wird generiert" anzuzeigen.</li>
-      <li>Generiertes Teststrategie-Dokument folgt der Kapitelgliederung der Referenz (Regressionstest für 1cbb48a).</li>
-      <li>Abbruch/Fehler bei der API (z. B. Rate-Limit) → verständliche Fehlermeldung statt hängendem Fortschrittsbalken.</li>
-      <li>Gunicorn-Timeout (120&nbsp;s, siehe Procfile) reicht auch bei allen drei Dokumenttypen nacheinander.</li>
-    </ul>
-    <p class="cmd-note" style="margin-top:10px">Geplant: Unit-Test mit gemocktem <code>anthropic</code>-Modul (wie in den manuellen Verifikationen dieser Session) statt Live-API-Aufrufen.</p>
   </div>
 
   <div class="section" id="profile">
     <div class="section-header">
       <span class="section-title">Profil &amp; Benachrichtigungen</span>
-      <code class="section-file">app/templates/_profile_button.html</code>
-      <span class="badge badge-pending">Offen</span>
+      <code class="section-file">tests/test_profile.py</code>
+      <span class="badge badge-frontend">Frontend</span>
     </div>
-    <p class="section-desc">Name, Rolle, Administration und Abmelden liegen jetzt im Profil-Dropdown oben rechts statt im Sidebar-Footer. Die Postkorb-Glocke ist auf jeder Seite vorhanden (nicht mehr nur auf drei Admin-Templates) und pollt <code>/api/inbox/count</code> alle 60 Sekunden für Badge und Sidebar-Zähler gemeinsam.</p>
-    <ul class="gap-list">
-      <li>Profil-Button oben rechts sichtbar auf allen Seiten, nicht nur im Dashboard.</li>
-      <li>Dropdown zeigt "Administration" nur für Superuser, nicht für einfache Admins.</li>
-      <li>Glocke zeigt einen Badge, sobald eine neue Postkorb-Nachricht eintrifft, ohne Seiten-Reload (Polling-Intervall abwarten oder Intervall im Test verkürzen).</li>
-      <li>Glocke ist für normale Benutzer (kein Admin) nicht sichtbar.</li>
-    </ul>
-    <p class="cmd-note" style="margin-top:10px">Geplant: <code>tests/test_profile.py</code> (Playwright) für Dropdown-Sichtbarkeit je Rolle und Badge-Update.</p>
+    <p class="section-desc">Playwright-Tests für den Profil-Button oben rechts (Dropdown mit Administration/Konto/Abmelden) und die Postkorb-Glocke, die seit dieser Session auf jeder Seite statt nur auf drei Admin-Templates verfügbar ist.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>ID</th><th>Beschreibung</th><th>Typ</th></tr></thead>
+        <tbody>
+          <tr><td class="tc-id">P1</td><td class="tc-desc">Profil-Button oben rechts sichtbar auf mehreren Seiten (Dashboard, Vorlagen), nicht nur im Dashboard</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P2</td><td class="tc-desc">Dropdown zeigt "Administration" für Superuser</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P3</td><td class="tc-desc">Postkorb-Glocke ist für Admins sichtbar</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">P4</td><td class="tc-desc">Glocke zeigt einen Badge &gt; 0, sobald eine neue Postkorb-Nachricht eintrifft</td><td><span class="badge badge-pos">P</span></td></tr>
+          <tr><td class="tc-id">N1</td><td class="tc-desc">Dropdown zeigt "Administration" NICHT für einen einfachen Admin (kein Superuser)</td><td><span class="badge badge-neg">N</span></td></tr>
+          <tr><td class="tc-id">N2</td><td class="tc-desc">Glocke ist für normale Benutzer (kein Admin) NICHT sichtbar</td><td><span class="badge badge-neg">N</span></td></tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 
   <!-- ── AUSFÜHRUNG ────────────────────────────────────────────────── -->
@@ -941,7 +945,7 @@
 <!-- ── Test-Runner: Play-Buttons (nur lokaler Dev-Server, siehe /admin/tests/*) ── -->
 <script>
 (function () {
-  var RUNNABLE_SECTIONS = ['auth', 'sec', 'proj', 'api', 'login', 'register', 'admin', 'questionnaire', 'recs', 'inbox', 'e2e'];
+  var RUNNABLE_SECTIONS = ['auth', 'sec', 'proj', 'account', 'aidocs', 'api', 'login', 'register', 'admin', 'questionnaire', 'recs', 'inbox', 'profile', 'e2e'];
   var runner = { enabled: false, results: {} };
 
   function statusLabel(s) {
