@@ -20,6 +20,7 @@
       --text:        #1C1B2E;
       --muted:       #635D80;
       --nav-w:       220px;
+      --nav-green:   #04F06A; /* Wavestone "Energy Green" — exakt wie in der App-Sidebar (app.css --ws-green) */
       --r:           8px;
     }
     @media (prefers-color-scheme: dark) {
@@ -72,23 +73,25 @@
     }
     .sidenav-logo {
       padding: 0 20px 20px;
-      border-bottom: 1px solid rgba(255,255,255,.12);
-      margin-bottom: 16px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 12px;
     }
     .sidenav-logo-name {
-      font-size: 1.25rem;
-      font-weight: 800;
+      font-family: 'Aptos', 'Inter', sans-serif;
+      font-size: 2.6rem;
+      font-weight: 700;
       color: #fff;
-      letter-spacing: .04em;
+      line-height: 1;
       display: block;
     }
     .sidenav-logo-sub {
       font-size: .7rem;
-      color: rgba(255,255,255,.5);
-      text-transform: uppercase;
-      letter-spacing: .08em;
+      font-weight: 700;
+      color: var(--nav-green);
+      letter-spacing: .01em;
+      line-height: 1.3;
       display: block;
-      margin-top: 2px;
+      margin-top: 4px;
     }
     .sidenav-section-label {
       font-size: .65rem;
@@ -99,19 +102,33 @@
       padding: 16px 20px 4px;
     }
     .sidenav a {
-      display: block;
-      padding: 7px 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 12px;
+      padding: 9px 10px;
+      border-radius: 6px;
       font-size: .82rem;
-      color: rgba(255,255,255,.65);
+      font-weight: 500;
+      color: rgba(255,255,255,.72);
       text-decoration: none;
-      border-left: 2px solid transparent;
-      transition: color .15s, border-color .15s, background .15s;
+      transition: color .15s, background .15s;
     }
-    .sidenav a:hover,
+    .sidenav a .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      background: rgba(255,255,255,.4);
+    }
+    .sidenav a:hover { color: #fff; background: var(--c-nav-hover, rgba(255,255,255,.08)); }
     .sidenav a.active {
       color: #fff;
-      border-left-color: var(--green);
-      background: rgba(255,255,255,.06);
+      background: rgba(69,29,199,.35);
+    }
+    .sidenav a.active .dot {
+      background: var(--nav-green);
+      box-shadow: 0 0 0 3px rgba(4,240,106,.25);
     }
     .sidenav-footer {
       margin-top: auto;
@@ -419,32 +436,32 @@
 <nav class="sidenav">
   <div class="sidenav-logo">
     <span class="sidenav-logo-name">WARP</span>
-    <span class="sidenav-logo-sub">Testdokumentation</span>
+    <span class="sidenav-logo-sub">Testsuite</span>
   </div>
 
   <span class="sidenav-section-label">Unit-Tests</span>
-  <a href="#auth">Authentifizierung</a>
-  <a href="#sec">Sicherheit</a>
-  <a href="#proj">Projektverwaltung</a>
-  <a href="#account">Konto &amp; Passwort</a>
-  <a href="#aidocs">KI-Dokumente</a>
-  <a href="#api">API &amp; Postkorb</a>
+  <a href="#auth"><span class="dot"></span>Authentifizierung</a>
+  <a href="#sec"><span class="dot"></span>Sicherheit</a>
+  <a href="#proj"><span class="dot"></span>Projektverwaltung</a>
+  <a href="#account"><span class="dot"></span>Konto &amp; Passwort</a>
+  <a href="#aidocs"><span class="dot"></span>KI-Dokumente</a>
+  <a href="#api"><span class="dot"></span>API &amp; Postkorb</a>
 
   <span class="sidenav-section-label">Frontend-Tests</span>
-  <a href="#login">Login</a>
-  <a href="#register">Registrierung</a>
-  <a href="#admin">Administration</a>
-  <a href="#questionnaire">Fragenkatalog</a>
-  <a href="#recs">Handlungsempfehlungen</a>
-  <a href="#inbox">Postkorb UI</a>
-  <a href="#profile">Profil &amp; Benachrichtigungen</a>
+  <a href="#login"><span class="dot"></span>Login</a>
+  <a href="#register"><span class="dot"></span>Registrierung</a>
+  <a href="#admin"><span class="dot"></span>Administration</a>
+  <a href="#questionnaire"><span class="dot"></span>Fragenkatalog</a>
+  <a href="#recs"><span class="dot"></span>Handlungsempfehlungen</a>
+  <a href="#inbox"><span class="dot"></span>Postkorb UI</a>
+  <a href="#profile"><span class="dot"></span>Profil &amp; Benachrichtigungen</a>
 
   <span class="sidenav-section-label">E2E Live</span>
-  <a href="#e2e">Vollständiger Workflow</a>
+  <a href="#e2e"><span class="dot"></span>Vollständiger Workflow</a>
 
   <span class="sidenav-section-label">Ausführung</span>
-  <a href="#run">Befehle</a>
-  <a href="#infra">Infrastruktur</a>
+  <a href="#run"><span class="dot"></span>Befehle</a>
+  <a href="#infra"><span class="dot"></span>Infrastruktur</a>
 
   <div class="sidenav-footer">Stand: Oktober 2026</div>
 </nav>
