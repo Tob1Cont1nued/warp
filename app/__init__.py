@@ -274,7 +274,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
         },
     },
     "login": {
-        "file": "tests/test_login.py", "browser": True,
+        "file": "tests/step_defs/test_login_steps.py", "browser": True,
         "tests": {
             "P1": "test_p1_login_seite_elemente_sichtbar",
             "P2": "test_p2_admin_login_leitet_auf_admin_weiter",
@@ -285,7 +285,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
         },
     },
     "register": {
-        "file": "tests/test_register.py", "browser": True,
+        "file": "tests/step_defs/test_register_steps.py", "browser": True,
         "tests": {
             "P1": "test_p1_register_seite_elemente_sichtbar",
             "P2": "test_p2_neuer_benutzer_wird_angelegt_und_weitergeleitet",
@@ -296,7 +296,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
         },
     },
     "admin": {
-        "file": "tests/test_admin.py", "browser": True,
+        "file": "tests/step_defs/test_admin_steps.py", "browser": True,
         "tests": {
             "P1": "test_p1_admin_seite_elemente_sichtbar",
             "P2": "test_p2_admin_legt_benutzer_an",
@@ -307,7 +307,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
         },
     },
     "questionnaire": {
-        "file": "tests/test_questionnaire.py", "browser": True,
+        "file": "tests/step_defs/test_questionnaire_steps.py", "browser": True,
         "tests": {
             "P1": "test_p1_questionnaire_elemente_sichtbar",
             "P2": "test_p2_antwort_wird_nach_reload_gespeichert",
@@ -318,7 +318,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
         },
     },
     "recs": {
-        "file": "tests/test_recommendations.py", "browser": True,
+        "file": "tests/step_defs/test_recommendations_steps.py", "browser": True,
         "tests": {
             "R1": "test_r1_recs_card_visible_with_low_answers",
             "R2": "test_r2_recs_card_hidden_without_low_answers",
@@ -329,7 +329,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
         },
     },
     "inbox": {
-        "file": "tests/test_inbox.py", "browser": True,
+        "file": "tests/step_defs/test_inbox_steps.py", "browser": True,
         "tests": {
             "I1": "test_i1_admin_sees_postkorb_in_sidebar",
             "I2": "test_i2_admin_opens_inbox_via_sidebar",
@@ -339,7 +339,7 @@ TEST_REGISTRY: Dict[str, Dict[str, Any]] = {
         },
     },
     "profile": {
-        "file": "tests/test_profile.py", "browser": True,
+        "file": "tests/step_defs/test_profile_steps.py", "browser": True,
         "tests": {
             "P1": "test_p1_profilbutton_auf_mehreren_seiten_sichtbar",
             "P2": "test_p2_administration_sichtbar_fuer_superuser",

@@ -255,6 +255,7 @@
     .badge-unit     { background: var(--purple-lite); color: var(--purple-mid); }
     .badge-e2e      { background: var(--green-lite);  color: #077040; }
     .badge-frontend { background: var(--amber-lite);  color: var(--amber); }
+    .badge-bdd      { background: #E0F2FE; color: #0369A1; }
     .badge-pos      { background: #E6F7EE; color: #077040; }
     .badge-neg      { background: #FEE2E2; color: #B91C1C; }
     .badge-pending  { background: transparent; border: 1px dashed var(--muted); color: var(--muted); }
@@ -264,12 +265,14 @@
       .badge-unit     { background: #2A2350; color: #A78BFA; }
       .badge-e2e      { background: #0A2E1C; color: #34D399; }
       .badge-frontend { background: #2D1E07; color: #FCD34D; }
+      .badge-bdd      { background: #0C2D48; color: #7DD3FC; }
     }
     :root[data-theme="dark"] .badge-pos { background: #0A2E1C; color: #4ADE80; }
     :root[data-theme="dark"] .badge-neg { background: #2D1010; color: #F87171; }
     :root[data-theme="dark"] .badge-unit     { background: #2A2350; color: #A78BFA; }
     :root[data-theme="dark"] .badge-e2e      { background: #0A2E1C; color: #34D399; }
     :root[data-theme="dark"] .badge-frontend { background: #2D1E07; color: #FCD34D; }
+    :root[data-theme="dark"] .badge-bdd      { background: #0C2D48; color: #7DD3FC; }
 
     /* ── Test-Runner (Play-Buttons) ─────────────────────────────────── */
     .runner-banner {
@@ -504,6 +507,7 @@
   <div class="legend">
     <div class="legend-item"><span class="badge badge-unit">Unit</span> Flask Test Client, kein Browser</div>
     <div class="legend-item"><span class="badge badge-frontend">Frontend</span> Playwright, lokaler Server</div>
+    <div class="legend-item"><span class="badge badge-bdd">Gherkin</span> Szenario in tests/features/*.feature, Schritte in tests/step_defs/</div>
     <div class="legend-item"><span class="badge badge-e2e">E2E Live</span> Playwright, Render-Produktiv</div>
     <div class="legend-item"><span class="badge badge-pos">P</span> Positiv-Test (Happy Path)</div>
     <div class="legend-item"><span class="badge badge-neg">N</span> Negativ-Test (Fehlerfall)</div>
@@ -631,8 +635,10 @@
   <div class="section" id="login">
     <div class="section-header">
       <span class="section-title">Login</span>
-      <code class="section-file">tests/test_login.py</code>
+      <code class="section-file">tests/features/login.feature</code>
+      <code class="section-file">tests/step_defs/test_login_steps.py</code>
       <span class="badge badge-frontend">Frontend</span>
+      <span class="badge badge-bdd">Gherkin</span>
     </div>
     <p class="section-desc">Playwright-Tests für die Login-Seite im echten Browser. Prüft UI-Elemente, Weiterleitungen nach Login und Fehlermeldungen bei ungültigen Eingaben.</p>
     <div class="table-wrap">
@@ -653,8 +659,10 @@
   <div class="section" id="register">
     <div class="section-header">
       <span class="section-title">Registrierung</span>
-      <code class="section-file">tests/test_register.py</code>
+      <code class="section-file">tests/features/register.feature</code>
+      <code class="section-file">tests/step_defs/test_register_steps.py</code>
       <span class="badge badge-frontend">Frontend</span>
+      <span class="badge badge-bdd">Gherkin</span>
     </div>
     <p class="section-desc">Playwright-Tests für die Registrierungsseite. Prüft erfolgreiche Kontoanlage, Navigation zur Login-Seite und Validierungsfehler.</p>
     <div class="table-wrap">
@@ -675,8 +683,10 @@
   <div class="section" id="admin">
     <div class="section-header">
       <span class="section-title">Administration</span>
-      <code class="section-file">tests/test_admin.py</code>
+      <code class="section-file">tests/features/admin.feature</code>
+      <code class="section-file">tests/step_defs/test_admin_steps.py</code>
       <span class="badge badge-frontend">Frontend</span>
+      <span class="badge badge-bdd">Gherkin</span>
     </div>
     <p class="section-desc">Playwright-Tests für das Admin-Panel. Prüft Benutzerverwaltung (Anlegen, Sperren) und Zugriffskontrolle auf /admin.</p>
     <div class="table-wrap">
@@ -697,8 +707,10 @@
   <div class="section" id="questionnaire">
     <div class="section-header">
       <span class="section-title">Fragenkatalog</span>
-      <code class="section-file">tests/test_questionnaire.py</code>
+      <code class="section-file">tests/features/questionnaire.feature</code>
+      <code class="section-file">tests/step_defs/test_questionnaire_steps.py</code>
       <span class="badge badge-frontend">Frontend</span>
+      <span class="badge badge-bdd">Gherkin</span>
     </div>
     <p class="section-desc">Playwright-Tests für den Fragebogen. Prüft UI-Darstellung, AJAX-Autosave und Zugriffskontrolle auf Projektebene.</p>
     <div class="table-wrap">
@@ -719,8 +731,10 @@
   <div class="section" id="recs">
     <div class="section-header">
       <span class="section-title">Handlungsempfehlungen</span>
-      <code class="section-file">tests/test_recommendations.py</code>
+      <code class="section-file">tests/features/recommendations.feature</code>
+      <code class="section-file">tests/step_defs/test_recommendations_steps.py</code>
       <span class="badge badge-frontend">Frontend</span>
+      <span class="badge badge-bdd">Gherkin</span>
     </div>
     <p class="section-desc">Playwright-Tests für den Empfehlungsbereich auf dem Auswertungs-Tab. Echter User-Flow: Login → Dashboard → Projekt über Sidebar anlegen → Fragen beantworten → Auswertung-Tab klicken. Kein direkter URL-Aufruf.</p>
     <div class="table-wrap">
@@ -741,8 +755,10 @@
   <div class="section" id="inbox">
     <div class="section-header">
       <span class="section-title">Postkorb UI</span>
-      <code class="section-file">tests/test_inbox.py</code>
+      <code class="section-file">tests/features/inbox.feature</code>
+      <code class="section-file">tests/step_defs/test_inbox_steps.py</code>
       <span class="badge badge-frontend">Frontend</span>
+      <span class="badge badge-bdd">Gherkin</span>
     </div>
     <p class="section-desc">Playwright-Tests für den Postkorb. Echter User-Flow: Admin navigiert über den „Postkorb"-Link in der Sidebar. Kein direkter URL-Aufruf für den Happy-Path.</p>
     <div class="table-wrap">
@@ -843,8 +859,10 @@
   <div class="section" id="profile">
     <div class="section-header">
       <span class="section-title">Profil &amp; Benachrichtigungen</span>
-      <code class="section-file">tests/test_profile.py</code>
+      <code class="section-file">tests/features/profile.feature</code>
+      <code class="section-file">tests/step_defs/test_profile_steps.py</code>
       <span class="badge badge-frontend">Frontend</span>
+      <span class="badge badge-bdd">Gherkin</span>
     </div>
     <p class="section-desc">Playwright-Tests für den Profil-Button oben rechts (Dropdown mit Administration/Konto/Abmelden) und die Postkorb-Glocke, die seit dieser Session auf jeder Seite statt nur auf drei Admin-Templates verfügbar ist.</p>
     <div class="table-wrap">
@@ -890,8 +908,8 @@
     </div>
 
     <div class="cmd-section">
-      <div class="cmd-label">Einzelne Test-Suite (Frontend)</div>
-      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/test_recommendations.py tests/test_inbox.py</span> --browser chromium -v</code>
+      <div class="cmd-label">Einzelne Test-Suite (Frontend / Gherkin)</div>
+      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/step_defs/test_recommendations_steps.py tests/step_defs/test_inbox_steps.py</span> --browser chromium -v</code>
       <p class="cmd-note">Flask-Server auf localhost:5000 wird automatisch gestartet und am Ende gestoppt.</p>
     </div>
 
@@ -908,9 +926,8 @@
 
     <div class="cmd-section">
       <div class="cmd-label">Alle Tests (Unit + Frontend)</div>
-      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/unit/ tests/test_login.py tests/test_register.py \
-      tests/test_admin.py tests/test_questionnaire.py \
-      tests/test_recommendations.py tests/test_inbox.py</span> --browser chromium -v</code>
+      <code class="cmd"><span class="kw">pytest</span> <span class="arg">tests/unit/ tests/step_defs/</span> --browser chromium -v</code>
+      <p class="cmd-note">Die Frontend-Tests liegen als Gherkin-Szenarien in tests/features/*.feature vor, ausgeführt über die Schritt-Definitionen in tests/step_defs/.</p>
     </div>
   </div>
 
@@ -924,7 +941,8 @@
       <table>
         <thead><tr><th>Komponente</th><th>Beschreibung</th></tr></thead>
         <tbody>
-          <tr><td class="tc-id">Framework</td><td class="tc-desc">pytest + pytest-playwright (Chromium)</td></tr>
+          <tr><td class="tc-id">Framework</td><td class="tc-desc">pytest + pytest-playwright (Chromium) + pytest-bdd (Gherkin) für die Frontend-Tests</td></tr>
+          <tr><td class="tc-id">Gherkin</td><td class="tc-desc">Szenarien auf Deutsch in <code>tests/features/*.feature</code> (<code># language: de</code>), Schritt-Definitionen in <code>tests/step_defs/</code>. Gemeinsame Schritte (Login, Redirects, Fehlermeldungen) liegen in <code>tests/step_defs/conftest.py</code>, damit sie allen Feature-Dateien automatisch zur Verfügung stehen.</td></tr>
           <tr><td class="tc-id">Unit-Client</td><td class="tc-desc">Flask Test Client (CSRF deaktiviert, SQLite in-memory)</td></tr>
           <tr><td class="tc-id">Live-Server</td><td class="tc-desc">Fixture <code>live_server</code> startet Flask über <code>run.py</code> auf localhost:5000 (wird automatisch beendet)</td></tr>
           <tr><td class="tc-id">Test-DB</td><td class="tc-desc">SQLite-Datei <code>warp.db</code> (lokal, nicht in git). Bei sauberem Start neu anlegen: Datei löschen, Flask erstellt sie mit Admin <em>admin / warp2024</em>.</td></tr>
