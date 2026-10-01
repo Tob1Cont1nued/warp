@@ -3,6 +3,12 @@ Konfigurations-Overrides für Remote-Tests gegen die Produktions-URL.
 Diese conftest überschreibt die lokalen Server-Fixtures aus tests/conftest.py.
 """
 import pytest
+from dotenv import load_dotenv
+
+# Lädt .env im Projektroot (WARP_E2E_USERNAME/WARP_E2E_PASSWORD), bevor
+# test_assessment.py seine Modul-Konstanten mit os.environ.get(...) auswertet.
+# conftest.py wird von pytest vor dem Testmodul im selben Verzeichnis geladen.
+load_dotenv()
 
 PROD_URL = "https://warp-5ld0.onrender.com"
 
