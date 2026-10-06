@@ -171,6 +171,34 @@ def _seed_questions_if_needed() -> None:
     print(f"[WARP] Fragenkatalog ({q_total} Fragen, {len(PY_CATS)} Kategorien) in DB geladen.")
 
 
+def _seed_process_catalog_if_needed() -> None:
+    from .data.questions_process import CATEGORIES as PROC_CATS
+    exists = db.session.execute(
+        db.select(Category.id).where(Category.catalog_type == "process").limit(1)
+    ).first()
+    if exists:
+        return
+    for sort_idx, cat_data in enumerate(PROC_CATS):
+        db.session.add(Category(
+            id=cat_data["id"],
+            title=cat_data["title"],
+            parent=cat_data["parent"],
+            description=cat_data.get("description", ""),
+            sort_order=sort_idx,
+            catalog_type="process",
+        ))
+        for q_idx, q_data in enumerate(cat_data["questions"]):
+            db.session.add(Question(
+                id=q_data["id"],
+                category_id=cat_data["id"],
+                text=q_data["text"],
+                hint=q_data.get("hint"),
+                is_new=False,
+                sort_order=q_idx,
+            ))
+    db.session.commit()
+
+
 # ---------------------------------------------------------------------------
 # Testdokumentation: Registry für die Play-Buttons (app/static/testdokumentation.html)
 #
@@ -563,6 +591,12 @@ def create_app() -> Flask:
         return render_template("403.html"), 403
 
     def _db_question_count(catalog_type: str = 'assessment') -> int:
+        try:
+            _seed_process_catalog_if_needed()
+        except Exception as e:
+            db.session.rollback()
+            print(f"[WARP] Prozess-Katalog-Seed übersprungen: {e}")
+
         return db.session.execute(
             db.select(db.func.count(Question.id))
             .join(Category, Question.category_id == Category.id)
