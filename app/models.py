@@ -62,6 +62,9 @@ class Project(db.Model):
         cascade="all, delete-orphan",
         order_by="WorkshopQuestion.sort_order",
     )
+    process_model = db.relationship(
+        "ProcessModel", uselist=False, cascade="all, delete-orphan",
+    )
 
     def answers_dict(self) -> dict:
         return {a.question_id: a.answer_id for a in self.answers if a.answer_id}
@@ -172,3 +175,101 @@ class GeneratedDocument(db.Model):
     __table_args__ = (
         db.UniqueConstraint("project_id", "doc_type", name="uq_project_doctype"),
     )
+
+
+class ProcessModel(db.Model):
+    __tablename__ = "process_model"
+    id = db.Column(db.Integer, primary_key=True)
+    project_id = db.Column(db.Integer, db.ForeignKey("project.id"), nullable=False, unique=True)
+    name = db.Column(db.String(200), nullable=False, default="Deployment-Prozess")
+    version = db.Column(db.Integer, nullable=False, default=1)
+    created_at = db.Column(db.DateTime, default=dt.datetime.utcnow, nullable=False)
+    updated_at = db.Column(db.DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow, nullable=False)
+
+    phases = db.relationship(
+        "ProcessPhase", back_populates="model",
+        cascade="all, delete-orphan", order_by="ProcessPhase.sort_order",
+    )
+    roles = db.relationship(
+        "ProcessRole", back_populates="model",
+        cascade="all, delete-orphan", order_by="ProcessRole.name",
+    )
+    interfaces = db.relationship(
+        "ProcessInterface", back_populates="model",
+        cascade="all, delete-orphan", order_by="ProcessInterface.name",
+    )
+    dependencies = db.relationship(
+        "ProcessDependency", back_populates="model",
+        cascade="all, delete-orphan",
+    )
+
+
+class ProcessPhase(db.Model):
+    __tablename__ = "process_phase"
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey("process_model.id"), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    model = db.relationship("ProcessModel", back_populates="phases")
+    steps = db.relationship(
+        "ProcessStep", back_populates="phase",
+        cascade="all, delete-orphan", order_by="ProcessStep.sort_order",
+    )
+
+
+class ProcessRole(db.Model):
+    __tablename__ = "process_role"
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey("process_model.id"), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    deputy_role_id = db.Column(db.Integer, db.ForeignKey("process_role.id"), nullable=True)
+
+    model = db.relationship("ProcessModel", back_populates="roles")
+    deputy_role = db.relationship("ProcessRole", remote_side=[id])
+
+
+class ProcessStep(db.Model):
+    __tablename__ = "process_step"
+    id = db.Column(db.Integer, primary_key=True)
+    phase_id = db.Column(db.Integer, db.ForeignKey("process_phase.id"), nullable=False)
+    responsible_role_id = db.Column(db.Integer, db.ForeignKey("process_role.id"), nullable=True)
+    name = db.Column(db.String(200), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    is_test_step = db.Column(db.Boolean, default=False, nullable=False)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    phase = db.relationship("ProcessPhase", back_populates="steps")
+    responsible_role = db.relationship("ProcessRole")
+
+
+class ProcessDependency(db.Model):
+    """Abhängigkeit eines Schritts: entweder von einem anderen Schritt oder von einem
+    benannten System/Umgebung/Datenquelle (dann depends_on_label statt depends_on_step_id)."""
+    __tablename__ = "process_dependency"
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey("process_model.id"), nullable=False)
+    step_id = db.Column(db.Integer, db.ForeignKey("process_step.id"), nullable=False)
+    depends_on_step_id = db.Column(db.Integer, db.ForeignKey("process_step.id"), nullable=True)
+    depends_on_label = db.Column(db.String(200), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+
+    model = db.relationship("ProcessModel", back_populates="dependencies")
+    step = db.relationship("ProcessStep", foreign_keys=[step_id])
+    depends_on_step = db.relationship("ProcessStep", foreign_keys=[depends_on_step_id])
+
+
+class ProcessInterface(db.Model):
+    __tablename__ = "process_interface"
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey("process_model.id"), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    source_system = db.Column(db.String(200), nullable=True)
+    target_system = db.Column(db.String(200), nullable=True)
+    owner_role_id = db.Column(db.Integer, db.ForeignKey("process_role.id"), nullable=True)
+    description = db.Column(db.Text, nullable=True)
+
+    model = db.relationship("ProcessModel", back_populates="interfaces")
+    owner_role = db.relationship("ProcessRole")
