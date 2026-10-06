@@ -202,6 +202,10 @@ class ProcessModel(db.Model):
         "ProcessDependency", back_populates="model",
         cascade="all, delete-orphan",
     )
+    environments = db.relationship(
+        "ProcessEnvironment", back_populates="model",
+        cascade="all, delete-orphan", order_by="ProcessEnvironment.sort_order",
+    )
 
 
 class ProcessPhase(db.Model):
@@ -273,3 +277,34 @@ class ProcessInterface(db.Model):
 
     model = db.relationship("ProcessModel", back_populates="interfaces")
     owner_role = db.relationship("ProcessRole")
+
+
+class ProcessEnvironment(db.Model):
+    """Umgebung wie Entwicklung, Test oder Integration. stage ist frei wählbar, z.B. 'entwicklung', 'test', 'integration', 'prod'."""
+    __tablename__ = "process_environment"
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey("process_model.id"), nullable=False)
+    name = db.Column(db.String(200), nullable=False)
+    stage = db.Column(db.String(40), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    sort_order = db.Column(db.Integer, nullable=False, default=0)
+
+    model = db.relationship("ProcessModel", back_populates="environments")
+    versions = db.relationship(
+        "ProcessEnvironmentVersion", back_populates="environment",
+        cascade="all, delete-orphan", order_by="ProcessEnvironmentVersion.deployed_at.desc()",
+    )
+
+
+class ProcessEnvironmentVersion(db.Model):
+    """Versionsstand, der zu einem Zeitpunkt auf einer Umgebung bereitliegt."""
+    __tablename__ = "process_environment_version"
+    id = db.Column(db.Integer, primary_key=True)
+    environment_id = db.Column(db.Integer, db.ForeignKey("process_environment.id"), nullable=False)
+    version = db.Column(db.String(100), nullable=False)
+    deployed_at = db.Column(db.DateTime, nullable=True)
+    deployed_by_role_id = db.Column(db.Integer, db.ForeignKey("process_role.id"), nullable=True)
+    note = db.Column(db.Text, nullable=True)
+
+    environment = db.relationship("ProcessEnvironment", back_populates="versions")
+    deployed_by_role = db.relationship("ProcessRole")

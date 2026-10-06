@@ -7,7 +7,10 @@ TC-PZ-02  Rolle verweist auf Vertretung
 TC-PZ-03  Abhängigkeit auf externes System ohne Schritt-Referenz
 TC-PZ-04  Projekt löschen entfernt Prozessmodell samt Inhalt
 TC-PZ-05  Pro Projekt nur ein Prozessmodell erlaubt
+TC-PZ-06  Umgebung mit Versionsständen, neuester Stand zuerst
 """
+
+import datetime as dt
 
 import pytest
 from sqlalchemy.exc import IntegrityError
@@ -127,6 +130,29 @@ class TestProzessmodell:
             assert db.session.execute(
                 db.select(ProcessRole).where(ProcessRole.model_id == model_id)
             ).first() is None
+
+    def test_tc_pz_06_umgebung_mit_versionsstaenden(self, app):
+        from app.models import (
+            db, ProcessModel, ProcessEnvironment, ProcessEnvironmentVersion,
+        )
+        project_id = _new_project(app, "_unit_pz_06")
+        with app.app_context():
+            model = ProcessModel(project_id=project_id)
+            db.session.add(model)
+            db.session.flush()
+            env = ProcessEnvironment(model_id=model.id, name="Testumgebung A", stage="test")
+            db.session.add(env)
+            db.session.flush()
+            db.session.add(ProcessEnvironmentVersion(
+                environment_id=env.id, version="1.2.0", deployed_at=dt.datetime(2026, 9, 1),
+            ))
+            db.session.add(ProcessEnvironmentVersion(
+                environment_id=env.id, version="1.3.0", deployed_at=dt.datetime(2026, 9, 20),
+            ))
+            db.session.commit()
+
+            loaded = db.session.get(ProcessEnvironment, env.id)
+            assert [v.version for v in loaded.versions] == ["1.3.0", "1.2.0"]
 
     def test_tc_pz_05_ein_prozessmodell_pro_projekt(self, app):
         from app.models import db, ProcessModel
