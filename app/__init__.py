@@ -1604,7 +1604,7 @@ def create_app() -> Flask:
         if request.method == "POST":
             name = request.form.get("name", "").strip() or "Neues Projekt"
             catalog_type = request.form.get("catalog_type", "assessment")
-            if catalog_type not in ("assessment", "workshop"):
+            if catalog_type not in ("assessment", "workshop", "process"):
                 catalog_type = "assessment"
             project = Project(
                 user_id=current_user.id,

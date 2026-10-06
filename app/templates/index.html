@@ -17,9 +17,10 @@
   </button>
   <div class="topbar-title">
     <h1>{{ project.name }}</h1>
-    <p>{% if project.catalog_type == 'workshop' %}Workshop{% else %}WARP Assessment{% endif %}</p>
+    <p>{% if project.catalog_type == 'workshop' %}Workshop{% elif project.catalog_type == 'process' %}Deployment-Prozess{% else %}WARP Assessment{% endif %}</p>
   </div>
-  <div class="progress-pill">
+  {% set is_process = project.catalog_type == 'process' %}
+  <div class="progress-pill" {% if is_process %}style="display:none"{% endif %}>
     <span class="progress-label">Beantwortet</span>
     <span class="progress-value"><span id="js-answered">0</span> / {{ total_questions }}</span>
     <div class="progress-bar"><div class="progress-bar-fill" id="js-progress-bar"></div></div>
@@ -40,8 +41,9 @@
         <path d="M5 5h6M5 8h6M5 11h3"/>
       </svg>
       Fragenkatalog
-      <span class="tab-count" id="js-tab-count">0&nbsp;/&nbsp;{{ total_questions }}</span>
+      <span class="tab-count" id="js-tab-count" {% if is_process %}style="display:none"{% endif %}>0&nbsp;/&nbsp;{{ total_questions }}</span>
     </button>
+    {% if not is_process %}
     <button class="tab-btn" data-tab="auswertung" role="tab" aria-selected="false">
       <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
         <rect x="1" y="1" width="14" height="14" rx="2"/>
@@ -49,7 +51,8 @@
       </svg>
       Auswertung
     </button>
-    {% if project.catalog_type != 'workshop' %}
+    {% endif %}
+    {% if project.catalog_type not in ('workshop', 'process') %}
     <button class="tab-btn" data-tab="dokumente" role="tab" aria-selected="false">
       <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6">
         <path d="M4 2h6l4 4v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z"/>
@@ -150,6 +153,9 @@
               {% if q.hint %}<em>{{ q.hint }}</em>{% else %}<span class="muted">&mdash;</span>{% endif %}
             </td>
             <td class="col-answer" data-label="Bewertung">
+              {% if is_process %}
+              <span class="muted">Antwort im Notizfeld</span>
+              {% else %}
               <select class="js-answer" data-cat="{{ cat.id }}" data-qid="{{ q.id }}">
                 <option value="">Bitte wählen …</option>
                 {% for opt in answer_options %}
@@ -159,6 +165,7 @@
                   </option>
                 {% endfor %}
               </select>
+              {% endif %}
             </td>
             <td class="col-notes" data-label="Notizen (optional)">
               <textarea class="js-note" data-qid="{{ q.id }}" rows="2"
@@ -172,11 +179,13 @@
     {% endfor %}
 
     {# CTA am Ende des Fragenkatalogs #}
+    {% if not is_process %}
     <div style="display:flex;justify-content:flex-end;margin-bottom:24px">
       <button class="btn btn-primary" onclick="switchTab('auswertung')" style="width:auto;padding:12px 28px">
         Weiter zur Auswertung &rarr;
       </button>
     </div>
+    {% endif %}
 
   </div>{# /tab-fragen #}
 
@@ -343,7 +352,7 @@
   </div>{# /tab-verwalten #}
   {% endif %}
 
-  {% if project.catalog_type != 'workshop' %}
+  {% if project.catalog_type not in ('workshop', 'process') %}
   <div class="tab-panel" id="tab-dokumente">
 
     <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#fff 0%,var(--ws-blue-soft) 100%);border:1px solid rgba(69,29,199,.1)">
