@@ -68,7 +68,10 @@ from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from .models import db, User, Project, Answer, Category, Question, InboxMessage, GeneratedDocument, WorkshopQuestion
+from .models import (
+    db, User, Project, Answer, Category, Question, InboxMessage, GeneratedDocument, WorkshopQuestion,
+    ProcessModel, ProcessStep, ProcessDependency,
+)
 from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER, CATEGORIES as _PY_CATS
 
 # Lookup: question_id → recommendations dict (low/mid), built from questions.py
@@ -1680,6 +1683,154 @@ def create_app() -> Flask:
         q = WorkshopQuestion(id=qid, project_id=pid, text=text, hint=hint, sort_order=max_order + 1)
         db.session.add(q)
         db.session.commit()
+    def _get_or_create_process_model(project_id: int) -> "ProcessModel":
+        model = db.session.execute(
+            db.select(ProcessModel).where(ProcessModel.project_id == project_id)
+        ).scalar_one_or_none()
+        if model is None:
+            model = ProcessModel(project_id=project_id)
+            db.session.add(model)
+            db.session.commit()
+        return model
+
+    def _step_to_dict(step: "ProcessStep") -> dict:
+        return {
+            "id": step.id,
+            "name": step.name,
+            "description": step.description or "",
+            "phase_id": step.phase_id,
+            "phase_name": step.phase.name if step.phase else None,
+            "x": step.x if step.x is not None else 0,
+            "y": step.y if step.y is not None else 0,
+        }
+
+    def _dependency_to_dict(dep: "ProcessDependency") -> dict:
+        return {
+            "id": dep.id,
+            "from_id": dep.depends_on_step_id,
+            "to_id": dep.step_id,
+        }
+
+    @app.route("/project/<int:pid>/prozesskarte")
+    @login_required
+    def process_map(pid: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        model = _get_or_create_process_model(pid)
+        nodes = [_step_to_dict(s) for s in model.steps]
+        edges = [
+            _dependency_to_dict(d) for d in model.dependencies
+            if d.depends_on_step_id is not None
+        ]
+        return render_template(
+            "process_map.html",
+            project=project,
+            projects=current_user.projects,
+            nodes=nodes,
+            edges=edges,
+        )
+
+    @app.route("/project/<int:pid>/prozesskarte/knoten", methods=["POST"])
+    @login_required
+    def process_map_add_node(pid: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        data = request.get_json(silent=True) or {}
+        name = (data.get("name") or "").strip()
+        if not name:
+            return jsonify({"ok": False, "error": "name fehlt"}), 400
+        model = _get_or_create_process_model(pid)
+        step = ProcessStep(
+            model_id=model.id,
+            name=name[:200],
+            x=float(data.get("x", 0)),
+            y=float(data.get("y", 0)),
+        )
+        db.session.add(step)
+        db.session.commit()
+        return jsonify({"ok": True, "node": _step_to_dict(step)})
+
+    @app.route("/project/<int:pid>/prozesskarte/knoten/<int:node_id>", methods=["PATCH"])
+    @login_required
+    def process_map_update_node(pid: int, node_id: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        step = db.session.execute(
+            db.select(ProcessStep).where(ProcessStep.id == node_id, ProcessStep.model_id.in_(
+                db.select(ProcessModel.id).where(ProcessModel.project_id == pid)
+            ))
+        ).scalar_one_or_none()
+        if step is None:
+            abort(404)
+        data = request.get_json(silent=True) or {}
+        if "x" in data:
+            step.x = float(data["x"])
+        if "y" in data:
+            step.y = float(data["y"])
+        if "name" in data and data["name"].strip():
+            step.name = data["name"].strip()[:200]
+        if "description" in data:
+            step.description = (data["description"] or "").strip() or None
+        db.session.commit()
+        return jsonify({"ok": True, "node": _step_to_dict(step)})
+
+    @app.route("/project/<int:pid>/prozesskarte/knoten/<int:node_id>", methods=["DELETE"])
+    @login_required
+    def process_map_delete_node(pid: int, node_id: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        step = db.session.execute(
+            db.select(ProcessStep).where(ProcessStep.id == node_id, ProcessStep.model_id.in_(
+                db.select(ProcessModel.id).where(ProcessModel.project_id == pid)
+            ))
+        ).scalar_one_or_none()
+        if step is None:
+            abort(404)
+        db.session.delete(step)
+        db.session.commit()
+        return jsonify({"ok": True})
+
+    @app.route("/project/<int:pid>/prozesskarte/kante", methods=["POST"])
+    @login_required
+    def process_map_add_edge(pid: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        data = request.get_json(silent=True) or {}
+        from_id = data.get("from_id")
+        to_id = data.get("to_id")
+        if not from_id or not to_id or from_id == to_id:
+            return jsonify({"ok": False, "error": "ungültige Knoten"}), 400
+        model = _get_or_create_process_model(pid)
+        step_ids = {s.id for s in model.steps}
+        if from_id not in step_ids or to_id not in step_ids:
+            abort(404)
+        dep = ProcessDependency(model_id=model.id, step_id=to_id, depends_on_step_id=from_id)
+        db.session.add(dep)
+        db.session.commit()
+        return jsonify({"ok": True, "edge": _dependency_to_dict(dep)})
+
+    @app.route("/project/<int:pid>/prozesskarte/kante/<int:edge_id>", methods=["DELETE"])
+    @login_required
+    def process_map_delete_edge(pid: int, edge_id: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        dep = db.session.execute(
+            db.select(ProcessDependency).where(ProcessDependency.id == edge_id, ProcessDependency.model_id.in_(
+                db.select(ProcessModel.id).where(ProcessModel.project_id == pid)
+            ))
+        ).scalar_one_or_none()
+        if dep is None:
+            abort(404)
+        db.session.delete(dep)
+        db.session.commit()
+        return jsonify({"ok": True})
+
         return redirect(url_for("questionnaire", pid=pid) + "#verwalten")
 
     @app.route("/project/<int:pid>/workshop/question/<qid>/edit", methods=["POST"])

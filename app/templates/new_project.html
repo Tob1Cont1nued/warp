@@ -22,8 +22,8 @@
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <div class="field">
         <label>Projekttyp</label>
-        <div style="display:flex;gap:10px;margin-top:4px">
-          <label style="flex:1;cursor:pointer">
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+          <label style="cursor:pointer">
             <input type="radio" name="catalog_type" value="assessment" checked style="display:none" class="catalog-radio">
             <div class="catalog-type-card" data-for="assessment">
               <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0">
@@ -36,7 +36,7 @@
               </div>
             </div>
           </label>
-          <label style="flex:1;cursor:pointer">
+          <label style="cursor:pointer">
             <input type="radio" name="catalog_type" value="workshop" style="display:none" class="catalog-radio">
             <div class="catalog-type-card" data-for="workshop">
               <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0">
@@ -49,7 +49,7 @@
               </div>
             </div>
           </label>
-          <label style="flex:1;cursor:pointer">
+          <label style="cursor:pointer">
             <input type="radio" name="catalog_type" value="process" style="display:none" class="catalog-radio">
             <div class="catalog-type-card" data-for="process">
               <svg viewBox="0 0 16 16" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" style="flex-shrink:0">

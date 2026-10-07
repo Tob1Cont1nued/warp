@@ -206,6 +206,10 @@ class ProcessModel(db.Model):
         "ProcessEnvironment", back_populates="model",
         cascade="all, delete-orphan", order_by="ProcessEnvironment.sort_order",
     )
+    steps = db.relationship(
+        "ProcessStep", back_populates="model",
+        cascade="all, delete-orphan",
+    )
 
 
 class ProcessPhase(db.Model):
@@ -217,9 +221,11 @@ class ProcessPhase(db.Model):
     sort_order = db.Column(db.Integer, nullable=False, default=0)
 
     model = db.relationship("ProcessModel", back_populates="phases")
+    # Kein delete-orphan hier: Steps gehören primär zu ProcessModel (siehe dort), die
+    # Phase ist nur eine optionale Zuordnung. Ein Step darf die Phase wechseln oder
+    # verlieren, ohne gelöscht zu werden.
     steps = db.relationship(
-        "ProcessStep", back_populates="phase",
-        cascade="all, delete-orphan", order_by="ProcessStep.sort_order",
+        "ProcessStep", back_populates="phase", order_by="ProcessStep.sort_order",
     )
 
 
@@ -236,15 +242,21 @@ class ProcessRole(db.Model):
 
 
 class ProcessStep(db.Model):
+    """Ein Knoten auf der Prozesskarte. Gehört immer zu einem ProcessModel (für Kaskaden-Löschung),
+    die Phase ist optional – frei hinzugefügte Punkte können zunächst ohne Phase bestehen."""
     __tablename__ = "process_step"
     id = db.Column(db.Integer, primary_key=True)
-    phase_id = db.Column(db.Integer, db.ForeignKey("process_phase.id"), nullable=False)
+    model_id = db.Column(db.Integer, db.ForeignKey("process_model.id"), nullable=False)
+    phase_id = db.Column(db.Integer, db.ForeignKey("process_phase.id"), nullable=True)
     responsible_role_id = db.Column(db.Integer, db.ForeignKey("process_role.id"), nullable=True)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     is_test_step = db.Column(db.Boolean, default=False, nullable=False)
     sort_order = db.Column(db.Integer, nullable=False, default=0)
+    x = db.Column(db.Float, nullable=True)
+    y = db.Column(db.Float, nullable=True)
 
+    model = db.relationship("ProcessModel", back_populates="steps")
     phase = db.relationship("ProcessPhase", back_populates="steps")
     responsible_role = db.relationship("ProcessRole")
 

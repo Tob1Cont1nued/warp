@@ -51,11 +51,11 @@ class TestProzessmodell:
             db.session.flush()
 
             db.session.add(ProcessStep(
-                phase_id=test_phase.id, name="Regressionstest",
+                model_id=model.id, phase_id=test_phase.id, name="Regressionstest",
                 responsible_role_id=testmanager.id, is_test_step=True, sort_order=1,
             ))
             db.session.add(ProcessStep(
-                phase_id=dev_phase.id, name="Code-Review",
+                model_id=model.id, phase_id=dev_phase.id, name="Code-Review",
                 responsible_role_id=team_a.id, sort_order=1,
             ))
             db.session.add(ProcessInterface(
@@ -100,7 +100,7 @@ class TestProzessmodell:
             phase = ProcessPhase(model_id=model.id, name="Deployment")
             db.session.add(phase)
             db.session.flush()
-            step = ProcessStep(phase_id=phase.id, name="Datenladung")
+            step = ProcessStep(model_id=model.id, phase_id=phase.id, name="Datenladung")
             db.session.add(step)
             db.session.flush()
             db.session.add(ProcessDependency(
@@ -113,7 +113,7 @@ class TestProzessmodell:
             assert dep.depends_on_label == "Datawarehouse"
 
     def test_tc_pz_04_projekt_loeschen_entfernt_prozessmodell(self, app):
-        from app.models import db, Project, ProcessModel, ProcessRole
+        from app.models import db, Project, ProcessModel, ProcessRole, ProcessStep
         project_id = _new_project(app, "_unit_pz_04")
         with app.app_context():
             model = ProcessModel(project_id=project_id)
@@ -121,6 +121,7 @@ class TestProzessmodell:
             db.session.flush()
             model_id = model.id
             db.session.add(ProcessRole(model_id=model_id, name="Betrieb"))
+            db.session.add(ProcessStep(model_id=model_id, name="Freier Punkt ohne Phase", x=10, y=20))
             db.session.commit()
 
             db.session.delete(db.session.get(Project, project_id))
@@ -129,6 +130,9 @@ class TestProzessmodell:
             assert db.session.get(ProcessModel, model_id) is None
             assert db.session.execute(
                 db.select(ProcessRole).where(ProcessRole.model_id == model_id)
+            ).first() is None
+            assert db.session.execute(
+                db.select(ProcessStep).where(ProcessStep.model_id == model_id)
             ).first() is None
 
     def test_tc_pz_06_umgebung_mit_versionsstaenden(self, app):

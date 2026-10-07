@@ -1,0 +1,199 @@
+{# WARP Tool - Prozesskarte: frei erstellbarer Graph pro Projekt (Knoten = ProcessStep, Kanten = ProcessDependency) #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WARP &middot; {{ project.name }} &middot; Prozesskarte</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
+  <script src="{{ url_for('static', filename='js/cytoscape.min.js') }}"></script>
+  <style>
+    .map-toolbar { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
+    .map-toolbar .btn { width:auto; padding:8px 14px; font-size:.8rem; }
+    .map-toolbar .btn.active { background:var(--ws-blue-deep); }
+    .map-hint { font-size:.72rem; color:var(--c-text-muted); margin-left:auto; }
+    #map-canvas {
+      width:100%; height:calc(100vh - 190px); min-height:420px;
+      border:1px solid var(--c-border); border-radius:10px; background:#fafafa;
+      position:relative;
+    }
+    #map-tooltip {
+      position:fixed; display:none; max-width:260px; z-index:50;
+      background:#1a1a1a; color:#fff; font-size:.72rem; line-height:1.4;
+      padding:8px 10px; border-radius:6px; pointer-events:none;
+    }
+    #map-tooltip strong { display:block; margin-bottom:3px; font-size:.76rem; }
+  </style>
+</head>
+<body>
+
+<header class="topbar">
+  <button type="button" class="topbar-burger" id="js-burger" aria-label="Menü">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2">
+      <path d="M3 6h18M3 12h18M3 18h18"/>
+    </svg>
+  </button>
+  <div class="topbar-title">
+    <h1>{{ project.name }}</h1>
+    <p>Prozesskarte</p>
+  </div>
+  {% include '_profile_button.html' %}
+</header>
+
+{% set active_nav = 'fragenkatalog' %}
+{% include '_sidebar.html' %}
+
+<main class="main">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <h2 style="margin:0;font-size:1.05rem">Prozesskarte</h2>
+    <a href="{{ url_for('questionnaire', pid=project.id) }}" class="btn" style="width:auto;padding:8px 16px">
+      &larr; Zurück zum Fragenkatalog
+    </a>
+  </div>
+
+  <div class="map-toolbar">
+    <button type="button" class="btn btn-primary" id="js-mode-add">+ Punkt hinzufügen</button>
+    <button type="button" class="btn" id="js-mode-connect">Verbinden</button>
+    <button type="button" class="btn" id="js-delete-selected">Auswahl löschen</button>
+    <span class="map-hint" id="js-mode-hint">Klicke auf die Karte, um einen Punkt zu setzen.</span>
+  </div>
+
+  <div id="map-canvas"></div>
+  <div id="map-tooltip"></div>
+</main>
+
+<script>
+(function () {
+  var pid = {{ project.id }};
+  var initialNodes = {{ nodes | tojson }};
+  var initialEdges = {{ edges | tojson }};
+
+  function api(path, method, body) {
+    return fetch(path, {
+      method: method,
+      headers: {'Content-Type': 'application/json'},
+      body: body ? JSON.stringify(body) : undefined,
+    }).then(function (r) { return r.json(); });
+  }
+
+  var cyNodes = initialNodes.map(function (n) {
+    return { data: { id: 'n' + n.id, dbId: n.id, label: n.name, description: n.description, phase: n.phase_name },
+             position: { x: n.x, y: n.y } };
+  });
+  var cyEdges = initialEdges.map(function (e) {
+    return { data: { id: 'e' + e.id, dbId: e.id, source: 'n' + e.from_id, target: 'n' + e.to_id } };
+  });
+
+  var cy = cytoscape({
+    container: document.getElementById('map-canvas'),
+    elements: cyNodes.concat(cyEdges),
+    style: [
+      { selector: 'node', style: {
+          'background-color': '#451DC7', 'label': 'data(label)',
+          'color': '#000', 'font-size': 11, 'text-valign': 'bottom', 'text-margin-y': 6,
+          'width': 22, 'height': 22, 'border-width': 2, 'border-color': '#fff',
+          'text-wrap': 'wrap', 'text-max-width': '120px', 'text-halign': 'center',
+      }},
+      { selector: 'node:selected', style: { 'border-color': '#451DC7', 'border-width': 3, 'background-color': '#EDE8FC' } },
+      { selector: 'edge', style: {
+          'width': 2, 'line-color': '#9a9a9a', 'target-arrow-color': '#9a9a9a',
+          'target-arrow-shape': 'triangle', 'curve-style': 'bezier',
+      }},
+      { selector: 'edge:selected', style: { 'line-color': '#451DC7', 'target-arrow-color': '#451DC7', 'width': 3 } },
+    ],
+    layout: initialNodes.length ? { name: 'preset' } : { name: 'grid' },
+    minZoom: 0.2, maxZoom: 3,
+  });
+
+  // ── Punkt hinzufügen ──────────────────────────────────────────────
+  var addBtn = document.getElementById('js-mode-add');
+  var connectBtn = document.getElementById('js-mode-connect');
+  var hintEl = document.getElementById('js-mode-hint');
+  var mode = null; // null | 'add' | 'connect'
+  var connectFrom = null;
+
+  function setMode(next) {
+    mode = (mode === next) ? null : next;
+    connectFrom = null;
+    addBtn.classList.toggle('active', mode === 'add');
+    connectBtn.classList.toggle('active', mode === 'connect');
+    if (mode === 'add') hintEl.textContent = 'Klicke auf die Karte, um einen Punkt zu setzen.';
+    else if (mode === 'connect') hintEl.textContent = 'Klicke zuerst den Start-, dann den Zielpunkt.';
+    else hintEl.textContent = '';
+    cy.nodes().unselect();
+  }
+  addBtn.addEventListener('click', function () { setMode('add'); });
+  connectBtn.addEventListener('click', function () { setMode('connect'); });
+
+  cy.on('tap', function (evt) {
+    if (mode === 'add' && evt.target === cy) {
+      var name = window.prompt('Name des Punkts:');
+      if (!name || !name.trim()) return;
+      var pos = evt.position;
+      api('/project/' + pid + '/prozesskarte/knoten', 'POST', { name: name.trim(), x: pos.x, y: pos.y })
+        .then(function (res) {
+          if (!res.ok) { alert('Konnte Punkt nicht anlegen.'); return; }
+          cy.add({ data: { id: 'n' + res.node.id, dbId: res.node.id, label: res.node.name, description: res.node.description }, position: pos });
+        });
+    }
+  });
+
+  cy.on('tap', 'node', function (evt) {
+    if (mode !== 'connect') return;
+    var node = evt.target;
+    if (!connectFrom) {
+      connectFrom = node;
+      node.select();
+      hintEl.textContent = 'Jetzt den Zielpunkt anklicken.';
+      return;
+    }
+    if (connectFrom.id() === node.id()) { connectFrom = null; return; }
+    api('/project/' + pid + '/prozesskarte/kante', 'POST', { from_id: connectFrom.data('dbId'), to_id: node.data('dbId') })
+      .then(function (res) {
+        if (!res.ok) { alert('Konnte Verbindung nicht anlegen.'); return; }
+        cy.add({ data: { id: 'e' + res.edge.id, dbId: res.edge.id, source: connectFrom.id(), target: node.id() } });
+        connectFrom.unselect();
+        connectFrom = null;
+        hintEl.textContent = 'Klicke zuerst den Start-, dann den Zielpunkt.';
+      });
+  });
+
+  // ── Verschieben: Position speichern ─────────────────────────────────
+  cy.on('dragfree', 'node', function (evt) {
+    var node = evt.target;
+    var pos = node.position();
+    api('/project/' + pid + '/prozesskarte/knoten/' + node.data('dbId'), 'PATCH', { x: pos.x, y: pos.y });
+  });
+
+  // ── Löschen ───────────────────────────────────────────────────────
+  document.getElementById('js-delete-selected').addEventListener('click', function () {
+    var selected = cy.elements(':selected');
+    if (selected.length === 0) return;
+    if (!window.confirm('Auswahl wirklich löschen?')) return;
+    selected.forEach(function (el) {
+      var path = el.isNode()
+        ? '/project/' + pid + '/prozesskarte/knoten/' + el.data('dbId')
+        : '/project/' + pid + '/prozesskarte/kante/' + el.data('dbId');
+      api(path, 'DELETE').then(function (res) { if (res.ok) el.remove(); });
+    });
+  });
+
+  // ── Hover-Tooltip ─────────────────────────────────────────────────
+  var tooltip = document.getElementById('map-tooltip');
+  cy.on('mouseover', 'node', function (evt) {
+    var d = evt.target.data();
+    if (!d.description && !d.phase) return;
+    tooltip.innerHTML = '<strong>' + d.label + '</strong>' + (d.phase ? d.phase + '<br>' : '') + (d.description || '');
+    tooltip.style.display = 'block';
+  });
+  cy.on('mousemove', function (evt) {
+    if (tooltip.style.display !== 'block') return;
+    tooltip.style.left = (evt.originalEvent.clientX + 14) + 'px';
+    tooltip.style.top = (evt.originalEvent.clientY + 14) + 'px';
+  });
+  cy.on('mouseout', 'node', function () { tooltip.style.display = 'none'; });
+})();
+</script>
+
+</body>
+</html>
