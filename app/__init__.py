@@ -1700,6 +1700,8 @@ def create_app() -> Flask:
             "x": step.x if step.x is not None else 0,
             "y": step.y if step.y is not None else 0,
             "color": step.color or NODE_COLORS[0],
+            "width": step.width,
+            "height": step.height,
         }
 
     def _dependency_to_dict(dep: "ProcessDependency") -> dict:
@@ -1862,6 +1864,10 @@ def create_app() -> Flask:
         if "color" in data:
             color = data.get("color")
             step.color = color if color in NODE_COLORS else None
+        if "width" in data:
+            step.width = max(50.0, float(data["width"]))
+        if "height" in data:
+            step.height = max(24.0, float(data["height"]))
         db.session.commit()
         return jsonify({"ok": True, "node": _step_to_dict(step)})
 

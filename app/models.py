@@ -261,6 +261,9 @@ class ProcessStep(db.Model):
     y = db.Column(db.Float, nullable=True)
     # Akzentfarbe des Punkts auf der Prozesskarte (Hex), None = Standardfarbe.
     color = db.Column(db.String(20), nullable=True)
+    # Explizite Größe nach manuellem Skalieren; None = automatisch an die Beschriftung angepasst.
+    width = db.Column(db.Float, nullable=True)
+    height = db.Column(db.Float, nullable=True)
 
     model = db.relationship("ProcessModel", back_populates="steps")
     phase = db.relationship("ProcessPhase", back_populates="steps")

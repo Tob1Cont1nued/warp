@@ -278,7 +278,7 @@
 
   var cyNodes = initialNodes.map(function (n) {
     return {
-      data: { id: 'n' + n.id, dbId: n.id, label: n.name, description: n.description || '', phase: n.phase_name, color: n.color || NODE_COLORS[0] },
+      data: { id: 'n' + n.id, dbId: n.id, label: n.name, description: n.description || '', phase: n.phase_name, color: n.color || NODE_COLORS[0], width: n.width || null, height: n.height || null },
       position: { x: n.x, y: n.y },
     };
   });
@@ -311,7 +311,9 @@
           'shape': 'round-rectangle', 'z-index': 5,
           'background-color': 'data(color)', 'background-opacity': 0.16,
           'border-width': 2, 'border-color': 'data(color)',
-          'width': 'label', 'height': 'label', 'padding': '10px',
+          'width': function (ele) { return ele.data('width') || 'label'; },
+          'height': function (ele) { return ele.data('height') || 'label'; },
+          'padding': '10px',
           'label': 'data(label)', 'color': '#e5e7eb', 'font-size': 11,
           'text-valign': 'center', 'text-halign': 'center',
           'text-wrap': 'wrap', 'text-max-width': '150px',
@@ -963,11 +965,11 @@
       });
   });
 
-  // ── Rechtecke: Resize-Griff beim Hovern, Klick öffnet das Detail-Panel ──
+  // ── Punkte & Rechtecke: Resize-Griff beim Hovern (gleiches Prinzip für beide) ──
   var resizeHandle = null;
   var resizeClearTimer = null;
   var resizing = null;
-  var hoveredAreaForHandle = null;
+  var hoveredResizeNode = null;
 
   function clearResizeHandle() {
     if (resizeHandle) { resizeHandle.remove(); resizeHandle = null; }
@@ -979,9 +981,9 @@
     if (resizeClearTimer) { clearTimeout(resizeClearTimer); resizeClearTimer = null; }
   }
 
-  function showResizeHandleFor(area) {
+  function showResizeHandleFor(node) {
     clearResizeHandle();
-    var bb = area.renderedBoundingBox();
+    var bb = node.renderedBoundingBox();
     var handle = document.createElement('div');
     handle.className = 'map-resize-handle';
     handle.style.left = bb.x2 + 'px';
@@ -991,7 +993,7 @@
     handle.addEventListener('mousedown', function (evt) {
       evt.stopPropagation();
       evt.preventDefault();
-      startResizing(area);
+      startResizing(node);
     });
     stage.appendChild(handle);
     resizeHandle = handle;
@@ -1001,26 +1003,26 @@
     if (mode !== null || connecting || resizing) return;
     var rect = stage.getBoundingClientRect();
     var x = evt.clientX - rect.left, y = evt.clientY - rect.top;
-    // Liegt an dieser Stelle auch ein Punkt, hat der Vorrang vor dem Resize-Griff des Rechtecks.
-    var area = findNodeAtStagePoint(x, y) ? null : findAreaAtStagePoint(x, y);
-    if (area) {
-      if (!hoveredAreaForHandle || hoveredAreaForHandle.id() !== area.id()) {
-        hoveredAreaForHandle = area;
+    var target = findNodeAtStagePoint(x, y) || findAreaAtStagePoint(x, y);
+    if (target) {
+      if (!hoveredResizeNode || hoveredResizeNode.id() !== target.id()) {
+        hoveredResizeNode = target;
         cancelClearResizeHandle();
-        showResizeHandleFor(area);
+        showResizeHandleFor(target);
       }
-    } else if (hoveredAreaForHandle) {
-      hoveredAreaForHandle = null;
+    } else if (hoveredResizeNode) {
+      hoveredResizeNode = null;
       scheduleClearResizeHandle();
     }
   });
-  cy.on('pan zoom drag', function () { if (!resizing) { clearResizeHandle(); hoveredAreaForHandle = null; } });
+  cy.on('pan zoom drag', function () { if (!resizing) { clearResizeHandle(); hoveredResizeNode = null; } });
 
-  function startResizing(area) {
-    var pos = area.position();
+  function startResizing(node) {
+    var pos = node.position();
     resizing = {
-      area: area, startWidth: area.data('width'), startHeight: area.data('height'),
+      node: node, startWidth: node.width(), startHeight: node.height(),
       startPosX: pos.x, startPosY: pos.y, startX: null, startY: null,
+      minWidth: node.hasClass('area') ? 40 : 50, minHeight: node.hasClass('area') ? 30 : 24,
     };
     document.addEventListener('mousemove', onResizeMove);
     document.addEventListener('mouseup', onResizeUp);
@@ -1031,26 +1033,27 @@
     var zoom = cy.zoom();
     var dw = (evt.clientX - resizing.startX) / zoom;
     var dh = (evt.clientY - resizing.startY) / zoom;
-    var newWidth = Math.max(40, resizing.startWidth + dw);
-    var newHeight = Math.max(30, resizing.startHeight + dh);
+    var newWidth = Math.max(resizing.minWidth, resizing.startWidth + dw);
+    var newHeight = Math.max(resizing.minHeight, resizing.startHeight + dh);
     // Mittelpunkt um die halbe tatsächliche Größenänderung mitverschieben, damit
     // die linke obere Ecke fix bleibt und nur an der gezogenen Seite gewachsen wird.
     var appliedDw = newWidth - resizing.startWidth;
     var appliedDh = newHeight - resizing.startHeight;
-    resizing.area.data('width', newWidth);
-    resizing.area.data('height', newHeight);
-    resizing.area.position({ x: resizing.startPosX + appliedDw / 2, y: resizing.startPosY + appliedDh / 2 });
-    showResizeHandleFor(resizing.area);
+    resizing.node.data('width', newWidth);
+    resizing.node.data('height', newHeight);
+    resizing.node.position({ x: resizing.startPosX + appliedDw / 2, y: resizing.startPosY + appliedDh / 2 });
+    showResizeHandleFor(resizing.node);
   }
   function onResizeUp() {
     document.removeEventListener('mousemove', onResizeMove);
     document.removeEventListener('mouseup', onResizeUp);
     if (!resizing) return;
-    var area = resizing.area;
+    var node = resizing.node;
     resizing = null;
-    var pos = area.position();
-    api('/project/' + pid + '/prozesskarte/rechteck/' + area.data('dbId'), 'PATCH', {
-      width: area.data('width'), height: area.data('height'), x: pos.x, y: pos.y,
+    var pos = node.position();
+    var endpoint = node.hasClass('area') ? 'rechteck' : 'knoten';
+    api('/project/' + pid + '/prozesskarte/' + endpoint + '/' + node.data('dbId'), 'PATCH', {
+      width: node.data('width'), height: node.data('height'), x: pos.x, y: pos.y,
     });
   }
 

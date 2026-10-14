@@ -18,6 +18,7 @@ TC-PP-13  Rechteck anlegen, verschieben, umbenennen, einfärben, Transparenz/Ebe
 TC-PP-14  Ungültige Rechteck-Farbe/-Ebene fallen auf Standard zurück
 TC-PP-15  Rechteck löschen
 TC-PP-16  Rechteck eines anderen Projekts ist nicht über die eigene Projekt-ID erreichbar
+TC-PP-17  Punktgröße setzen (manuell), Mindestgröße wird erzwungen, Standard ist "automatisch" (null)
 """
 
 import pytest
@@ -246,3 +247,21 @@ class TestDeploymentProzessProjekt:
 
         r2 = user_client.patch(f"/project/{pid_mine}/prozesskarte/rechteck/{area_other}", json={"x": 1})
         assert r2.status_code == 404
+
+    def test_tc_pp_17_punktgroesse(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        r0 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "A", "x": 0, "y": 0})
+        node = r0.get_json()["node"]
+        assert node["width"] is None and node["height"] is None
+
+        r1 = user_client.patch(
+            f"/project/{pid}/prozesskarte/knoten/{node['id']}", json={"width": 220, "height": 80}
+        )
+        updated = r1.get_json()["node"]
+        assert updated["width"] == 220 and updated["height"] == 80
+
+        r2 = user_client.patch(
+            f"/project/{pid}/prozesskarte/knoten/{node['id']}", json={"width": 1, "height": 1}
+        )
+        clamped = r2.get_json()["node"]
+        assert clamped["width"] == 50 and clamped["height"] == 24
