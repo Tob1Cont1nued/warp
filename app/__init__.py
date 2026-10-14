@@ -544,6 +544,10 @@ def create_app() -> Flask:
             "ALTER TABLE \"user\" ADD COLUMN email VARCHAR(200)",
             "ALTER TABLE \"user\" ADD COLUMN reset_token VARCHAR(100)",
             "ALTER TABLE \"user\" ADD COLUMN reset_token_expires TIMESTAMP",
+            "ALTER TABLE process_step ADD COLUMN color VARCHAR(20)",
+            "ALTER TABLE process_step ADD COLUMN width FLOAT",
+            "ALTER TABLE process_step ADD COLUMN height FLOAT",
+            "ALTER TABLE process_dependency ADD COLUMN kind VARCHAR(30) DEFAULT 'default'",
         ):
             try:
                 db.session.execute(db.text(_col_sql))
