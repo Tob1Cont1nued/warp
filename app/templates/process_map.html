@@ -141,6 +141,11 @@
     }
     .map-resize-handle:hover { background:#451DC7; }
 
+    #map-area-ghost {
+      position:absolute; border:2px dashed #451DC7; background:rgba(69,29,199,0.12);
+      z-index:26; display:none; pointer-events:none;
+    }
+
     #map-area-detail {
       position:absolute; z-index:30; width:240px;
       background:#171b24; border:1px solid #2a2f3a; border-radius:9px;
@@ -211,6 +216,7 @@
       <button type="button" id="js-zoom-reset" title="1:1">1:1</button>
     </div>
     <div id="map-canvas"></div>
+    <div id="map-area-ghost"></div>
     <svg id="map-ghost-line" width="100%" height="100%"><line id="js-ghost-line" stroke="#451DC7" stroke-width="2" stroke-dasharray="5,4" style="display:none" /></svg>
     <canvas id="map-minimap" width="170" height="110"></canvas>
     <div id="map-legend"></div>
@@ -328,7 +334,16 @@
           'width': 2.5, 'line-color': EDGE_KINDS.default.color, 'target-arrow-color': EDGE_KINDS.default.color,
           'target-arrow-shape': 'triangle', 'z-index': 6,
           'curve-style': 'unbundled-bezier',
-          'control-point-distances': 30, 'control-point-weights': 0.5,
+          'control-point-distances': function (ele) {
+            // Schwung richtet sich nach dem Höhenunterschied der beiden Punkte: auf
+            // annähernd gleicher Höhe fast gerade, je steiler desto mehr Bogen.
+            var s = ele.source().position(), t = ele.target().position();
+            var dx = t.x - s.x, dy = t.y - s.y;
+            var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+            var steepness = Math.abs(dy) / dist; // 0 = waagerecht, 1 = senkrecht
+            return 6 + steepness * 34;
+          },
+          'control-point-weights': 0.5,
       }},
       { selector: 'edge:selected', style: { 'width': 3.5 } },
     ].concat(edgeStyles),
@@ -372,8 +387,11 @@
     addBtn.classList.toggle('active', mode === 'add');
     areaBtn.classList.toggle('active', mode === 'area');
     if (mode === 'add') hintEl.textContent = 'Klick auf die Karte setzt einen Punkt.';
-    else if (mode === 'area') hintEl.textContent = 'Klick auf die Karte setzt ein Rechteck.';
+    else if (mode === 'area') hintEl.textContent = 'Rechteck durch Ziehen aufziehen.';
     else hintEl.textContent = '';
+    // Während des Rechteck-Ziehens sollen Cytoscapes eigenes Panning/Box-Select nicht dazwischenfunken.
+    cy.userPanningEnabled(mode !== 'area');
+    cy.boxSelectionEnabled(mode !== 'area');
     cy.nodes().unselect();
     closeDetail();
     closeAreaDetail();
@@ -394,28 +412,72 @@
           setMode(null);
           openDetail(node, true);
         });
-    } else if (mode === 'area' && evt.target === cy) {
-      var apos = evt.position;
-      api('/project/' + pid + '/prozesskarte/rechteck', 'POST', { label: 'Bereich', x: apos.x, y: apos.y })
-        .then(function (res) {
-          if (!res.ok) { alert('Konnte Rechteck nicht anlegen.'); return; }
-          var area = cy.add({
-            data: {
-              id: 'r' + res.area.id, dbId: res.area.id, label: res.area.label, color: res.area.color || NODE_COLORS[0],
-              opacity: res.area.opacity, width: res.area.width, height: res.area.height, layer: res.area.layer,
-              zIndex: res.area.layer === 'front' ? 10 : 0,
-            },
-            position: apos,
-            classes: 'area',
-          });
-          setMode(null);
-          openAreaDetail(area, true);
-        });
     } else if (mode === null && evt.target === cy) {
       closeDetail();
       closeAreaDetail();
     }
   });
+
+  // ── Rechteck durch Ziehen aufziehen (Registrierung des mousedown-Listeners
+  // erfolgt weiter unten, sobald canvasEl/stage zugewiesen sind) ──────────
+  var areaGhost = document.getElementById('map-area-ghost');
+  var drawingArea = null; // { startX, startY } in Stage-Koordinaten (Bildschirm-Pixel)
+
+  function onAreaDrawMove(evt) {
+    if (!drawingArea) return;
+    var rect = stage.getBoundingClientRect();
+    var curX = evt.clientX - rect.left, curY = evt.clientY - rect.top;
+    var x1 = Math.min(drawingArea.startX, curX), x2 = Math.max(drawingArea.startX, curX);
+    var y1 = Math.min(drawingArea.startY, curY), y2 = Math.max(drawingArea.startY, curY);
+    areaGhost.style.left = x1 + 'px';
+    areaGhost.style.top = y1 + 'px';
+    areaGhost.style.width = (x2 - x1) + 'px';
+    areaGhost.style.height = (y2 - y1) + 'px';
+  }
+
+  function onAreaDrawUp(evt) {
+    document.removeEventListener('mousemove', onAreaDrawMove);
+    document.removeEventListener('mouseup', onAreaDrawUp);
+    areaGhost.style.display = 'none';
+    if (!drawingArea) return;
+    var rect = stage.getBoundingClientRect();
+    var curX = evt.clientX - rect.left, curY = evt.clientY - rect.top;
+    var x1 = Math.min(drawingArea.startX, curX), x2 = Math.max(drawingArea.startX, curX);
+    var y1 = Math.min(drawingArea.startY, curY), y2 = Math.max(drawingArea.startY, curY);
+    drawingArea = null;
+
+    var zoom = cy.zoom();
+    var pan = cy.pan();
+    var minDrag = 6; // px — kleiner gilt als Klick ohne Ziehen -> Standardgröße
+    var width, height, centerScreenX, centerScreenY;
+    if ((x2 - x1) < minDrag && (y2 - y1) < minDrag) {
+      width = 220; height = 140;
+      centerScreenX = x1; centerScreenY = y1;
+    } else {
+      width = (x2 - x1) / zoom;
+      height = (y2 - y1) / zoom;
+      centerScreenX = (x1 + x2) / 2;
+      centerScreenY = (y1 + y2) / 2;
+    }
+    var modelX = (centerScreenX - pan.x) / zoom;
+    var modelY = (centerScreenY - pan.y) / zoom;
+
+    api('/project/' + pid + '/prozesskarte/rechteck', 'POST', { label: 'Bereich', x: modelX, y: modelY, width: width, height: height })
+      .then(function (res) {
+        if (!res.ok) { alert('Konnte Rechteck nicht anlegen.'); return; }
+        var area = cy.add({
+          data: {
+            id: 'r' + res.area.id, dbId: res.area.id, label: res.area.label, color: res.area.color || NODE_COLORS[0],
+            opacity: res.area.opacity, width: res.area.width, height: res.area.height, layer: res.area.layer,
+            zIndex: res.area.layer === 'front' ? 10 : 0,
+          },
+          position: { x: modelX, y: modelY },
+          classes: 'area',
+        });
+        setMode(null);
+        openAreaDetail(area, true);
+      });
+  }
 
   // ── Verschieben: Position speichern ─────────────────────────────────
   cy.on('dragfree', 'node', function (evt) {
@@ -502,8 +564,11 @@
   cy.on('pan zoom drag', function () { if (!connecting) { clearAnchors(); hoveredAnchorNode = null; } });
 
   function findNodeAtStagePoint(x, y) {
+    // Hinweis: cy.nodes(':not(.area)') liefert in dieser Cytoscape-Version fälschlich
+    // auch Area-Knoten zurück (Selektor-Negation + Klasse ist unzuverlässig) - daher
+    // manuell per hasClass filtern statt der Selektor-Syntax zu vertrauen.
     var found = null;
-    cy.nodes(':not(.area)').forEach(function (n) {
+    pointNodes().forEach(function (n) {
       var bb = n.renderedBoundingBox();
       if (x >= bb.x1 && x <= bb.x2 && y >= bb.y1 && y <= bb.y2) found = n;
     });
@@ -576,6 +641,20 @@
   });
   document.addEventListener('fullscreenchange', function () {
     setTimeout(function () { cy.resize(); drawMinimap(); }, 50);
+  });
+
+  canvasEl.addEventListener('mousedown', function (evt) {
+    if (mode !== 'area' || evt.button !== 0) return;
+    evt.preventDefault();
+    var rect = stage.getBoundingClientRect();
+    drawingArea = { startX: evt.clientX - rect.left, startY: evt.clientY - rect.top };
+    areaGhost.style.left = drawingArea.startX + 'px';
+    areaGhost.style.top = drawingArea.startY + 'px';
+    areaGhost.style.width = '0px';
+    areaGhost.style.height = '0px';
+    areaGhost.style.display = 'block';
+    document.addEventListener('mousemove', onAreaDrawMove);
+    document.addEventListener('mouseup', onAreaDrawUp);
   });
 
   // ── PDF-Export ────────────────────────────────────────────────────
@@ -672,15 +751,19 @@
   var searchCount = document.getElementById('js-search-count');
   var searchMatches = []; var searchIndex = -1;
 
+  function pointNodes() {
+    return cy.nodes().filter(function (n) { return !n.hasClass('area'); });
+  }
+
   function applySearch(query) {
-    cy.nodes(':not(.area)').removeClass('search-match search-dim');
+    pointNodes().removeClass('search-match search-dim');
     cy.edges().removeClass('search-dim');
     query = query.trim().toLowerCase();
     if (!query) { searchMatches = []; searchCount.textContent = ''; return; }
-    searchMatches = cy.nodes(':not(.area)').filter(function (n) { return (n.data('label') || '').toLowerCase().indexOf(query) !== -1; });
+    searchMatches = pointNodes().filter(function (n) { return (n.data('label') || '').toLowerCase().indexOf(query) !== -1; });
     var matchIds = {};
     searchMatches.forEach(function (n) { matchIds[n.id()] = true; });
-    cy.nodes(':not(.area)').forEach(function (n) { if (!matchIds[n.id()]) n.addClass('search-dim'); else n.addClass('search-match'); });
+    pointNodes().forEach(function (n) { if (!matchIds[n.id()]) n.addClass('search-dim'); else n.addClass('search-match'); });
     cy.edges().forEach(function (e) {
       if (!matchIds[e.source().id()] && !matchIds[e.target().id()]) e.addClass('search-dim');
     });
@@ -842,8 +925,8 @@
     detailEl.classList.remove('open');
   }
 
-  cy.on('tap', 'node:not(.area)', function (evt) {
-    if (mode !== null) return;
+  cy.on('tap', 'node', function (evt) {
+    if (mode !== null || evt.target.hasClass('area')) return;
     var node = evt.target;
     closeAreaDetail();
     if (detailNode && detailNode.id() === node.id()) { closeDetail(); return; }
