@@ -561,6 +561,106 @@ CATEGORIES = [
                     "low": "Stellen Sie sicher, dass Testumgebungsanforderungen bereits in der Projektplanungsphase – nicht erst kurz vor Testbeginn – spezifiziert und mit Architektur und Betrieb abgestimmt werden. Späte Anforderungen führen zu langen Vorlaufzeiten und Testverzögerungen.",
                     "mid": "Etablieren Sie einen festen Meilenstein in Ihrer Projektplanung, zu dem Testumgebungsanforderungen vollständig vorliegen und mit allen beteiligten Stellen (Betrieb, Architektur, Sicherheit) formell bestätigt sind.",
                 },
+            },
+            {
+                "id": "tum-9",
+                "text": "Testdaten liegen in ausreichendem Umfang und Variantenreichtum vor, um auch Grenzfälle und Negativszenarien abzudecken.",
+                "hint": "Gibt es z.B. auch fehlerhafte, unvollständige oder besonders große Datensätze zum Testen?",
+                "recommendations": {
+                    "low": "Ergänzen Sie den Testdatenbestand gezielt um Grenzfälle, fehlerhafte und untypische Datensätze, statt sich nur auf den Standardfall zu verlassen. Ohne solche Daten bleiben wichtige Fehlerpfade ungetestet.",
+                    "mid": "Überprüfen Sie systematisch, welche Testszenarien mangels passender Daten bisher nicht abgedeckt werden können, und schließen Sie diese Lücken gezielt.",
+                },
+                "new": True,
+            },
+            {
+                "id": "tum-10",
+                "text": "Testdaten können bei Bedarf automatisiert und zeitnah neu bereitgestellt oder aktualisiert werden (Refresh-Prozess).",
+                "hint": "Wie lange dauert es, einen frischen, nutzbaren Testdatenbestand zu erhalten?",
+                "recommendations": {
+                    "low": "Automatisieren Sie das Zurücksetzen/Befüllen der Testdaten (z.B. per Skript oder als Teil der Pipeline), statt es manuell und fallweise durchzuführen. Lange Wartezeiten auf frische Testdaten verzögern den gesamten Testprozess.",
+                    "mid": "Messen Sie die Dauer eines Testdaten-Refreshs und optimieren Sie den Prozess gezielt, wenn er Testaktivitäten spürbar verzögert.",
+                },
+                "new": True,
+            },
+            {
+                "id": "tum-11",
+                "text": "Es ist klar geregelt, wer für Qualität, Aktualität und Datenschutzkonformität der Testdaten verantwortlich ist.",
+                "hint": None,
+                "recommendations": {
+                    "low": "Benennen Sie eine verantwortliche Rolle für die Testdaten, die Qualität, Aktualität und Einhaltung von Datenschutzvorgaben (z.B. korrekte Anonymisierung) sicherstellt.",
+                    "mid": "Überprüfen Sie, ob diese Verantwortlichkeit in der Praxis gelebt wird und ob Verstöße gegen Datenschutzvorgaben bei Testdaten aktiv erkannt und verhindert werden, statt erst im Nachhinein aufzufallen.",
+                },
+                "new": True,
+            },
+            {
+                "id": "tum-12",
+                "text": "Es gibt ein aktuelles Verzeichnis aller Testumgebungen inkl. Zweck, Versionsstand und Zugriffsberechtigten (Umgebungsinventar).",
+                "hint": "Weiß jeder im Team, welche Umgebungen es gibt und wofür sie gedacht sind?",
+                "recommendations": {
+                    "low": "Führen Sie eine einfache, zentral zugängliche Übersicht aller Testumgebungen mit Zweck und Ansprechpartner. Ohne ein solches Inventar entstehen leicht Doppelnutzungen oder vergessene, veraltete Umgebungen.",
+                    "mid": "Überprüfen Sie, ob das Umgebungsinventar aktuell gehalten wird und ob Versionsstand sowie Zugriffsrechte dort zuverlässig nachvollziehbar sind.",
+                },
+                "new": True,
+            },
+            {
+                "id": "tum-13",
+                "text": "Für Störungen oder Ausfälle einer Testumgebung gibt es einen definierten Eskalationsweg mit Wiederherstellungsziel (SLA).",
+                "hint": "Wer wird informiert, wenn die Testumgebung ausfällt, und wie schnell wird sie wiederhergestellt?",
+                "recommendations": {
+                    "low": "Definieren Sie, an wen ein Ausfall der Testumgebung gemeldet wird und welche Wiederherstellungszeit angestrebt wird. Ohne klaren Eskalationsweg verzögern sich Reaktionen auf Umgebungsausfälle unnötig.",
+                    "mid": "Überprüfen Sie anhand vergangener Störungen, ob die vereinbarten Wiederherstellungszeiten tatsächlich eingehalten werden, und passen Sie den Eskalationsprozess bei Bedarf an.",
+                },
+                "new": True,
+            },
+            {
+                "id": "tum-14",
+                "text": "Zugriffsrechte auf Testumgebungen werden verwaltet und regelmäßig überprüft.",
+                "hint": None,
+                "recommendations": {
+                    "low": "Führen Sie eine Vergabe und Dokumentation von Zugriffsrechten auf Testumgebungen ein, statt Zugänge informell und unkontrolliert zu teilen.",
+                    "mid": "Etablieren Sie eine regelmäßige Überprüfung der vergebenen Zugriffsrechte, um veraltete oder nicht mehr benötigte Berechtigungen zeitnah zu entfernen.",
+                },
+                "new": True,
+            },
+        ],
+    },
+    {
+        "id": "releasemanagement",
+        "title": "Releasemanagement",
+        "parent": "Stufe 2 - Managed",
+        "description": (
+            "Freigabe und Produktivsetzung von Releases folgen einem definierten, "
+            "nachvollziehbaren Prozess mit klaren Kriterien und Verantwortlichkeiten."
+        ),
+        "questions": [
+            {
+                "id": "rel-1",
+                "text": "Es gibt klar definierte Freigabekriterien, die vor jedem Release erfüllt sein müssen.",
+                "hint": "Welche Kriterien müssen erfüllt sein, damit ein Release freigegeben wird?",
+                "recommendations": {
+                    "low": "Definieren Sie schriftliche Freigabekriterien (z.B. Testabschluss, maximale Anzahl offener kritischer Defects, erforderliche Abnahmen) statt einer informellen Einzelfallentscheidung pro Release.",
+                    "mid": "Überprüfen Sie, ob die bestehenden Freigabekriterien tatsächlich konsequent angewendet werden und ob sie die relevanten Qualitätsrisiken angemessen abdecken.",
+                },
+                "new": True,
+            },
+            {
+                "id": "rel-2",
+                "text": "Es ist festgelegt, wer ein Release freigibt, und es gibt eine Vertretungsregelung für diese Rolle.",
+                "hint": "Wer entscheidet über die Freigabe, und wer vertritt diese Person im Urlaubs-/Krankheitsfall?",
+                "recommendations": {
+                    "low": "Benennen Sie eine verantwortliche Rolle für die Release-Freigabe inklusive einer klaren Vertretungsregelung, damit Freigaben nicht an einer einzelnen Person hängen.",
+                    "mid": "Überprüfen Sie, ob die Vertretungsregelung in der Praxis funktioniert und die Vertretung ausreichend in Freigabekriterien und -prozess eingearbeitet ist.",
+                },
+                "new": True,
+            },
+            {
+                "id": "rel-3",
+                "text": "Für jedes Release existiert ein Rollback-Plan für den Fall, dass die Produktivsetzung zurückgenommen werden muss.",
+                "hint": "Wie lange dauert ein Rollback, und ist er auch für Datenbankänderungen möglich?",
+                "recommendations": {
+                    "low": "Erstellen Sie vor jeder Produktivsetzung einen Rollback-Plan, der insbesondere Datenbankänderungen berücksichtigt. Ohne diesen Plan wird ein fehlgeschlagenes Release im Ernstfall improvisiert zurückgenommen.",
+                    "mid": "Überprüfen Sie anhand vergangener Releases, wie realistisch und schnell der Rollback-Plan tatsächlich umsetzbar ist, und testen Sie ihn soweit möglich vorab.",
+                },
                 "new": True,
             },
         ],

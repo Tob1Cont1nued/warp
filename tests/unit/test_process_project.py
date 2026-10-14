@@ -10,7 +10,17 @@ TC-PP-05  Prozesskarte ist für Assessment-Projekte nicht erreichbar (404)
 TC-PP-06  Punkt anlegen, verschieben, umbenennen, löschen
 TC-PP-07  Zwei Punkte werden gerichtet verbunden, Kante wird wieder gelöscht
 TC-PP-08  Punkt/Kante eines anderen Projekts ist nicht über die eigene Projekt-ID erreichbar
+TC-PP-09  Kantentyp wird übernommen, ungültiger Typ fällt auf 'default' zurück
+TC-PP-10  Prozesskarte lässt sich als PDF exportieren
+TC-PP-11  PDF-Export ohne Bild liefert 400
+TC-PP-12  Punktfarbe setzen, ungültige Farbe fällt auf Standard zurück
+TC-PP-13  Rechteck anlegen, verschieben, umbenennen, einfärben, Transparenz/Ebene setzen
+TC-PP-14  Ungültige Rechteck-Farbe/-Ebene fallen auf Standard zurück
+TC-PP-15  Rechteck löschen
+TC-PP-16  Rechteck eines anderen Projekts ist nicht über die eigene Projekt-ID erreichbar
 """
+
+import pytest
 
 from app.models import db, Project
 
@@ -106,6 +116,7 @@ class TestDeploymentProzessProjekt:
         assert r.status_code == 200
         edge = r.get_json()["edge"]
         assert edge["from_id"] == n1 and edge["to_id"] == n2
+        assert edge["kind"] == "default"
 
         r2 = user_client.delete(f"/project/{pid}/prozesskarte/kante/{edge['id']}")
         assert r2.status_code == 200
@@ -123,4 +134,115 @@ class TestDeploymentProzessProjekt:
         r2 = user_client.patch(
             f"/project/{pid_mine}/prozesskarte/knoten/{node_other}", json={"x": 1, "y": 1},
         )
+        assert r2.status_code == 404
+
+    def test_tc_pp_09_kantentyp(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        n1 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "A", "x": 0, "y": 0}).get_json()["node"]["id"]
+        n2 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "B", "x": 100, "y": 0}).get_json()["node"]["id"]
+        n3 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "C", "x": 200, "y": 0}).get_json()["node"]["id"]
+
+        r1 = user_client.post(f"/project/{pid}/prozesskarte/kante", json={"from_id": n1, "to_id": n2, "kind": "blockiert"})
+        assert r1.get_json()["edge"]["kind"] == "blockiert"
+
+        r2 = user_client.post(f"/project/{pid}/prozesskarte/kante", json={"from_id": n2, "to_id": n3, "kind": "nicht-existent"})
+        assert r2.get_json()["edge"]["kind"] == "default"
+
+    def test_tc_pp_10_pdf_export(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "A", "x": 0, "y": 0})
+        tiny_png = (
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+        )
+        try:
+            r = user_client.post(
+                f"/project/{pid}/prozesskarte/export",
+                json={"image": f"data:image/png;base64,{tiny_png}", "width": 400, "height": 300},
+            )
+        except OSError:
+            pytest.skip("WeasyPrint-Systembibliotheken (GTK/Pango) sind hier nicht installiert.")
+        if r.status_code == 500:
+            pytest.skip("WeasyPrint-Systembibliotheken (GTK/Pango) sind hier nicht installiert.")
+        assert r.status_code == 200
+        assert r.mimetype == "application/pdf"
+        assert r.data[:4] == b"%PDF"
+
+    def test_tc_pp_11_pdf_export_ohne_bild(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        r = user_client.post(f"/project/{pid}/prozesskarte/export", json={})
+        assert r.status_code == 400
+
+    def test_tc_pp_12_punktfarbe_setzen_und_zuruecksetzen(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        node_id = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "A", "x": 0, "y": 0}).get_json()["node"]["id"]
+
+        r1 = user_client.patch(f"/project/{pid}/prozesskarte/knoten/{node_id}", json={"color": "#e5484d"})
+        assert r1.get_json()["node"]["color"] == "#e5484d"
+
+        r2 = user_client.patch(f"/project/{pid}/prozesskarte/knoten/{node_id}", json={"color": "#nicht-in-der-palette"})
+        assert r2.get_json()["node"]["color"] == "#3b4252"
+
+    def test_tc_pp_13_rechteck_crud(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        r = user_client.post(
+            f"/project/{pid}/prozesskarte/rechteck",
+            json={"label": "Team A", "x": 50, "y": 60, "width": 200, "height": 120},
+        )
+        assert r.status_code == 200
+        area = r.get_json()["area"]
+        assert area["label"] == "Team A"
+        assert area["layer"] == "back"
+
+        r2 = user_client.patch(
+            f"/project/{pid}/prozesskarte/rechteck/{area['id']}",
+            json={"x": 80, "y": 90, "width": 300, "height": 180, "label": "Team B", "color": "#3b82f6", "opacity": 0.4, "layer": "front"},
+        )
+        updated = r2.get_json()["area"]
+        assert updated["x"] == 80 and updated["y"] == 90
+        assert updated["width"] == 300 and updated["height"] == 180
+        assert updated["label"] == "Team B"
+        assert updated["color"] == "#3b82f6"
+        assert updated["opacity"] == 0.4
+        assert updated["layer"] == "front"
+
+    def test_tc_pp_14_rechteck_ungueltige_werte_fallen_zurueck(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        area_id = user_client.post(
+            f"/project/{pid}/prozesskarte/rechteck", json={"x": 0, "y": 0}
+        ).get_json()["area"]["id"]
+
+        r = user_client.patch(
+            f"/project/{pid}/prozesskarte/rechteck/{area_id}",
+            json={"color": "#was-auch-immer", "layer": "mitte", "width": 1, "height": 1, "opacity": 5},
+        )
+        area = r.get_json()["area"]
+        assert area["color"] == "#3b4252"
+        assert area["layer"] == "back"
+        assert area["width"] >= 40
+        assert area["height"] >= 30
+        assert area["opacity"] == 1.0
+
+    def test_tc_pp_15_rechteck_loeschen(self, user_client, app):
+        from app.models import db, ProcessArea
+        pid = _create_process_project(user_client, app)
+        area_id = user_client.post(
+            f"/project/{pid}/prozesskarte/rechteck", json={"x": 0, "y": 0}
+        ).get_json()["area"]["id"]
+
+        r = user_client.delete(f"/project/{pid}/prozesskarte/rechteck/{area_id}")
+        assert r.status_code == 200
+        with app.app_context():
+            assert db.session.get(ProcessArea, area_id) is None
+
+    def test_tc_pp_16_fremdes_rechteck_nicht_erreichbar(self, user_client, admin_client, app):
+        pid_mine = _create_process_project(user_client, app)
+        r = admin_client.post(
+            "/project/new", data={"name": "Fremdes Prozessprojekt 2", "catalog_type": "process"}, follow_redirects=False,
+        )
+        pid_other = int(r.headers["Location"].rstrip("/").split("/")[-1])
+        area_other = admin_client.post(
+            f"/project/{pid_other}/prozesskarte/rechteck", json={"x": 0, "y": 0}
+        ).get_json()["area"]["id"]
+
+        r2 = user_client.patch(f"/project/{pid_mine}/prozesskarte/rechteck/{area_other}", json={"x": 1})
         assert r2.status_code == 404

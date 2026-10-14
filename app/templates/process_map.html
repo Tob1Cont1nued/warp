@@ -8,21 +8,161 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}" />
   <script src="{{ url_for('static', filename='js/cytoscape.min.js') }}"></script>
   <style>
-    .map-toolbar { display:flex; gap:8px; align-items:center; margin-bottom:10px; flex-wrap:wrap; }
-    .map-toolbar .btn { width:auto; padding:8px 14px; font-size:.8rem; }
-    .map-toolbar .btn.active { background:var(--ws-blue-deep); }
-    .map-hint { font-size:.72rem; color:var(--c-text-muted); margin-left:auto; }
-    #map-canvas {
-      width:100%; height:calc(100vh - 190px); min-height:420px;
-      border:1px solid var(--c-border); border-radius:10px; background:#fafafa;
-      position:relative;
+    #map-stage {
+      position:relative; width:100%; height:calc(100vh - 150px); min-height:460px;
+      background:#0d1016; border-radius:12px; overflow:hidden;
     }
+    #map-stage:fullscreen { height:100vh; border-radius:0; }
+    #map-canvas { width:100%; height:100%; }
+
+    .map-toolbar {
+      position:absolute; top:12px; left:12px; right:68px; z-index:20;
+      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+      pointer-events:none;
+    }
+    .map-toolbar > * { pointer-events:auto; }
+    .map-btn {
+      border:1px solid #2a2f3a; background:#171b24; color:#e5e7eb;
+      border-radius:7px; padding:7px 13px; font-size:.78rem; cursor:pointer;
+      display:inline-flex; align-items:center; gap:6px; transition:background .12s, border-color .12s;
+    }
+    .map-btn:hover { background:#222733; }
+    .map-btn.active { background:#451DC7; border-color:#6a3ff5; color:#fff; }
+    .map-hint {
+      font-size:.72rem; color:#9aa1ad; background:#171b24;
+      border:1px solid #2a2f3a; border-radius:7px; padding:7px 11px;
+    }
+    #js-search {
+      background:#171b24; border:1px solid #2a2f3a; color:#e5e7eb;
+      border-radius:7px; padding:7px 11px; font-size:.78rem; width:200px;
+    }
+    #js-search::placeholder { color:#6b7280; }
+    #js-search-count { font-size:.68rem; color:#6b7280; }
+
+    .kind-palette { display:flex; gap:4px; align-items:center; flex-wrap:wrap; background:#171b24; border:1px solid #2a2f3a; border-radius:7px; padding:4px; }
+    .kind-swatch {
+      width:20px; height:20px; border-radius:50%; cursor:pointer; border:2px solid transparent;
+    }
+    .kind-swatch.active { border-color:#fff; }
+
+    #map-legend {
+      position:absolute; bottom:12px; left:12px; z-index:20;
+      background:#171b24; border:1px solid #2a2f3a; border-radius:8px;
+      padding:8px 10px; font-size:.7rem; color:#c7cbd3;
+    }
+    #map-legend .legend-row { display:flex; align-items:center; gap:6px; margin-top:3px; }
+    #map-legend .legend-row:first-child { margin-top:0; }
+    #map-legend .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+    .map-zoom {
+      position:absolute; top:12px; right:12px; z-index:20;
+      display:flex; flex-direction:column; background:#171b24; border:1px solid #2a2f3a;
+      border-radius:8px; overflow:hidden; width:40px;
+    }
+    .map-zoom button {
+      border:none; border-bottom:1px solid #2a2f3a; background:transparent; color:#e5e7eb;
+      font-size:.9rem; padding:8px 0; cursor:pointer; line-height:1;
+    }
+    .map-zoom button:last-child { border-bottom:none; }
+    .map-zoom button:hover { background:#222733; }
+    .map-zoom .zoom-pct { font-size:.62rem; color:#9aa1ad; text-align:center; padding:4px 0; border-bottom:1px solid #2a2f3a; }
+
+    #map-minimap {
+      position:absolute; bottom:12px; right:12px; z-index:20;
+      width:170px; height:110px; background:#12151c; border:1px solid #2a2f3a; border-radius:8px;
+      cursor:pointer;
+    }
+
     #map-tooltip {
-      position:fixed; display:none; max-width:260px; z-index:50;
-      background:#1a1a1a; color:#fff; font-size:.72rem; line-height:1.4;
-      padding:8px 10px; border-radius:6px; pointer-events:none;
+      position:fixed; display:none; max-width:240px; z-index:60;
+      background:#1a1e27; border:1px solid #2a2f3a; color:#e5e7eb; font-size:.72rem; line-height:1.4;
+      padding:7px 10px; border-radius:6px; pointer-events:none;
     }
-    #map-tooltip strong { display:block; margin-bottom:3px; font-size:.76rem; }
+    #map-tooltip strong { display:block; margin-bottom:3px; font-size:.76rem; color:#fff; }
+
+    .map-anchor {
+      position:absolute; width:24px; height:24px; margin:-12px 0 0 -12px;
+      z-index:25; cursor:crosshair;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .map-anchor::after {
+      content:''; width:11px; height:11px; border-radius:50%;
+      background:#451DC7; border:2px solid #fff;
+    }
+    .map-anchor:hover::after { background:#f59e0b; transform:scale(1.2); }
+    #map-ghost-line { position:absolute; top:0; left:0; z-index:24; pointer-events:none; }
+
+    #map-detail {
+      position:absolute; z-index:30; width:260px;
+      background:#171b24; border:1px solid #2a2f3a; border-radius:9px;
+      padding:12px; color:#e5e7eb; box-shadow:0 8px 24px rgba(0,0,0,.4);
+      display:none;
+    }
+    #map-detail.open { display:block; }
+    #map-detail input, #map-detail textarea {
+      width:100%; background:#0d1016; border:1px solid #2a2f3a; border-radius:6px;
+      color:#e5e7eb; font-size:.78rem; padding:6px 8px; margin-top:4px; box-sizing:border-box;
+      font-family:inherit;
+    }
+    #map-detail label { font-size:.68rem; color:#9aa1ad; text-transform:uppercase; letter-spacing:.03em; }
+    #map-detail .detail-actions { display:flex; justify-content:space-between; margin-top:10px; gap:8px; }
+    #map-detail .detail-actions .map-btn { font-size:.72rem; padding:6px 10px; }
+    #map-detail .detail-close {
+      position:absolute; top:6px; right:8px; cursor:pointer; color:#9aa1ad; font-size:1rem; background:none; border:none;
+    }
+
+    .detail-bullets-toggle {
+      display:flex; align-items:center; gap:6px; width:100%; margin-top:10px;
+      background:none; border:none; color:#9aa1ad; font-size:.68rem; text-transform:uppercase;
+      letter-spacing:.03em; cursor:pointer; padding:4px 0;
+    }
+    .detail-bullets-toggle:hover { color:#e5e7eb; }
+    #js-bullets-chevron { display:inline-block; transition:transform .12s; font-size:.6rem; }
+    .detail-bullets-toggle.open #js-bullets-chevron { transform:rotate(90deg); }
+    .bullets-count { color:#6b7280; }
+    #js-detail-bullets-wrap { display:none; }
+    #js-detail-bullets-wrap.open { display:block; }
+    #js-detail-bullets { display:flex; flex-direction:column; gap:5px; margin-top:4px; max-height:180px; overflow-y:auto; }
+    .bullet-row { display:flex; align-items:center; gap:6px; }
+    .bullet-row .bullet-dot { color:#6b7280; font-size:.9rem; flex-shrink:0; }
+    .bullet-row input {
+      flex:1; margin-top:0; background:#0d1016; border:1px solid #2a2f3a; border-radius:6px;
+      color:#e5e7eb; font-size:.76rem; padding:5px 7px;
+    }
+    .bullet-row .bullet-remove {
+      flex-shrink:0; background:none; border:none; color:#6b7280; cursor:pointer; font-size:.9rem; padding:0 2px;
+    }
+    .bullet-row .bullet-remove:hover { color:#e5484d; }
+
+    .map-resize-handle {
+      position:absolute; width:12px; height:12px; margin:-6px 0 0 -6px;
+      background:#171b24; border:2px solid #451DC7; border-radius:2px;
+      z-index:25; cursor:nwse-resize;
+    }
+    .map-resize-handle:hover { background:#451DC7; }
+
+    #map-area-detail {
+      position:absolute; z-index:30; width:240px;
+      background:#171b24; border:1px solid #2a2f3a; border-radius:9px;
+      padding:12px; color:#e5e7eb; box-shadow:0 8px 24px rgba(0,0,0,.4);
+      display:none;
+    }
+    #map-area-detail.open { display:block; }
+    #map-area-detail input[type=text] {
+      width:100%; background:#0d1016; border:1px solid #2a2f3a; border-radius:6px;
+      color:#e5e7eb; font-size:.78rem; padding:6px 8px; margin-top:4px; box-sizing:border-box;
+      font-family:inherit;
+    }
+    #map-area-detail label { font-size:.68rem; color:#9aa1ad; text-transform:uppercase; letter-spacing:.03em; display:block; margin-top:10px; }
+    #map-area-detail label:first-of-type { margin-top:0; }
+    #map-area-detail input[type=range] { width:100%; margin-top:4px; }
+    .area-layer-toggle { display:flex; gap:6px; margin-top:4px; }
+    .area-layer-toggle .map-btn { flex:1; font-size:.7rem; padding:6px 0; justify-content:center; }
+    #map-area-detail .detail-actions { display:flex; justify-content:space-between; margin-top:12px; gap:8px; }
+    #map-area-detail .detail-actions .map-btn { font-size:.72rem; padding:6px 10px; }
+    #map-area-detail .detail-close {
+      position:absolute; top:6px; right:8px; cursor:pointer; color:#9aa1ad; font-size:1rem; background:none; border:none;
+    }
   </style>
 </head>
 <body>
@@ -51,14 +191,65 @@
     </a>
   </div>
 
-  <div class="map-toolbar">
-    <button type="button" class="btn btn-primary" id="js-mode-add">+ Punkt hinzufügen</button>
-    <button type="button" class="btn" id="js-mode-connect">Verbinden</button>
-    <button type="button" class="btn" id="js-delete-selected">Auswahl löschen</button>
-    <span class="map-hint" id="js-mode-hint">Klicke auf die Karte, um einen Punkt zu setzen.</span>
+  <div id="map-stage">
+    <div class="map-toolbar">
+      <button type="button" class="map-btn" id="js-mode-add">+ Punkt</button>
+      <button type="button" class="map-btn" id="js-mode-area">+ Rechteck</button>
+      <div class="kind-palette" id="js-kind-palette" title="Typ für neue Verbindungen"></div>
+      <button type="button" class="map-btn" id="js-delete-selected">Löschen</button>
+      <button type="button" class="map-btn" id="js-fullscreen">⛶ Vollbild</button>
+      <button type="button" class="map-btn" id="js-export-pdf">⭳ Als PDF</button>
+      <input type="text" id="js-search" placeholder="Punkt suchen … (Enter = weiter)" />
+      <span class="map-hint" id="js-search-count"></span>
+      <span class="map-hint" id="js-mode-hint"></span>
+    </div>
+    <div class="map-zoom">
+      <button type="button" id="js-zoom-in" title="Vergrößern">+</button>
+      <span class="zoom-pct" id="js-zoom-pct">100%</span>
+      <button type="button" id="js-zoom-out" title="Verkleinern">&minus;</button>
+      <button type="button" id="js-zoom-fit" title="Alles einpassen">⤢</button>
+      <button type="button" id="js-zoom-reset" title="1:1">1:1</button>
+    </div>
+    <div id="map-canvas"></div>
+    <svg id="map-ghost-line" width="100%" height="100%"><line id="js-ghost-line" stroke="#451DC7" stroke-width="2" stroke-dasharray="5,4" style="display:none" /></svg>
+    <canvas id="map-minimap" width="170" height="110"></canvas>
+    <div id="map-legend"></div>
+    <div id="map-detail">
+      <button type="button" class="detail-close" id="js-detail-close">&times;</button>
+      <label>Name</label>
+      <input type="text" id="js-detail-name" maxlength="200" />
+      <div class="kind-palette" id="js-node-color-palette" style="margin-top:8px"></div>
+      <button type="button" id="js-detail-bullets-toggle" class="detail-bullets-toggle">
+        <span id="js-bullets-chevron">&#9656;</span> Anmerkungen <span id="js-bullets-count" class="bullets-count"></span>
+      </button>
+      <div id="js-detail-bullets-wrap">
+        <div id="js-detail-bullets"></div>
+        <button type="button" class="map-btn" id="js-bullet-add" style="font-size:.7rem;padding:5px 9px;margin-top:4px">+ Anmerkung</button>
+      </div>
+      <div class="detail-actions">
+        <button type="button" class="map-btn" id="js-detail-delete">Punkt löschen</button>
+        <button type="button" class="map-btn active" id="js-detail-save">Speichern</button>
+      </div>
+    </div>
+    <div id="map-area-detail">
+      <button type="button" class="detail-close" id="js-area-close">&times;</button>
+      <label>Beschriftung</label>
+      <input type="text" id="js-area-label" maxlength="200" />
+      <label>Farbe</label>
+      <div class="kind-palette" id="js-area-color-palette"></div>
+      <label>Transparenz <span id="js-area-opacity-val" style="color:#6b7280"></span></label>
+      <input type="range" id="js-area-opacity" min="0.05" max="1" step="0.05" />
+      <label>Ebene</label>
+      <div class="area-layer-toggle">
+        <button type="button" class="map-btn" id="js-area-layer-back">Hinter den Punkten</button>
+        <button type="button" class="map-btn" id="js-area-layer-front">Vor den Punkten</button>
+      </div>
+      <div class="detail-actions">
+        <button type="button" class="map-btn" id="js-area-delete">Rechteck löschen</button>
+        <button type="button" class="map-btn active" id="js-area-save">Speichern</button>
+      </div>
+    </div>
   </div>
-
-  <div id="map-canvas"></div>
   <div id="map-tooltip"></div>
 </main>
 
@@ -67,6 +258,9 @@
   var pid = {{ project.id }};
   var initialNodes = {{ nodes | tojson }};
   var initialEdges = {{ edges | tojson }};
+  var initialAreas = {{ areas | tojson }};
+  var EDGE_KINDS = {{ edge_kinds | tojson }};
+  var NODE_COLORS = {{ node_colors | tojson }};
 
   function api(path, method, body) {
     return fetch(path, {
@@ -77,121 +271,816 @@
   }
 
   var cyNodes = initialNodes.map(function (n) {
-    return { data: { id: 'n' + n.id, dbId: n.id, label: n.name, description: n.description, phase: n.phase_name },
-             position: { x: n.x, y: n.y } };
+    return {
+      data: { id: 'n' + n.id, dbId: n.id, label: n.name, description: n.description || '', phase: n.phase_name, color: n.color || NODE_COLORS[0] },
+      position: { x: n.x, y: n.y },
+    };
   });
   var cyEdges = initialEdges.map(function (e) {
-    return { data: { id: 'e' + e.id, dbId: e.id, source: 'n' + e.from_id, target: 'n' + e.to_id } };
+    return { data: { id: 'e' + e.id, dbId: e.id, source: 'n' + e.from_id, target: 'n' + e.to_id, kind: e.kind || 'default' } };
+  });
+  var cyAreas = initialAreas.map(function (a) {
+    return {
+      data: {
+        id: 'r' + a.id, dbId: a.id, label: a.label, color: a.color || NODE_COLORS[0],
+        opacity: a.opacity, width: a.width, height: a.height, layer: a.layer,
+        zIndex: a.layer === 'front' ? 10 : 0,
+      },
+      position: { x: a.x, y: a.y },
+      classes: 'area',
+    };
+  });
+
+  var edgeStyles = Object.keys(EDGE_KINDS).map(function (kind) {
+    return { selector: 'edge[kind = "' + kind + '"]', style: {
+      'line-color': EDGE_KINDS[kind].color, 'target-arrow-color': EDGE_KINDS[kind].color,
+    } };
   });
 
   var cy = cytoscape({
     container: document.getElementById('map-canvas'),
-    elements: cyNodes.concat(cyEdges),
+    elements: cyNodes.concat(cyEdges).concat(cyAreas),
     style: [
       { selector: 'node', style: {
-          'background-color': '#451DC7', 'label': 'data(label)',
-          'color': '#000', 'font-size': 11, 'text-valign': 'bottom', 'text-margin-y': 6,
-          'width': 22, 'height': 22, 'border-width': 2, 'border-color': '#fff',
-          'text-wrap': 'wrap', 'text-max-width': '120px', 'text-halign': 'center',
+          'shape': 'round-rectangle', 'z-index': 5,
+          'background-color': 'data(color)', 'background-opacity': 0.16,
+          'border-width': 2, 'border-color': 'data(color)',
+          'width': 'label', 'height': 'label', 'padding': '10px',
+          'label': 'data(label)', 'color': '#e5e7eb', 'font-size': 11,
+          'text-valign': 'center', 'text-halign': 'center',
+          'text-wrap': 'wrap', 'text-max-width': '150px',
       }},
-      { selector: 'node:selected', style: { 'border-color': '#451DC7', 'border-width': 3, 'background-color': '#EDE8FC' } },
+      { selector: 'node:selected', style: { 'border-width': 3.5, 'overlay-color': '#451DC7', 'overlay-opacity': 0.2, 'overlay-padding': 4 } },
+      { selector: 'node.search-match', style: { 'border-color': '#22c55e', 'border-width': 2.5 } },
+      { selector: 'node.search-dim, edge.search-dim', style: { 'opacity': 0.15 } },
+      { selector: 'node.area', style: {
+          'shape': 'round-rectangle',
+          'width': 'data(width)', 'height': 'data(height)',
+          'background-color': 'data(color)', 'background-opacity': 'data(opacity)',
+          'border-width': 1.5, 'border-color': 'data(color)', 'border-opacity': 0.7,
+          'label': 'data(label)', 'color': '#e5e7eb', 'font-size': 12, 'font-weight': 'bold',
+          'text-valign': 'top', 'text-halign': 'center', 'text-margin-y': 8,
+          'text-wrap': 'wrap', 'text-max-width': '90%',
+          'z-index': 'data(zIndex)',
+      }},
+      { selector: 'node.area:selected', style: { 'border-width': 2.5, 'border-color': '#451DC7' } },
       { selector: 'edge', style: {
-          'width': 2, 'line-color': '#9a9a9a', 'target-arrow-color': '#9a9a9a',
-          'target-arrow-shape': 'triangle', 'curve-style': 'bezier',
+          'width': 2.5, 'line-color': EDGE_KINDS.default.color, 'target-arrow-color': EDGE_KINDS.default.color,
+          'target-arrow-shape': 'triangle', 'z-index': 6,
+          'curve-style': 'unbundled-bezier',
+          'control-point-distances': 30, 'control-point-weights': 0.5,
       }},
-      { selector: 'edge:selected', style: { 'line-color': '#451DC7', 'target-arrow-color': '#451DC7', 'width': 3 } },
-    ],
+      { selector: 'edge:selected', style: { 'width': 3.5 } },
+    ].concat(edgeStyles),
     layout: initialNodes.length ? { name: 'preset' } : { name: 'grid' },
-    minZoom: 0.2, maxZoom: 3,
+    minZoom: 0.15, maxZoom: 3,
+    wheelSensitivity: 0.25,
+    backgroundColor: '#0d1016',
   });
 
-  // ── Punkt hinzufügen ──────────────────────────────────────────────
+  // ── Legende ───────────────────────────────────────────────────────
+  var legendEl = document.getElementById('map-legend');
+  legendEl.innerHTML = Object.keys(EDGE_KINDS).map(function (kind) {
+    var k = EDGE_KINDS[kind];
+    return '<div class="legend-row"><span class="legend-dot" style="background:' + k.color + '"></span>' + k.label + '</div>';
+  }).join('');
+
+  // ── Kantentyp-Auswahl ────────────────────────────────────────────
+  var paletteEl = document.getElementById('js-kind-palette');
+  var selectedKind = 'default';
+  Object.keys(EDGE_KINDS).forEach(function (kind) {
+    var sw = document.createElement('div');
+    sw.className = 'kind-swatch' + (kind === selectedKind ? ' active' : '');
+    sw.style.background = EDGE_KINDS[kind].color;
+    sw.title = EDGE_KINDS[kind].label;
+    sw.dataset.kind = kind;
+    sw.addEventListener('click', function () {
+      selectedKind = kind;
+      paletteEl.querySelectorAll('.kind-swatch').forEach(function (s) { s.classList.toggle('active', s === sw); });
+    });
+    paletteEl.appendChild(sw);
+  });
+
+  // ── Modus: Punkt / Rechteck hinzufügen ───────────────────────────────
   var addBtn = document.getElementById('js-mode-add');
-  var connectBtn = document.getElementById('js-mode-connect');
+  var areaBtn = document.getElementById('js-mode-area');
   var hintEl = document.getElementById('js-mode-hint');
-  var mode = null; // null | 'add' | 'connect'
-  var connectFrom = null;
+  var mode = null; // null | 'add' | 'area'
 
   function setMode(next) {
     mode = (mode === next) ? null : next;
-    connectFrom = null;
     addBtn.classList.toggle('active', mode === 'add');
-    connectBtn.classList.toggle('active', mode === 'connect');
-    if (mode === 'add') hintEl.textContent = 'Klicke auf die Karte, um einen Punkt zu setzen.';
-    else if (mode === 'connect') hintEl.textContent = 'Klicke zuerst den Start-, dann den Zielpunkt.';
+    areaBtn.classList.toggle('active', mode === 'area');
+    if (mode === 'add') hintEl.textContent = 'Klick auf die Karte setzt einen Punkt.';
+    else if (mode === 'area') hintEl.textContent = 'Klick auf die Karte setzt ein Rechteck.';
     else hintEl.textContent = '';
     cy.nodes().unselect();
+    closeDetail();
+    closeAreaDetail();
   }
   addBtn.addEventListener('click', function () { setMode('add'); });
-  connectBtn.addEventListener('click', function () { setMode('connect'); });
+  areaBtn.addEventListener('click', function () { setMode('area'); });
 
   cy.on('tap', function (evt) {
     if (mode === 'add' && evt.target === cy) {
-      var name = window.prompt('Name des Punkts:');
-      if (!name || !name.trim()) return;
       var pos = evt.position;
-      api('/project/' + pid + '/prozesskarte/knoten', 'POST', { name: name.trim(), x: pos.x, y: pos.y })
+      api('/project/' + pid + '/prozesskarte/knoten', 'POST', { name: 'Neuer Punkt', x: pos.x, y: pos.y })
         .then(function (res) {
           if (!res.ok) { alert('Konnte Punkt nicht anlegen.'); return; }
-          cy.add({ data: { id: 'n' + res.node.id, dbId: res.node.id, label: res.node.name, description: res.node.description }, position: pos });
+          var node = cy.add({
+            data: { id: 'n' + res.node.id, dbId: res.node.id, label: res.node.name, description: res.node.description || '', color: res.node.color || NODE_COLORS[0] },
+            position: pos,
+          });
+          setMode(null);
+          openDetail(node, true);
         });
+    } else if (mode === 'area' && evt.target === cy) {
+      var apos = evt.position;
+      api('/project/' + pid + '/prozesskarte/rechteck', 'POST', { label: 'Bereich', x: apos.x, y: apos.y })
+        .then(function (res) {
+          if (!res.ok) { alert('Konnte Rechteck nicht anlegen.'); return; }
+          var area = cy.add({
+            data: {
+              id: 'r' + res.area.id, dbId: res.area.id, label: res.area.label, color: res.area.color || NODE_COLORS[0],
+              opacity: res.area.opacity, width: res.area.width, height: res.area.height, layer: res.area.layer,
+              zIndex: res.area.layer === 'front' ? 10 : 0,
+            },
+            position: apos,
+            classes: 'area',
+          });
+          setMode(null);
+          openAreaDetail(area, true);
+        });
+    } else if (mode === null && evt.target === cy) {
+      closeDetail();
+      closeAreaDetail();
     }
-  });
-
-  cy.on('tap', 'node', function (evt) {
-    if (mode !== 'connect') return;
-    var node = evt.target;
-    if (!connectFrom) {
-      connectFrom = node;
-      node.select();
-      hintEl.textContent = 'Jetzt den Zielpunkt anklicken.';
-      return;
-    }
-    if (connectFrom.id() === node.id()) { connectFrom = null; return; }
-    api('/project/' + pid + '/prozesskarte/kante', 'POST', { from_id: connectFrom.data('dbId'), to_id: node.data('dbId') })
-      .then(function (res) {
-        if (!res.ok) { alert('Konnte Verbindung nicht anlegen.'); return; }
-        cy.add({ data: { id: 'e' + res.edge.id, dbId: res.edge.id, source: connectFrom.id(), target: node.id() } });
-        connectFrom.unselect();
-        connectFrom = null;
-        hintEl.textContent = 'Klicke zuerst den Start-, dann den Zielpunkt.';
-      });
   });
 
   // ── Verschieben: Position speichern ─────────────────────────────────
   cy.on('dragfree', 'node', function (evt) {
     var node = evt.target;
     var pos = node.position();
-    api('/project/' + pid + '/prozesskarte/knoten/' + node.data('dbId'), 'PATCH', { x: pos.x, y: pos.y });
+    if (node.hasClass('area')) {
+      api('/project/' + pid + '/prozesskarte/rechteck/' + node.data('dbId'), 'PATCH', { x: pos.x, y: pos.y });
+      if (areaDetailNode && areaDetailNode.id() === node.id()) positionAreaDetail(node);
+    } else {
+      api('/project/' + pid + '/prozesskarte/knoten/' + node.data('dbId'), 'PATCH', { x: pos.x, y: pos.y });
+      if (detailNode && detailNode.id() === node.id()) positionDetail(node);
+    }
   });
 
-  // ── Löschen ───────────────────────────────────────────────────────
+  // ── Andockpunkte: Hover zeigt sie, Ziehen auf einen anderen Punkt verbindet ──
+  var ghostLine = document.getElementById('js-ghost-line');
+  var activeAnchors = [];
+  var clearTimer = null;
+  var connecting = null;
+
+  function clearAnchors() {
+    activeAnchors.forEach(function (a) { a.remove(); });
+    activeAnchors = [];
+  }
+  function scheduleClearAnchors() {
+    clearTimer = setTimeout(function () { if (!connecting) clearAnchors(); }, 200);
+  }
+  function cancelClearAnchors() {
+    if (clearTimer) { clearTimeout(clearTimer); clearTimer = null; }
+  }
+
+  function showAnchorsFor(node) {
+    clearAnchors();
+    var bb = node.renderedBoundingBox();
+    var points = [
+      { x: (bb.x1 + bb.x2) / 2, y: bb.y1 },
+      { x: bb.x2, y: (bb.y1 + bb.y2) / 2 },
+      { x: (bb.x1 + bb.x2) / 2, y: bb.y2 },
+      { x: bb.x1, y: (bb.y1 + bb.y2) / 2 },
+    ];
+    points.forEach(function (p) {
+      var dot = document.createElement('div');
+      dot.className = 'map-anchor';
+      dot.style.left = p.x + 'px';
+      dot.style.top = p.y + 'px';
+      dot.addEventListener('mouseenter', cancelClearAnchors);
+      dot.addEventListener('mouseleave', scheduleClearAnchors);
+      dot.addEventListener('mousedown', function (evt) {
+        evt.stopPropagation();
+        evt.preventDefault();
+        startConnecting(node, p);
+      });
+      stage.appendChild(dot);
+      activeAnchors.push(dot);
+    });
+  }
+
+  // Manuelles Hit-Testing statt cy's eingebautem 'mouseover'/'mouseout' auf Nodes:
+  // dessen Trefferfläche deckte bei runden Rechtecken mit niedriger Füllopazität
+  // nur den Rand zuverlässig ab. findNodeAtStagePoint prüft die volle Bounding-Box
+  // und wird auch beim Erkennen des Zielpunkts beim Verbinden verwendet.
+  var hoveredAnchorNode = null;
+  var canvasEl = document.getElementById('map-canvas');
+  canvasEl.addEventListener('mousemove', function (evt) {
+    if (mode === 'add' || connecting) return;
+    var rect = stage.getBoundingClientRect();
+    var node = findNodeAtStagePoint(evt.clientX - rect.left, evt.clientY - rect.top);
+    if (node) {
+      if (!hoveredAnchorNode || hoveredAnchorNode.id() !== node.id()) {
+        hoveredAnchorNode = node;
+        cancelClearAnchors();
+        showAnchorsFor(node);
+      }
+    } else if (hoveredAnchorNode) {
+      hoveredAnchorNode = null;
+      scheduleClearAnchors();
+    }
+  });
+  canvasEl.addEventListener('mouseleave', function () {
+    if (connecting) return;
+    hoveredAnchorNode = null;
+    scheduleClearAnchors();
+  });
+  cy.on('pan zoom drag', function () { if (!connecting) { clearAnchors(); hoveredAnchorNode = null; } });
+
+  function findNodeAtStagePoint(x, y) {
+    var found = null;
+    cy.nodes(':not(.area)').forEach(function (n) {
+      var bb = n.renderedBoundingBox();
+      if (x >= bb.x1 && x <= bb.x2 && y >= bb.y1 && y <= bb.y2) found = n;
+    });
+    return found;
+  }
+
+  function findAreaAtStagePoint(x, y) {
+    var found = null;
+    cy.nodes('.area').forEach(function (n) {
+      var bb = n.renderedBoundingBox();
+      if (x >= bb.x1 && x <= bb.x2 && y >= bb.y1 && y <= bb.y2) found = n;
+    });
+    return found;
+  }
+
+  function startConnecting(fromNode, anchorPos) {
+    connecting = { from: fromNode };
+    ghostLine.style.display = 'block';
+    ghostLine.setAttribute('x1', anchorPos.x);
+    ghostLine.setAttribute('y1', anchorPos.y);
+    ghostLine.setAttribute('x2', anchorPos.x);
+    ghostLine.setAttribute('y2', anchorPos.y);
+    document.addEventListener('mousemove', onConnectMove);
+    document.addEventListener('mouseup', onConnectUp);
+  }
+
+  function onConnectMove(evt) {
+    if (!connecting) return;
+    var rect = stage.getBoundingClientRect();
+    ghostLine.setAttribute('x2', evt.clientX - rect.left);
+    ghostLine.setAttribute('y2', evt.clientY - rect.top);
+  }
+
+  function onConnectUp(evt) {
+    document.removeEventListener('mousemove', onConnectMove);
+    document.removeEventListener('mouseup', onConnectUp);
+    ghostLine.style.display = 'none';
+    if (!connecting) return;
+    var fromNode = connecting.from;
+    connecting = null;
+    var rect = stage.getBoundingClientRect();
+    var target = findNodeAtStagePoint(evt.clientX - rect.left, evt.clientY - rect.top);
+    clearAnchors();
+    if (!target || target.id() === fromNode.id()) return;
+    api('/project/' + pid + '/prozesskarte/kante', 'POST', { from_id: fromNode.data('dbId'), to_id: target.data('dbId'), kind: selectedKind })
+      .then(function (res) {
+        if (!res.ok) return;
+        cy.add({ data: { id: 'e' + res.edge.id, dbId: res.edge.id, source: fromNode.id(), target: target.id(), kind: res.edge.kind } });
+      });
+  }
+
+  // ── Löschen (Mehrfachauswahl) ────────────────────────────────────────
   document.getElementById('js-delete-selected').addEventListener('click', function () {
     var selected = cy.elements(':selected');
     if (selected.length === 0) return;
-    if (!window.confirm('Auswahl wirklich löschen?')) return;
     selected.forEach(function (el) {
-      var path = el.isNode()
-        ? '/project/' + pid + '/prozesskarte/knoten/' + el.data('dbId')
-        : '/project/' + pid + '/prozesskarte/kante/' + el.data('dbId');
-      api(path, 'DELETE').then(function (res) { if (res.ok) el.remove(); });
+      var path;
+      if (el.isNode() && el.hasClass('area')) path = '/project/' + pid + '/prozesskarte/rechteck/' + el.data('dbId');
+      else if (el.isNode()) path = '/project/' + pid + '/prozesskarte/knoten/' + el.data('dbId');
+      else path = '/project/' + pid + '/prozesskarte/kante/' + el.data('dbId');
+      api(path, 'DELETE').then(function (res) { if (res.ok) { el.remove(); closeDetail(); closeAreaDetail(); } });
     });
   });
 
-  // ── Hover-Tooltip ─────────────────────────────────────────────────
+  // ── Vollbild ──────────────────────────────────────────────────────
+  var stage = document.getElementById('map-stage');
+  document.getElementById('js-fullscreen').addEventListener('click', function () {
+    if (!document.fullscreenElement) stage.requestFullscreen();
+    else document.exitFullscreen();
+  });
+  document.addEventListener('fullscreenchange', function () {
+    setTimeout(function () { cy.resize(); drawMinimap(); }, 50);
+  });
+
+  // ── PDF-Export ────────────────────────────────────────────────────
+  var exportBtn = document.getElementById('js-export-pdf');
+  exportBtn.addEventListener('click', function () {
+    if (cy.nodes().length === 0) { alert('Keine Punkte zum Exportieren vorhanden.'); return; }
+    exportBtn.disabled = true;
+    var origLabel = exportBtn.textContent;
+    exportBtn.textContent = '⏳ Export läuft …';
+    var dataUrl = cy.png({ full: true, scale: 2, bg: '#0d1016' });
+    var img = new Image();
+    img.onload = function () {
+      fetch('/project/' + pid + '/prozesskarte/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image: dataUrl, width: img.naturalWidth, height: img.naturalHeight }),
+      }).then(function (r) {
+        if (!r.ok) throw new Error('Export fehlgeschlagen');
+        return r.blob();
+      }).then(function (blob) {
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url; a.download = 'WARP_Prozesskarte.pdf';
+        document.body.appendChild(a); a.click(); a.remove();
+        URL.revokeObjectURL(url);
+      }).catch(function () {
+        alert('PDF-Export fehlgeschlagen.');
+      }).finally(function () {
+        exportBtn.disabled = false;
+        exportBtn.textContent = origLabel;
+      });
+    };
+    img.src = dataUrl;
+  });
+
+  // ── Zoom-Regler ───────────────────────────────────────────────────
+  var zoomPct = document.getElementById('js-zoom-pct');
+  function updateZoomPct() { zoomPct.textContent = Math.round(cy.zoom() * 100) + '%'; }
+  document.getElementById('js-zoom-in').addEventListener('click', function () { cy.zoom({ level: cy.zoom() * 1.25, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); });
+  document.getElementById('js-zoom-out').addEventListener('click', function () { cy.zoom({ level: cy.zoom() / 1.25, renderedPosition: { x: cy.width() / 2, y: cy.height() / 2 } }); });
+  document.getElementById('js-zoom-fit').addEventListener('click', function () { cy.fit(undefined, 40); });
+  document.getElementById('js-zoom-reset').addEventListener('click', function () { cy.zoom(1); cy.center(); });
+  cy.on('zoom', updateZoomPct);
+  updateZoomPct();
+
+  // ── Mini-Map ──────────────────────────────────────────────────────
+  var miniCanvas = document.getElementById('map-minimap');
+  var miniCtx = miniCanvas.getContext('2d');
+
+  function drawMinimap() {
+    var w = miniCanvas.width, h = miniCanvas.height;
+    miniCtx.clearRect(0, 0, w, h);
+    var nodes = cy.nodes();
+    if (nodes.length === 0) return;
+    var bb = cy.elements().boundingBox();
+    var pad = 10;
+    var scale = Math.min((w - 2 * pad) / Math.max(bb.w, 1), (h - 2 * pad) / Math.max(bb.h, 1));
+    function toMini(x, y) {
+      return { x: pad + (x - bb.x1) * scale, y: pad + (y - bb.y1) * scale };
+    }
+    miniCtx.strokeStyle = '#3b4252';
+    cy.edges().forEach(function (e) {
+      var s = toMini(e.source().position('x'), e.source().position('y'));
+      var t = toMini(e.target().position('x'), e.target().position('y'));
+      miniCtx.beginPath(); miniCtx.moveTo(s.x, s.y); miniCtx.lineTo(t.x, t.y); miniCtx.stroke();
+    });
+    miniCtx.fillStyle = '#60a5fa';
+    nodes.forEach(function (n) {
+      var p = toMini(n.position('x'), n.position('y'));
+      miniCtx.fillRect(p.x - 2, p.y - 2, 4, 4);
+    });
+    var ext = cy.extent();
+    var v1 = toMini(ext.x1, ext.y1), v2 = toMini(ext.x2, ext.y2);
+    miniCtx.strokeStyle = '#f59e0b';
+    miniCtx.lineWidth = 1.5;
+    miniCtx.strokeRect(v1.x, v1.y, Math.max(v2.x - v1.x, 2), Math.max(v2.y - v1.y, 2));
+    miniCanvas._bb = bb; miniCanvas._scale = scale; miniCanvas._pad = pad;
+  }
+  cy.on('pan zoom add remove position render', drawMinimap);
+  drawMinimap();
+
+  miniCanvas.addEventListener('click', function (evt) {
+    var bb = miniCanvas._bb, scale = miniCanvas._scale, pad = miniCanvas._pad;
+    if (!bb) return;
+    var rect = miniCanvas.getBoundingClientRect();
+    var mx = evt.clientX - rect.left, my = evt.clientY - rect.top;
+    var modelX = bb.x1 + (mx - pad) / scale;
+    var modelY = bb.y1 + (my - pad) / scale;
+    cy.animate({ center: { position: { x: modelX, y: modelY } } }, { duration: 150 });
+  });
+
+  // ── Suche ─────────────────────────────────────────────────────────
+  var searchInput = document.getElementById('js-search');
+  var searchCount = document.getElementById('js-search-count');
+  var searchMatches = []; var searchIndex = -1;
+
+  function applySearch(query) {
+    cy.nodes(':not(.area)').removeClass('search-match search-dim');
+    cy.edges().removeClass('search-dim');
+    query = query.trim().toLowerCase();
+    if (!query) { searchMatches = []; searchCount.textContent = ''; return; }
+    searchMatches = cy.nodes(':not(.area)').filter(function (n) { return (n.data('label') || '').toLowerCase().indexOf(query) !== -1; });
+    var matchIds = {};
+    searchMatches.forEach(function (n) { matchIds[n.id()] = true; });
+    cy.nodes(':not(.area)').forEach(function (n) { if (!matchIds[n.id()]) n.addClass('search-dim'); else n.addClass('search-match'); });
+    cy.edges().forEach(function (e) {
+      if (!matchIds[e.source().id()] && !matchIds[e.target().id()]) e.addClass('search-dim');
+    });
+    searchCount.textContent = searchMatches.length ? searchMatches.length + ' Treffer' : 'Keine Treffer';
+    searchIndex = -1;
+  }
+
+  function gotoMatch(step) {
+    if (searchMatches.length === 0) return;
+    searchIndex = (searchIndex + step + searchMatches.length) % searchMatches.length;
+    var node = searchMatches[searchIndex];
+    cy.animate({ center: { eles: node }, zoom: Math.max(cy.zoom(), 1) }, { duration: 200 });
+  }
+
+  searchInput.addEventListener('input', function () { applySearch(searchInput.value); });
+  searchInput.addEventListener('keydown', function (evt) {
+    if (evt.key !== 'Enter') return;
+    evt.preventDefault();
+    gotoMatch(evt.shiftKey ? -1 : 1);
+  });
+
+  // ── Hover-Tooltip (Kurzvorschau) ──────────────────────────────────
   var tooltip = document.getElementById('map-tooltip');
-  cy.on('mouseover', 'node', function (evt) {
-    var d = evt.target.data();
-    if (!d.description && !d.phase) return;
-    tooltip.innerHTML = '<strong>' + d.label + '</strong>' + (d.phase ? d.phase + '<br>' : '') + (d.description || '');
-    tooltip.style.display = 'block';
+  function escapeHtml(s) {
+    return (s || '').replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  var hoveredTooltipNode = null;
+  canvasEl.addEventListener('mousemove', function (evt) {
+    var rect = stage.getBoundingClientRect();
+    var node = findNodeAtStagePoint(evt.clientX - rect.left, evt.clientY - rect.top);
+    if (!node) {
+      hoveredTooltipNode = null;
+      tooltip.style.display = 'none';
+      return;
+    }
+    if (!hoveredTooltipNode || hoveredTooltipNode.id() !== node.id()) {
+      hoveredTooltipNode = node;
+      var d = node.data();
+      if (!d.description && !d.phase) { tooltip.style.display = 'none'; }
+      else {
+        var bullets = (d.description || '').split('\n').filter(function (l) { return l.trim(); });
+        var bulletsHtml = bullets.map(function (l) { return '&bull; ' + escapeHtml(l); }).join('<br>');
+        tooltip.innerHTML = '<strong>' + escapeHtml(d.label) + '</strong>' + (d.phase ? escapeHtml(d.phase) + '<br>' : '') + bulletsHtml;
+        tooltip.style.display = 'block';
+      }
+    }
   });
-  cy.on('mousemove', function (evt) {
+  canvasEl.addEventListener('mousemove', function (evt) {
     if (tooltip.style.display !== 'block') return;
-    tooltip.style.left = (evt.originalEvent.clientX + 14) + 'px';
-    tooltip.style.top = (evt.originalEvent.clientY + 14) + 'px';
+    tooltip.style.left = (evt.clientX + 14) + 'px';
+    tooltip.style.top = (evt.clientY + 14) + 'px';
   });
-  cy.on('mouseout', 'node', function () { tooltip.style.display = 'none'; });
+  canvasEl.addEventListener('mouseleave', function () {
+    hoveredTooltipNode = null;
+    tooltip.style.display = 'none';
+  });
+
+  // ── Ausklappbare Beschreibung (Klick auf Punkt) ─────────────────────
+  var detailEl = document.getElementById('map-detail');
+  var nameInput = document.getElementById('js-detail-name');
+  var bulletsWrap = document.getElementById('js-detail-bullets-wrap');
+  var bulletsListEl = document.getElementById('js-detail-bullets');
+  var bulletsToggle = document.getElementById('js-detail-bullets-toggle');
+  var bulletsCount = document.getElementById('js-bullets-count');
+  var detailNode = null;
+
+  function positionDetail(node) {
+    var rp = node.renderedPosition();
+    var stageRect = stage.getBoundingClientRect();
+    var left = Math.min(rp.x + 20, stageRect.width - 280);
+    var top = Math.min(rp.y + 10, stageRect.height - 320);
+    detailEl.style.left = Math.max(10, left) + 'px';
+    detailEl.style.top = Math.max(10, top) + 'px';
+  }
+
+  function addBulletRow(text) {
+    var row = document.createElement('div');
+    row.className = 'bullet-row';
+    row.innerHTML = '<span class="bullet-dot">&bull;</span><input type="text" maxlength="300"><button type="button" class="bullet-remove" title="Entfernen">&times;</button>';
+    var input = row.querySelector('input');
+    input.value = text || '';
+    row.querySelector('.bullet-remove').addEventListener('click', function () {
+      row.remove();
+      updateBulletsCount();
+    });
+    input.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Enter') { evt.preventDefault(); addBulletRow(''); bulletsListEl.lastElementChild.querySelector('input').focus(); }
+    });
+    bulletsListEl.appendChild(row);
+    return row;
+  }
+
+  function updateBulletsCount() {
+    var n = bulletsListEl.querySelectorAll('input').length;
+    bulletsCount.textContent = n ? '(' + n + ')' : '';
+  }
+
+  function getBulletValues() {
+    return Array.from(bulletsListEl.querySelectorAll('input'))
+      .map(function (i) { return i.value.trim(); })
+      .filter(function (v) { return v; });
+  }
+
+  function setBulletsOpen(open) {
+    bulletsWrap.classList.toggle('open', open);
+    bulletsToggle.classList.toggle('open', open);
+  }
+
+  bulletsToggle.addEventListener('click', function () {
+    setBulletsOpen(!bulletsWrap.classList.contains('open'));
+  });
+  document.getElementById('js-bullet-add').addEventListener('click', function () {
+    setBulletsOpen(true);
+    var row = addBulletRow('');
+    row.querySelector('input').focus();
+    updateBulletsCount();
+  });
+
+  var colorPaletteEl = document.getElementById('js-node-color-palette');
+  NODE_COLORS.forEach(function (color) {
+    var sw = document.createElement('div');
+    sw.className = 'kind-swatch';
+    sw.style.background = color;
+    sw.dataset.color = color;
+    sw.addEventListener('click', function () {
+      if (!detailNode) return;
+      colorPaletteEl.querySelectorAll('.kind-swatch').forEach(function (s) { s.classList.toggle('active', s === sw); });
+      detailNode.data('color', color);
+      api('/project/' + pid + '/prozesskarte/knoten/' + detailNode.data('dbId'), 'PATCH', { color: color });
+    });
+    colorPaletteEl.appendChild(sw);
+  });
+
+  function openDetail(node, focusName) {
+    detailNode = node;
+    nameInput.value = node.data('label');
+    var currentColor = node.data('color') || NODE_COLORS[0];
+    colorPaletteEl.querySelectorAll('.kind-swatch').forEach(function (s) {
+      s.classList.toggle('active', s.dataset.color === currentColor);
+    });
+    bulletsListEl.innerHTML = '';
+    var lines = (node.data('description') || '').split('\n').filter(function (l) { return l.trim(); });
+    lines.forEach(function (l) { addBulletRow(l); });
+    updateBulletsCount();
+    setBulletsOpen(lines.length > 0);
+    positionDetail(node);
+    detailEl.classList.add('open');
+    tooltip.style.display = 'none';
+    if (focusName) {
+      setTimeout(function () { nameInput.focus(); nameInput.select(); }, 0);
+    }
+  }
+
+  function closeDetail() {
+    detailNode = null;
+    detailEl.classList.remove('open');
+  }
+
+  cy.on('tap', 'node:not(.area)', function (evt) {
+    if (mode !== null) return;
+    var node = evt.target;
+    closeAreaDetail();
+    if (detailNode && detailNode.id() === node.id()) { closeDetail(); return; }
+    openDetail(node);
+  });
+  cy.on('pan zoom', function () { if (detailNode) positionDetail(detailNode); if (areaDetailNode) positionAreaDetail(areaDetailNode); });
+
+  document.getElementById('js-detail-close').addEventListener('click', closeDetail);
+  nameInput.addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter') { evt.preventDefault(); document.getElementById('js-detail-save').click(); }
+  });
+
+  document.getElementById('js-detail-save').addEventListener('click', function () {
+    if (!detailNode) return;
+    var name = nameInput.value.trim();
+    var desc = getBulletValues().join('\n');
+    if (!name) { alert('Name darf nicht leer sein.'); return; }
+    api('/project/' + pid + '/prozesskarte/knoten/' + detailNode.data('dbId'), 'PATCH', { name: name, description: desc })
+      .then(function (res) {
+        if (!res.ok) { alert('Konnte nicht gespeichert werden.'); return; }
+        detailNode.data('label', res.node.name);
+        detailNode.data('description', res.node.description || '');
+        closeDetail();
+      });
+  });
+
+  document.getElementById('js-detail-delete').addEventListener('click', function () {
+    if (!detailNode) return;
+    api('/project/' + pid + '/prozesskarte/knoten/' + detailNode.data('dbId'), 'DELETE')
+      .then(function (res) {
+        if (!res.ok) return;
+        detailNode.remove();
+        closeDetail();
+      });
+  });
+
+  // ── Rechtecke: Resize-Griff beim Hovern, Klick öffnet das Detail-Panel ──
+  var resizeHandle = null;
+  var resizeClearTimer = null;
+  var resizing = null;
+  var hoveredAreaForHandle = null;
+
+  function clearResizeHandle() {
+    if (resizeHandle) { resizeHandle.remove(); resizeHandle = null; }
+  }
+  function scheduleClearResizeHandle() {
+    resizeClearTimer = setTimeout(function () { if (!resizing) clearResizeHandle(); }, 200);
+  }
+  function cancelClearResizeHandle() {
+    if (resizeClearTimer) { clearTimeout(resizeClearTimer); resizeClearTimer = null; }
+  }
+
+  function showResizeHandleFor(area) {
+    clearResizeHandle();
+    var bb = area.renderedBoundingBox();
+    var handle = document.createElement('div');
+    handle.className = 'map-resize-handle';
+    handle.style.left = bb.x2 + 'px';
+    handle.style.top = bb.y2 + 'px';
+    handle.addEventListener('mouseenter', cancelClearResizeHandle);
+    handle.addEventListener('mouseleave', scheduleClearResizeHandle);
+    handle.addEventListener('mousedown', function (evt) {
+      evt.stopPropagation();
+      evt.preventDefault();
+      startResizing(area);
+    });
+    stage.appendChild(handle);
+    resizeHandle = handle;
+  }
+
+  canvasEl.addEventListener('mousemove', function (evt) {
+    if (mode !== null || connecting || resizing) return;
+    var rect = stage.getBoundingClientRect();
+    var x = evt.clientX - rect.left, y = evt.clientY - rect.top;
+    // Liegt an dieser Stelle auch ein Punkt, hat der Vorrang vor dem Resize-Griff des Rechtecks.
+    var area = findNodeAtStagePoint(x, y) ? null : findAreaAtStagePoint(x, y);
+    if (area) {
+      if (!hoveredAreaForHandle || hoveredAreaForHandle.id() !== area.id()) {
+        hoveredAreaForHandle = area;
+        cancelClearResizeHandle();
+        showResizeHandleFor(area);
+      }
+    } else if (hoveredAreaForHandle) {
+      hoveredAreaForHandle = null;
+      scheduleClearResizeHandle();
+    }
+  });
+  cy.on('pan zoom drag', function () { if (!resizing) { clearResizeHandle(); hoveredAreaForHandle = null; } });
+
+  function startResizing(area) {
+    var pos = area.position();
+    resizing = {
+      area: area, startWidth: area.data('width'), startHeight: area.data('height'),
+      startPosX: pos.x, startPosY: pos.y, startX: null, startY: null,
+    };
+    document.addEventListener('mousemove', onResizeMove);
+    document.addEventListener('mouseup', onResizeUp);
+  }
+  function onResizeMove(evt) {
+    if (!resizing) return;
+    if (resizing.startX === null) { resizing.startX = evt.clientX; resizing.startY = evt.clientY; return; }
+    var zoom = cy.zoom();
+    var dw = (evt.clientX - resizing.startX) / zoom;
+    var dh = (evt.clientY - resizing.startY) / zoom;
+    var newWidth = Math.max(40, resizing.startWidth + dw);
+    var newHeight = Math.max(30, resizing.startHeight + dh);
+    // Mittelpunkt um die halbe tatsächliche Größenänderung mitverschieben, damit
+    // die linke obere Ecke fix bleibt und nur an der gezogenen Seite gewachsen wird.
+    var appliedDw = newWidth - resizing.startWidth;
+    var appliedDh = newHeight - resizing.startHeight;
+    resizing.area.data('width', newWidth);
+    resizing.area.data('height', newHeight);
+    resizing.area.position({ x: resizing.startPosX + appliedDw / 2, y: resizing.startPosY + appliedDh / 2 });
+    showResizeHandleFor(resizing.area);
+  }
+  function onResizeUp() {
+    document.removeEventListener('mousemove', onResizeMove);
+    document.removeEventListener('mouseup', onResizeUp);
+    if (!resizing) return;
+    var area = resizing.area;
+    resizing = null;
+    var pos = area.position();
+    api('/project/' + pid + '/prozesskarte/rechteck/' + area.data('dbId'), 'PATCH', {
+      width: area.data('width'), height: area.data('height'), x: pos.x, y: pos.y,
+    });
+  }
+
+  // ── Rechteck-Detail-Panel ────────────────────────────────────────────
+  var areaDetailEl = document.getElementById('map-area-detail');
+  var areaLabelInput = document.getElementById('js-area-label');
+  var areaColorPaletteEl = document.getElementById('js-area-color-palette');
+  var areaOpacityInput = document.getElementById('js-area-opacity');
+  var areaOpacityVal = document.getElementById('js-area-opacity-val');
+  var areaLayerBackBtn = document.getElementById('js-area-layer-back');
+  var areaLayerFrontBtn = document.getElementById('js-area-layer-front');
+  var areaDetailNode = null;
+  var areaSelectedLayer = 'back';
+
+  NODE_COLORS.forEach(function (color) {
+    var sw = document.createElement('div');
+    sw.className = 'kind-swatch';
+    sw.style.background = color;
+    sw.dataset.color = color;
+    sw.addEventListener('click', function () {
+      if (!areaDetailNode) return;
+      areaColorPaletteEl.querySelectorAll('.kind-swatch').forEach(function (s) { s.classList.toggle('active', s === sw); });
+      areaDetailNode.data('color', color);
+    });
+    areaColorPaletteEl.appendChild(sw);
+  });
+
+  function setAreaLayerUi(layer) {
+    areaSelectedLayer = layer;
+    areaLayerBackBtn.classList.toggle('active', layer === 'back');
+    areaLayerFrontBtn.classList.toggle('active', layer === 'front');
+  }
+  areaLayerBackBtn.addEventListener('click', function () {
+    setAreaLayerUi('back');
+    if (areaDetailNode) { areaDetailNode.data('zIndex', 0); areaDetailNode.data('layer', 'back'); }
+  });
+  areaLayerFrontBtn.addEventListener('click', function () {
+    setAreaLayerUi('front');
+    if (areaDetailNode) { areaDetailNode.data('zIndex', 10); areaDetailNode.data('layer', 'front'); }
+  });
+  areaOpacityInput.addEventListener('input', function () {
+    var v = parseFloat(areaOpacityInput.value);
+    areaOpacityVal.textContent = Math.round(v * 100) + '%';
+    if (areaDetailNode) areaDetailNode.data('opacity', v);
+  });
+
+  function positionAreaDetail(area) {
+    var bb = area.renderedBoundingBox();
+    var stageRect = stage.getBoundingClientRect();
+    var left = Math.min(bb.x2 + 10, stageRect.width - 260);
+    var top = Math.min(bb.y1, stageRect.height - 300);
+    areaDetailEl.style.left = Math.max(10, left) + 'px';
+    areaDetailEl.style.top = Math.max(10, top) + 'px';
+  }
+
+  function openAreaDetail(area, focusLabel) {
+    closeDetail();
+    areaDetailNode = area;
+    areaLabelInput.value = area.data('label');
+    var currentColor = area.data('color') || NODE_COLORS[0];
+    areaColorPaletteEl.querySelectorAll('.kind-swatch').forEach(function (s) {
+      s.classList.toggle('active', s.dataset.color === currentColor);
+    });
+    areaOpacityInput.value = area.data('opacity');
+    areaOpacityVal.textContent = Math.round(area.data('opacity') * 100) + '%';
+    setAreaLayerUi(area.data('layer') || 'back');
+    positionAreaDetail(area);
+    areaDetailEl.classList.add('open');
+    if (focusLabel) {
+      setTimeout(function () { areaLabelInput.focus(); areaLabelInput.select(); }, 0);
+    }
+  }
+
+  function closeAreaDetail() {
+    areaDetailNode = null;
+    areaDetailEl.classList.remove('open');
+  }
+
+  cy.on('tap', 'node.area', function (evt) {
+    if (mode !== null) return;
+    var area = evt.target;
+    closeDetail();
+    if (areaDetailNode && areaDetailNode.id() === area.id()) { closeAreaDetail(); return; }
+    openAreaDetail(area);
+  });
+
+  document.getElementById('js-area-close').addEventListener('click', closeAreaDetail);
+  areaLabelInput.addEventListener('keydown', function (evt) {
+    if (evt.key === 'Enter') { evt.preventDefault(); document.getElementById('js-area-save').click(); }
+  });
+
+  document.getElementById('js-area-save').addEventListener('click', function () {
+    if (!areaDetailNode) return;
+    var label = areaLabelInput.value.trim();
+    if (!label) { alert('Beschriftung darf nicht leer sein.'); return; }
+    api('/project/' + pid + '/prozesskarte/rechteck/' + areaDetailNode.data('dbId'), 'PATCH', {
+      label: label, color: areaDetailNode.data('color'), opacity: areaDetailNode.data('opacity'), layer: areaSelectedLayer,
+    }).then(function (res) {
+      if (!res.ok) { alert('Konnte nicht gespeichert werden.'); return; }
+      areaDetailNode.data('label', res.area.label);
+      closeAreaDetail();
+    });
+  });
+
+  document.getElementById('js-area-delete').addEventListener('click', function () {
+    if (!areaDetailNode) return;
+    api('/project/' + pid + '/prozesskarte/rechteck/' + areaDetailNode.data('dbId'), 'DELETE')
+      .then(function (res) {
+        if (!res.ok) return;
+        areaDetailNode.remove();
+        closeAreaDetail();
+      });
+  });
 })();
 </script>
 

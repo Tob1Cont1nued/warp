@@ -70,7 +70,7 @@ from flask_limiter.util import get_remote_address
 
 from .models import (
     db, User, Project, Answer, Category, Question, InboxMessage, GeneratedDocument, WorkshopQuestion,
-    ProcessModel, ProcessStep, ProcessDependency,
+    ProcessModel, ProcessStep, ProcessDependency, ProcessArea,
 )
 from .data.questions import ANSWER_OPTIONS, WARP_LEVEL_ORDER, CATEGORIES as _PY_CATS
 
@@ -574,6 +574,12 @@ def create_app() -> Flask:
             db.session.rollback()
             print(f"[WARP] Fragen-Seed übersprungen: {e}")
 
+        try:
+            _seed_process_catalog_if_needed()
+        except Exception as e:
+            db.session.rollback()
+            print(f"[WARP] Prozess-Katalog-Seed übersprungen: {e}")
+
     score_lookup = {opt["id"]: opt["score"] for opt in ANSWER_OPTIONS}
     label_lookup = {opt["id"]: opt["label"] for opt in ANSWER_OPTIONS}
 
@@ -594,12 +600,6 @@ def create_app() -> Flask:
         return render_template("403.html"), 403
 
     def _db_question_count(catalog_type: str = 'assessment') -> int:
-        try:
-            _seed_process_catalog_if_needed()
-        except Exception as e:
-            db.session.rollback()
-            print(f"[WARP] Prozess-Katalog-Seed übersprungen: {e}")
-
         return db.session.execute(
             db.select(db.func.count(Question.id))
             .join(Category, Question.category_id == Category.id)
@@ -1663,26 +1663,23 @@ def create_app() -> Flask:
             workshop_questions=workshop_questions,
         )
 
-    @app.route("/project/<int:pid>/workshop/question/add", methods=["POST"])
-    @login_required
-    def workshop_question_add(pid: int):
-        project = _get_project_or_403(pid)
-        if project.catalog_type != 'workshop':
-            abort(400)
-        if not (current_user.is_superuser or project.user_id == current_user.id):
-            abort(403)
-        text = request.form.get("text", "").strip()
-        if not text:
-            return redirect(url_for("questionnaire", pid=pid) + "#verwalten")
-        hint = request.form.get("hint", "").strip() or None
-        max_order = db.session.execute(
-            db.select(db.func.max(WorkshopQuestion.sort_order))
-            .where(WorkshopQuestion.project_id == pid)
-        ).scalar() or 0
-        qid = f"wq-{pid}-{uuid.uuid4().hex[:8]}"
-        q = WorkshopQuestion(id=qid, project_id=pid, text=text, hint=hint, sort_order=max_order + 1)
-        db.session.add(q)
-        db.session.commit()
+    # Vordefinierte Abhängigkeitstypen für die Prozesskarte (Kantenfarbe + Legende).
+    # "default" ist der Normalfall (schlichter Ablauf), die anderen markieren
+    # besondere Abhängigkeiten, die im Planspiel später brechen können.
+    EDGE_KINDS = {
+        "default":  {"label": "Ablauf",            "color": "#8a8f98"},
+        "blockiert": {"label": "Blockierend",       "color": "#e5484d"},
+        "liefert":  {"label": "Liefert Daten an",  "color": "#3b82f6"},
+        "risiko":   {"label": "Risikobehaftet",    "color": "#f59e0b"},
+    }
+
+    # Auswählbare Akzentfarben für Punkte auf der Prozesskarte. Erster Eintrag
+    # ist die neutrale Standardfarbe (= kein Farbe gesetzt).
+    NODE_COLORS = [
+        "#3b4252", "#e5484d", "#f59e0b", "#eab308",
+        "#22c55e", "#14b8a6", "#3b82f6", "#8b5cf6", "#ec4899",
+    ]
+
     def _get_or_create_process_model(project_id: int) -> "ProcessModel":
         model = db.session.execute(
             db.select(ProcessModel).where(ProcessModel.project_id == project_id)
@@ -1702,6 +1699,7 @@ def create_app() -> Flask:
             "phase_name": step.phase.name if step.phase else None,
             "x": step.x if step.x is not None else 0,
             "y": step.y if step.y is not None else 0,
+            "color": step.color or NODE_COLORS[0],
         }
 
     def _dependency_to_dict(dep: "ProcessDependency") -> dict:
@@ -1709,6 +1707,20 @@ def create_app() -> Flask:
             "id": dep.id,
             "from_id": dep.depends_on_step_id,
             "to_id": dep.step_id,
+            "kind": dep.kind or "default",
+        }
+
+    def _area_to_dict(area: "ProcessArea") -> dict:
+        return {
+            "id": area.id,
+            "label": area.label,
+            "x": area.x,
+            "y": area.y,
+            "width": area.width,
+            "height": area.height,
+            "color": area.color or NODE_COLORS[0],
+            "opacity": area.opacity,
+            "layer": area.layer,
         }
 
     @app.route("/project/<int:pid>/prozesskarte")
@@ -1723,13 +1735,86 @@ def create_app() -> Flask:
             _dependency_to_dict(d) for d in model.dependencies
             if d.depends_on_step_id is not None
         ]
+        areas = [_area_to_dict(a) for a in model.areas]
         return render_template(
             "process_map.html",
             project=project,
             projects=current_user.projects,
             nodes=nodes,
             edges=edges,
+            areas=areas,
+            edge_kinds=EDGE_KINDS,
+            node_colors=NODE_COLORS,
         )
+
+    @app.route("/project/<int:pid>/prozesskarte/rechteck", methods=["POST"])
+    @login_required
+    def process_map_add_area(pid: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        data = request.get_json(silent=True) or {}
+        model = _get_or_create_process_model(pid)
+        area = ProcessArea(
+            model_id=model.id,
+            label=(data.get("label") or "Bereich").strip()[:200] or "Bereich",
+            x=float(data.get("x", 0)),
+            y=float(data.get("y", 0)),
+            width=max(40.0, float(data.get("width", 220))),
+            height=max(30.0, float(data.get("height", 140))),
+        )
+        db.session.add(area)
+        db.session.commit()
+        return jsonify({"ok": True, "area": _area_to_dict(area)})
+
+    def _get_area_or_404(pid: int, area_id: int) -> "ProcessArea":
+        area = db.session.execute(
+            db.select(ProcessArea).where(ProcessArea.id == area_id, ProcessArea.model_id.in_(
+                db.select(ProcessModel.id).where(ProcessModel.project_id == pid)
+            ))
+        ).scalar_one_or_none()
+        if area is None:
+            abort(404)
+        return area
+
+    @app.route("/project/<int:pid>/prozesskarte/rechteck/<int:area_id>", methods=["PATCH"])
+    @login_required
+    def process_map_update_area(pid: int, area_id: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        area = _get_area_or_404(pid, area_id)
+        data = request.get_json(silent=True) or {}
+        if "x" in data:
+            area.x = float(data["x"])
+        if "y" in data:
+            area.y = float(data["y"])
+        if "width" in data:
+            area.width = max(40.0, float(data["width"]))
+        if "height" in data:
+            area.height = max(30.0, float(data["height"]))
+        if "label" in data and data["label"].strip():
+            area.label = data["label"].strip()[:200]
+        if "color" in data:
+            color = data.get("color")
+            area.color = color if color in NODE_COLORS else None
+        if "opacity" in data:
+            area.opacity = max(0.05, min(1.0, float(data["opacity"])))
+        if "layer" in data:
+            area.layer = data["layer"] if data["layer"] in ("back", "front") else "back"
+        db.session.commit()
+        return jsonify({"ok": True, "area": _area_to_dict(area)})
+
+    @app.route("/project/<int:pid>/prozesskarte/rechteck/<int:area_id>", methods=["DELETE"])
+    @login_required
+    def process_map_delete_area(pid: int, area_id: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        area = _get_area_or_404(pid, area_id)
+        db.session.delete(area)
+        db.session.commit()
+        return jsonify({"ok": True})
 
     @app.route("/project/<int:pid>/prozesskarte/knoten", methods=["POST"])
     @login_required
@@ -1774,6 +1859,9 @@ def create_app() -> Flask:
             step.name = data["name"].strip()[:200]
         if "description" in data:
             step.description = (data["description"] or "").strip() or None
+        if "color" in data:
+            color = data.get("color")
+            step.color = color if color in NODE_COLORS else None
         db.session.commit()
         return jsonify({"ok": True, "node": _step_to_dict(step)})
 
@@ -1809,7 +1897,10 @@ def create_app() -> Flask:
         step_ids = {s.id for s in model.steps}
         if from_id not in step_ids or to_id not in step_ids:
             abort(404)
-        dep = ProcessDependency(model_id=model.id, step_id=to_id, depends_on_step_id=from_id)
+        kind = data.get("kind") or "default"
+        if kind not in EDGE_KINDS:
+            kind = "default"
+        dep = ProcessDependency(model_id=model.id, step_id=to_id, depends_on_step_id=from_id, kind=kind)
         db.session.add(dep)
         db.session.commit()
         return jsonify({"ok": True, "edge": _dependency_to_dict(dep)})
@@ -1831,6 +1922,61 @@ def create_app() -> Flask:
         db.session.commit()
         return jsonify({"ok": True})
 
+    @app.route("/project/<int:pid>/prozesskarte/export", methods=["POST"])
+    @login_required
+    def process_map_export_pdf(pid: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        data = request.get_json(silent=True) or {}
+        image_data_url = data.get("image")
+        if not image_data_url or not image_data_url.startswith("data:image/png;base64,"):
+            return jsonify({"ok": False, "error": "kein Bild übergeben"}), 400
+        width = data.get("width") or 1000
+        height = data.get("height") or 700
+        landscape = width >= height
+
+        try:
+            from weasyprint import HTML  # type: ignore
+        except ImportError:
+            abort(500, description="WeasyPrint ist nicht installiert.")
+
+        html = render_template(
+            "process_map_export.html",
+            project=project,
+            image_data_url=image_data_url,
+            generated_at=dt.datetime.utcnow().strftime("%d.%m.%Y %H:%M"),
+            landscape=landscape,
+        )
+        pdf_bytes = HTML(string=html, base_url=request.host_url).write_pdf()
+        filename = f"WARP_Prozesskarte_{project.name.replace(' ', '_')}_{dt.date.today().isoformat()}.pdf"
+        return send_file(
+            io.BytesIO(pdf_bytes),
+            mimetype="application/pdf",
+            as_attachment=True,
+            download_name=filename,
+        )
+
+    @app.route("/project/<int:pid>/workshop/question/add", methods=["POST"])
+    @login_required
+    def workshop_question_add(pid: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'workshop':
+            abort(400)
+        if not (current_user.is_superuser or project.user_id == current_user.id):
+            abort(403)
+        text = request.form.get("text", "").strip()
+        if not text:
+            return redirect(url_for("questionnaire", pid=pid) + "#verwalten")
+        hint = request.form.get("hint", "").strip() or None
+        max_order = db.session.execute(
+            db.select(db.func.max(WorkshopQuestion.sort_order))
+            .where(WorkshopQuestion.project_id == pid)
+        ).scalar() or 0
+        qid = f"wq-{pid}-{uuid.uuid4().hex[:8]}"
+        q = WorkshopQuestion(id=qid, project_id=pid, text=text, hint=hint, sort_order=max_order + 1)
+        db.session.add(q)
+        db.session.commit()
         return redirect(url_for("questionnaire", pid=pid) + "#verwalten")
 
     @app.route("/project/<int:pid>/workshop/question/<qid>/edit", methods=["POST"])

@@ -210,6 +210,10 @@ class ProcessModel(db.Model):
         "ProcessStep", back_populates="model",
         cascade="all, delete-orphan",
     )
+    areas = db.relationship(
+        "ProcessArea", back_populates="model",
+        cascade="all, delete-orphan",
+    )
 
 
 class ProcessPhase(db.Model):
@@ -255,6 +259,8 @@ class ProcessStep(db.Model):
     sort_order = db.Column(db.Integer, nullable=False, default=0)
     x = db.Column(db.Float, nullable=True)
     y = db.Column(db.Float, nullable=True)
+    # Akzentfarbe des Punkts auf der Prozesskarte (Hex), None = Standardfarbe.
+    color = db.Column(db.String(20), nullable=True)
 
     model = db.relationship("ProcessModel", back_populates="steps")
     phase = db.relationship("ProcessPhase", back_populates="steps")
@@ -271,6 +277,9 @@ class ProcessDependency(db.Model):
     depends_on_step_id = db.Column(db.Integer, db.ForeignKey("process_step.id"), nullable=True)
     depends_on_label = db.Column(db.String(200), nullable=True)
     description = db.Column(db.Text, nullable=True)
+    # Typ der Kante auf der Prozesskarte, steuert die Farbe. Frei wählbar, siehe
+    # EDGE_KINDS in app/__init__.py für die vordefinierte Palette.
+    kind = db.Column(db.String(30), nullable=False, default="default")
 
     model = db.relationship("ProcessModel", back_populates="dependencies")
     step = db.relationship("ProcessStep", foreign_keys=[step_id])
@@ -320,3 +329,22 @@ class ProcessEnvironmentVersion(db.Model):
 
     environment = db.relationship("ProcessEnvironment", back_populates="versions")
     deployed_by_role = db.relationship("ProcessRole")
+
+
+class ProcessArea(db.Model):
+    """Frei platzierbares, beschriftetes Rechteck auf der Prozesskarte zum optischen
+    Gruppieren von Punkten (z.B. eine Phase oder ein Team-Bereich). layer bestimmt,
+    ob es hinter ('back') oder vor ('front') den Punkten liegt."""
+    __tablename__ = "process_area"
+    id = db.Column(db.Integer, primary_key=True)
+    model_id = db.Column(db.Integer, db.ForeignKey("process_model.id"), nullable=False)
+    label = db.Column(db.String(200), nullable=False, default="Bereich")
+    x = db.Column(db.Float, nullable=False, default=0)
+    y = db.Column(db.Float, nullable=False, default=0)
+    width = db.Column(db.Float, nullable=False, default=220)
+    height = db.Column(db.Float, nullable=False, default=140)
+    color = db.Column(db.String(20), nullable=True)
+    opacity = db.Column(db.Float, nullable=False, default=0.16)
+    layer = db.Column(db.String(10), nullable=False, default="back")
+
+    model = db.relationship("ProcessModel", back_populates="areas")
