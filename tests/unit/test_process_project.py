@@ -19,6 +19,7 @@ TC-PP-14  Ungültige Rechteck-Farbe/-Ebene fallen auf Standard zurück
 TC-PP-15  Rechteck löschen
 TC-PP-16  Rechteck eines anderen Projekts ist nicht über die eigene Projekt-ID erreichbar
 TC-PP-17  Punktgröße setzen (manuell), Mindestgröße wird erzwungen, Standard ist "automatisch" (null)
+TC-PP-18  PDF-Export mit überdimensioniertem Bild liefert 400 statt Server-Absturz
 """
 
 import pytest
@@ -265,3 +266,15 @@ class TestDeploymentProzessProjekt:
         )
         clamped = r2.get_json()["node"]
         assert clamped["width"] == 50 and clamped["height"] == 24
+
+    def test_tc_pp_18_pdf_export_bild_zu_gross(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "A", "x": 0, "y": 0})
+        tiny_png = (
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII="
+        )
+        r = user_client.post(
+            f"/project/{pid}/prozesskarte/export",
+            json={"image": f"data:image/png;base64,{tiny_png}", "width": 10000, "height": 10000},
+        )
+        assert r.status_code == 400

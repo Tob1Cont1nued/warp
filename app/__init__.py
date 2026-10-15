@@ -1944,6 +1944,8 @@ def create_app() -> Flask:
             return jsonify({"ok": False, "error": "kein Bild übergeben"}), 400
         width = data.get("width") or 1000
         height = data.get("height") or 700
+        if width * height > 20_000_000:
+            return jsonify({"ok": False, "error": "Bild zu groß für den Export"}), 400
         landscape = width >= height
 
         try:
