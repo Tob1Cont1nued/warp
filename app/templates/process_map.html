@@ -672,7 +672,10 @@
     // beim PDF-Export abstürzen (Speicherüberlastung).
     var bb = cy.elements().boundingBox();
     var MAX_EXPORT_DIM = 3500; // px, längere Seite
-    var exportScale = Math.max(0.3, Math.min(2, MAX_EXPORT_DIM / Math.max(bb.w, bb.h, 1)));
+    // Keine Untergrenze hier: Bei einem sehr großen Board muss der Faktor so weit
+    // sinken dürfen, wie es braucht, um unter dem Pixel-Limit zu bleiben - eine
+    // "Mindestgröße" hatte genau das zuvor ausgehebelt.
+    var exportScale = Math.min(2, MAX_EXPORT_DIM / Math.max(bb.w, bb.h, 1));
     var dataUrl = cy.png({ full: true, scale: exportScale, bg: '#0d1016' });
     var img = new Image();
     img.onload = function () {
