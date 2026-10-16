@@ -244,9 +244,13 @@
     <div class="map-toolbar">
       <button type="button" class="map-btn" id="js-mode-add" title="Danach auf die Karte klicken – oder einfach doppelklicken">+ Punkt</button>
       <button type="button" class="map-btn" id="js-mode-area">+ Rechteck</button>
+      <button type="button" class="map-btn" id="js-mode-select" title="Rahmen aufziehen markiert mehrere Elemente (ohne Modus: Shift+Ziehen)">⬚ Auswählen</button>
       <div class="kind-palette" id="js-kind-palette" title="Typ für neu gezogene Verbindungen">
         <span class="kind-palette-label">Neue Verbindung:</span>
       </div>
+      <span class="map-hint" id="js-selection-info"></span>
+      <button type="button" class="map-btn" id="js-copy" title="Markierte Elemente kopieren (Strg+C)" disabled>Kopieren</button>
+      <button type="button" class="map-btn" id="js-paste" title="Einfügen (Strg+V)" disabled>Einfügen</button>
       <button type="button" class="map-btn" id="js-delete-selected" title="Markierte Elemente löschen (Entf)" disabled>Löschen</button>
       <button type="button" class="map-btn" id="js-undo" title="Rückgängig (Strg+Z)" disabled>↶ Rückgängig</button>
       <button type="button" class="map-btn" id="js-fullscreen">⛶ Vollbild</button>
@@ -406,7 +410,7 @@
   }
 
   window.addEventListener('beforeunload', function (evt) {
-    if (pendingSaves > 0 || nodeSaveTimer || areaSaveTimer) { evt.preventDefault(); evt.returnValue = ''; }
+    if (pendingSaves > 0 || nodeSaveTimer || areaSaveTimer || arrowMove) { evt.preventDefault(); evt.returnValue = ''; }
   });
 
   // ── Element-Daten ─────────────────────────────────────────────────
@@ -517,6 +521,7 @@
     // Offene Panels zuerst regulär schließen: deren Änderungen werden so gespeichert
     // und landen als eigener Schritt oben auf dem Stapel, statt verloren zu gehen.
     closeAllPanels();
+    flushArrowMove();
     var fn = undoStack.pop();
     undoBtn.disabled = undoStack.length === 0;
     if (!fn) return;
@@ -536,7 +541,9 @@
     var k = EDGE_KINDS[kind];
     return '<div class="legend-row" data-kind="' + kind + '" title="Für neue Verbindungen verwenden"><span class="legend-dot" style="background:' + k.color + '"></span>' + k.label + '</div>';
   }).join('') +
-    '<div class="legend-help">Doppelklick: neuer Punkt<br>Punkt-Rand ziehen: verbinden<br>Entf: löschen · Strg+Z: rückgängig<br>Esc: abbrechen</div>';
+    '<div class="legend-help">Doppelklick: neuer Punkt<br>Punkt-Rand ziehen: verbinden<br>' +
+    'Shift+Klick / Shift+Ziehen: mehrere markieren<br>Strg+C / V / X / D · Pfeiltasten: verschieben<br>' +
+    'Entf: löschen · Strg+Z: rückgängig<br>Esc: abbrechen</div>';
 
   Object.keys(EDGE_KINDS).forEach(function (kind) {
     var sw = document.createElement('div');
@@ -563,26 +570,33 @@
   // ── Modus: Punkt / Rechteck hinzufügen ───────────────────────────────
   var addBtn = document.getElementById('js-mode-add');
   var areaBtn = document.getElementById('js-mode-area');
+  var selectBtn = document.getElementById('js-mode-select');
   var hintEl = document.getElementById('js-mode-hint');
-  var mode = null; // null | 'add' | 'area'
+  var mode = null; // null | 'add' | 'area' | 'select'
 
   function setMode(next) {
+    var prev = mode;
     mode = (mode === next) ? null : next;
     addBtn.classList.toggle('active', mode === 'add');
     areaBtn.classList.toggle('active', mode === 'area');
+    selectBtn.classList.toggle('active', mode === 'select');
     if (mode === 'add') hintEl.textContent = 'Klick auf die Karte setzt einen Punkt (Esc = abbrechen).';
     else if (mode === 'area') hintEl.textContent = 'Rechteck durch Ziehen aufziehen (Esc = abbrechen).';
+    else if (mode === 'select') hintEl.textContent = 'Rahmen aufziehen markiert mehrere Elemente (Esc = beenden).';
     else hintEl.textContent = '';
     hintEl.style.display = mode ? '' : 'none';
-    // Während des Rechteck-Ziehens sollen Cytoscapes eigenes Panning/Box-Select nicht dazwischenfunken.
-    cy.userPanningEnabled(mode !== 'area');
+    // Rechteck-Modus: Cytoscapes Panning/Box-Select dürfen nicht dazwischenfunken.
+    // Auswahl-Modus: Ziehen auf freier Fläche zieht ohne Shift einen Auswahlrahmen auf.
+    cy.userPanningEnabled(mode !== 'area' && mode !== 'select');
     cy.boxSelectionEnabled(mode !== 'area');
-    cy.elements().unselect();
+    // Beim Wechsel in/aus dem Auswahl-Modus die gerade getroffene Auswahl behalten.
+    if (mode !== 'select' && prev !== 'select') cy.elements().unselect();
     closeAllPanels();
   }
   hintEl.style.display = 'none';
   addBtn.addEventListener('click', function () { setMode('add'); });
   areaBtn.addEventListener('click', function () { setMode('area'); });
+  selectBtn.addEventListener('click', function () { setMode('select'); });
 
   function createPoint(pos) {
     return api(base + '/knoten', 'POST', { name: 'Neuer Punkt', x: pos.x, y: pos.y })
@@ -915,7 +929,7 @@
       var restore = function () { restoreSnapshot(snap); };
       pushUndo(restore);
       var what = describeDeleted(snap);
-      showToast(what + ' gelöscht.', { actionLabel: 'Rückgängig', action: function () {
+      showToast(what + ' ' + (opts.verb || 'gelöscht') + '.', { actionLabel: 'Rückgängig', action: function () {
         // Gleicher Eintrag wie oben - aus dem Stapel nehmen, damit er nicht doppelt greift.
         var i = undoStack.lastIndexOf(restore);
         if (i !== -1) undoStack.splice(i, 1);
@@ -933,50 +947,152 @@
     return parts.join(', ');
   }
 
-  function restoreSnapshot(snap) {
+  // Legt die Elemente eines Schnappschusses neu an (Wiederherstellen und Einfügen).
+  // opts.offset verschiebt alle Positionen; opts.onlyNew = true verbindet Kanten nur
+  // zwischen neu angelegten Punkten (Einfügen), sonst dürfen sie auch an bestehende
+  // Punkte andocken (Wiederherstellen nach Löschen). Liefert {alte ID: neue ID}.
+  function createFromSnapshot(snap, opts) {
+    opts = opts || {};
+    var off = opts.offset || { x: 0, y: 0 };
+    var map = {};
+    function at(pos) { return { x: pos.x + off.x, y: pos.y + off.y }; }
     var nodeReqs = snap.points.map(function (p) {
-      var d = p.data;
+      var d = p.data, pos = at(p.pos);
       return api(base + '/knoten', 'POST', {
         name: d.label, description: d.description, color: d.color, phase_id: d.phaseId,
-        width: d.width, height: d.height, x: p.pos.x, y: p.pos.y,
+        width: d.width, height: d.height, x: pos.x, y: pos.y,
       }).then(function (res) {
         if (!res.ok) return;
-        var n = cy.add({ data: nodeData(res.node), position: p.pos });
-        idAlias[p.id] = n.id();
+        map[p.id] = cy.add({ data: nodeData(res.node), position: pos }).id();
       });
     });
     var areaReqs = snap.areas.map(function (a) {
-      var d = a.data;
+      var d = a.data, pos = at(a.pos);
       return api(base + '/rechteck', 'POST', {
         label: d.label, color: d.color, opacity: d.opacity, layer: d.layer,
-        width: d.width, height: d.height, x: a.pos.x, y: a.pos.y,
+        width: d.width, height: d.height, x: pos.x, y: pos.y,
       }).then(function (res) {
         if (!res.ok) return;
-        var n = cy.add({ data: areaData(res.area), position: a.pos, classes: 'area' });
-        idAlias[a.id] = n.id();
+        map[a.id] = cy.add({ data: areaData(res.area), position: pos, classes: 'area' }).id();
       });
     });
+    function endpoint(id) {
+      if (map[id]) return cy.getElementById(map[id]);
+      return opts.onlyNew ? null : getEl(id);
+    }
     return Promise.all(nodeReqs.concat(areaReqs)).then(function () {
       return Promise.all(snap.edges.map(function (e) {
-        var s = getEl(e.source), t = getEl(e.target);
+        var s = endpoint(e.source), t = endpoint(e.target);
         if (!s || !t) return null;
         return api(base + '/kante', 'POST', { from_id: s.data('dbId'), to_id: t.data('dbId'), kind: e.kind })
           .then(function (res) {
             if (!res.ok) return;
-            var ne = cy.add({ data: edgeData(res.edge) });
-            idAlias[e.id] = ne.id();
+            map[e.id] = cy.add({ data: edgeData(res.edge) }).id();
           });
       }));
+    }).then(function () { return map; });
+  }
+
+  function restoreSnapshot(snap) {
+    return createFromSnapshot(snap).then(function (map) { Object.assign(idAlias, map); });
+  }
+
+  // ── Kopieren / Einfügen ───────────────────────────────────────────
+  // Zwischenablage zusätzlich im localStorage, damit Einfügen auch nach dem Neuladen
+  // und in einer anderen Prozesskarte funktioniert.
+  var CLIP_KEY = 'warp.prozesskarte.clipboard';
+  var clipboard = null;
+  var pasteCount = 0;
+  var copyBtn = document.getElementById('js-copy');
+  var pasteBtn = document.getElementById('js-paste');
+
+  function readClipboard() {
+    if (clipboard) return clipboard;
+    try { clipboard = JSON.parse(localStorage.getItem(CLIP_KEY)); } catch (e) { clipboard = null; }
+    return clipboard;
+  }
+
+  function copySelection(silent) {
+    var nodes = cy.elements(':selected').nodes();
+    if (nodes.empty()) { showToast('Zum Kopieren erst Punkte oder Rechtecke markieren.'); return null; }
+    var ids = {};
+    nodes.forEach(function (n) { ids[n.id()] = true; });
+    var clip = {
+      points: nodes.filter(function (n) { return !n.hasClass('area'); }).map(snapshotNode),
+      areas: nodes.filter(function (n) { return n.hasClass('area'); }).map(snapshotNode),
+      // Verbindungen zwischen kopierten Punkten gehören automatisch dazu.
+      edges: cy.edges().filter(function (e) { return ids[e.source().id()] && ids[e.target().id()]; })
+        .map(function (e) { return { id: e.id(), source: e.source().id(), target: e.target().id(), kind: e.data('kind') }; }),
+    };
+    clip.points.concat(clip.areas).forEach(function (s) { s.data.phaseId = null; }); // Phase gehört zum Original
+    clipboard = clip;
+    pasteCount = 0;
+    try { localStorage.setItem(CLIP_KEY, JSON.stringify(clip)); } catch (e) { /* nur diese Seite */ }
+    pasteBtn.disabled = false;
+    if (!silent) showToast(describeDeleted(clip) + ' kopiert. Strg+V fügt ein.');
+    return clip;
+  }
+
+  function clipBounds(clip) {
+    var x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+    clip.points.concat(clip.areas).forEach(function (s) {
+      var w = (s.data.width || 60) / 2, h = (s.data.height || 30) / 2;
+      x1 = Math.min(x1, s.pos.x - w); x2 = Math.max(x2, s.pos.x + w);
+      y1 = Math.min(y1, s.pos.y - h); y2 = Math.max(y2, s.pos.y + h);
+    });
+    return { x1: x1, y1: y1, x2: x2, y2: y2 };
+  }
+
+  function pasteClipboard() {
+    var clip = readClipboard();
+    if (!clip || (!clip.points.length && !clip.areas.length)) { showToast('Die Zwischenablage ist leer.'); return; }
+    pasteCount++;
+    var off = { x: 40 * pasteCount, y: 40 * pasteCount };
+    // Liegt die Kopie außerhalb des sichtbaren Bereichs (z.B. andere Karte, weit
+    // weggescrollt), in die Mitte der aktuellen Ansicht setzen.
+    var b = clipBounds(clip), ext = cy.extent();
+    if (b.x2 + off.x < ext.x1 || b.x1 + off.x > ext.x2 || b.y2 + off.y < ext.y1 || b.y1 + off.y > ext.y2) {
+      off = { x: (ext.x1 + ext.x2) / 2 - (b.x1 + b.x2) / 2, y: (ext.y1 + ext.y2) / 2 - (b.y1 + b.y2) / 2 };
+    }
+    closeAllPanels();
+    createFromSnapshot(clip, { offset: off, onlyNew: true }).then(function (map) {
+      var newIds = Object.keys(map).map(function (k) { return map[k]; });
+      if (!newIds.length) return;
+      cy.elements().unselect();
+      newIds.forEach(function (id) { cy.getElementById(id).select(); });
+      pushUndo(function () {
+        var els = cy.collection();
+        newIds.forEach(function (id) { var el = getEl(id); if (el) els = els.union(el); });
+        if (els.nonempty()) deleteElements(els, { recordUndo: false });
+      });
+      showToast(describeDeleted(clip) + ' eingefügt.');
     });
   }
+
+  copyBtn.addEventListener('click', function () { copySelection(); });
+  pasteBtn.addEventListener('click', pasteClipboard);
+  pasteBtn.disabled = !readClipboard();
 
   var deleteBtn = document.getElementById('js-delete-selected');
   deleteBtn.addEventListener('click', function () {
     var selected = cy.elements(':selected');
     if (selected.nonempty()) deleteElements(selected);
   });
-  function updateDeleteBtn() { deleteBtn.disabled = cy.elements(':selected').empty(); }
-  cy.on('select unselect add remove', updateDeleteBtn);
+  var selectionInfo = document.getElementById('js-selection-info');
+  var selectionTimer = null;
+  function updateSelectionUi() {
+    var sel = cy.elements(':selected');
+    deleteBtn.disabled = sel.empty();
+    copyBtn.disabled = sel.nodes().empty();
+    selectionInfo.textContent = sel.length > 1 ? sel.length + ' markiert' : '';
+    // Bei Mehrfachauswahl gehört kein Einzel-Panel mehr ins Bild.
+    if (sel.length > 1) closeAllPanels();
+  }
+  // select/unselect feuern pro Element - einmal pro Durchgang auswerten reicht.
+  cy.on('select unselect add remove', function () {
+    clearTimeout(selectionTimer);
+    selectionTimer = setTimeout(updateSelectionUi, 0);
+  });
 
   // ── Vollbild ──────────────────────────────────────────────────────
   document.getElementById('js-fullscreen').addEventListener('click', function () {
@@ -1326,8 +1442,15 @@
     detailEl.classList.remove('open');
   }
 
+  // Shift/Strg/Cmd-Klick ergänzt nur die Auswahl (macht Cytoscape selbst) - kein Panel.
+  function isMultiSelectTap(evt) {
+    var e = evt.originalEvent;
+    return !!(e && (e.shiftKey || e.ctrlKey || e.metaKey));
+  }
+
   cy.on('tap', 'node', function (evt) {
     if (mode !== null || evt.target.hasClass('area')) return;
+    if (isMultiSelectTap(evt)) { closeAllPanels(); return; }
     var node = evt.target;
     if (detailNode && detailNode.id() === node.id()) { closeDetail(); return; }
     openDetail(node);
@@ -1580,6 +1703,7 @@
 
   cy.on('tap', 'node.area', function (evt) {
     if (mode !== null) return;
+    if (isMultiSelectTap(evt)) { closeAllPanels(); return; }
     var area = evt.target;
     if (areaDetailNode && areaDetailNode.id() === area.id()) { closeAreaDetail(); return; }
     openAreaDetail(area);
@@ -1655,6 +1779,7 @@
 
   cy.on('tap', 'edge', function (evt) {
     if (mode !== null) return;
+    if (isMultiSelectTap(evt)) { closeAllPanels(); return; }
     var edge = evt.target;
     if (edgeDetailEdge && edgeDetailEdge.id() === edge.id()) { closeEdgeDetail(); return; }
     openEdgeDetail(edge);
@@ -1669,6 +1794,48 @@
     closeDetail(discard);
     closeAreaDetail(discard);
     closeEdgeDetail();
+  }
+
+  // ── Pfeiltasten: Auswahl verschieben ─────────────────────────────────
+  // Gedrückt halten erzeugt viele Schritte; gespeichert wird erst, wenn kurz keine
+  // Taste mehr kommt - als ein Rückgängig-Schritt für die ganze Bewegung.
+  var ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+  var arrowMove = null; // { from: {id: pos}, nodes, timer }
+
+  function moveSelectedBy(nodes, dir, step) {
+    if (!arrowMove) arrowMove = { from: {}, nodes: cy.collection() };
+    nodes.forEach(function (n) {
+      if (!arrowMove.from[n.id()]) { var p = n.position(); arrowMove.from[n.id()] = { x: p.x, y: p.y }; }
+      var p2 = n.position();
+      n.position({ x: p2.x + dir[0] * step, y: p2.y + dir[1] * step });
+    });
+    arrowMove.nodes = arrowMove.nodes.union(nodes);
+    if (detailNode) positionDetail(detailNode);
+    if (areaDetailNode) positionAreaDetail(areaDetailNode);
+    clearTimeout(arrowMove.timer);
+    arrowMove.timer = setTimeout(flushArrowMove, 500);
+  }
+  function flushArrowMove() {
+    if (!arrowMove) return;
+    var move = arrowMove;
+    arrowMove = null;
+    clearTimeout(move.timer);
+    move.nodes.forEach(function (n) {
+      if (!n.inside()) return;
+      var p = n.position(), from = move.from[n.id()];
+      api(elPath(n), 'PATCH', { x: p.x, y: p.y }).then(function (res) {
+        if (!res.ok && n.inside()) n.position(from);
+      });
+    });
+    pushUndo(function () {
+      Object.keys(move.from).forEach(function (id) {
+        var el = getEl(id);
+        if (!el) return;
+        var from = move.from[id];
+        el.position(from);
+        api(elPath(el), 'PATCH', { x: from.x, y: from.y });
+      });
+    });
   }
 
   // ── Tastenkürzel ──────────────────────────────────────────────────
@@ -1688,9 +1855,34 @@
     }
     if (typing) return; // Strg+Z / Entf in Textfeldern bleiben beim Browser
 
-    if ((evt.ctrlKey || evt.metaKey) && !evt.shiftKey && evt.key.toLowerCase() === 'z') {
+    var ctrl = (evt.ctrlKey || evt.metaKey) && !evt.shiftKey && !evt.altKey;
+    var key = evt.key.toLowerCase();
+    if (ctrl && key === 'z') { evt.preventDefault(); undo(); return; }
+    if (ctrl && key === 'a') {
       evt.preventDefault();
-      undo();
+      closeAllPanels();
+      cy.elements().select();
+      return;
+    }
+    // Ohne markierte Elemente bleibt Strg+C beim Browser (z.B. markierter Seitentext).
+    if (ctrl && key === 'c' && cy.nodes(':selected').nonempty()) { evt.preventDefault(); copySelection(); return; }
+    if (ctrl && key === 'v') { evt.preventDefault(); pasteClipboard(); return; }
+    if (ctrl && key === 'x') {
+      evt.preventDefault();
+      var cut = cy.elements(':selected');
+      if (copySelection(true)) deleteElements(cut, { verb: 'ausgeschnitten' });
+      return;
+    }
+    if (ctrl && key === 'd') {
+      evt.preventDefault(); // sonst: Lesezeichen anlegen
+      if (copySelection(true)) pasteClipboard();
+      return;
+    }
+    if (!ctrl && ARROWS[evt.key]) {
+      var nodes = cy.nodes(':selected');
+      if (nodes.empty()) return;
+      evt.preventDefault();
+      moveSelectedBy(nodes, ARROWS[evt.key], evt.shiftKey ? 25 : 5);
       return;
     }
     if (evt.key === 'Delete' || evt.key === 'Backspace') {
