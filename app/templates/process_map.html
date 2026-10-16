@@ -676,7 +676,15 @@
     // sinken dürfen, wie es braucht, um unter dem Pixel-Limit zu bleiben - eine
     // "Mindestgröße" hatte genau das zuvor ausgehebelt.
     var exportScale = Math.min(2, MAX_EXPORT_DIM / Math.max(bb.w, bb.h, 1));
-    var dataUrl = cy.png({ full: true, scale: exportScale, bg: '#0d1016' });
+    // Zielgröße über maxWidth/maxHeight statt "scale" vorgeben: Bei "scale" multipliziert
+    // Cytoscape zusätzlich mit dem devicePixelRatio (z.B. 1.5 bei 150 % Windows-Skalierung),
+    // wodurch das Bild trotz Begrenzung über dem Server-Limit landete.
+    var dataUrl = cy.png({
+      full: true,
+      maxWidth: Math.max(1, Math.floor(bb.w * exportScale)),
+      maxHeight: Math.max(1, Math.floor(bb.h * exportScale)),
+      bg: '#0d1016',
+    });
     var img = new Image();
     img.onload = function () {
       fetch('/project/' + pid + '/prozesskarte/export', {
@@ -684,7 +692,11 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: dataUrl, width: img.naturalWidth, height: img.naturalHeight }),
       }).then(function (r) {
-        if (!r.ok) throw new Error('Export fehlgeschlagen');
+        if (!r.ok) {
+          return r.json().catch(function () { return {}; }).then(function (d) {
+            throw new Error(d.error || 'Export fehlgeschlagen');
+          });
+        }
         return r.blob();
       }).then(function (blob) {
         var url = URL.createObjectURL(blob);
@@ -692,8 +704,8 @@
         a.href = url; a.download = 'WARP_Prozesskarte.pdf';
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
-      }).catch(function () {
-        alert('PDF-Export fehlgeschlagen.');
+      }).catch(function (err) {
+        alert('PDF-Export fehlgeschlagen: ' + err.message);
       }).finally(function () {
         exportBtn.disabled = false;
         exportBtn.textContent = origLabel;
