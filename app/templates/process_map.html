@@ -168,6 +168,50 @@
     #map-area-detail .detail-close {
       position:absolute; top:6px; right:8px; cursor:pointer; color:#9aa1ad; font-size:1rem; background:none; border:none;
     }
+
+    .map-btn:disabled { opacity:.45; cursor:default; }
+    .map-btn:disabled:hover { background:#171b24; }
+    .kind-palette-label { font-size:.7rem; color:#9aa1ad; padding:0 4px 0 6px; }
+    .kind-palette-name { font-size:.7rem; color:#e5e7eb; padding:0 6px 0 2px; min-width:90px; }
+    #map-legend .legend-row { cursor:pointer; border-radius:4px; padding:1px 4px; margin-left:-4px; }
+    #map-legend .legend-row:hover { background:#222733; }
+    #map-legend .legend-row.active { color:#fff; font-weight:600; }
+    #map-legend .legend-title { font-size:.62rem; color:#6b7280; text-transform:uppercase; letter-spacing:.03em; margin-bottom:4px; }
+    #map-legend .legend-help { margin-top:8px; padding-top:6px; border-top:1px solid #2a2f3a; font-size:.64rem; color:#6b7280; line-height:1.5; }
+
+    .map-hint:empty { display:none; }
+    /* Fest positioniert statt in der Toolbar, damit das Ein-/Ausblenden die Leiste nicht umbricht. */
+    #js-save-status { position:absolute; bottom:12px; right:194px; z-index:20; }
+    #js-save-status.saving { color:#9aa1ad; }
+    #js-save-status.saved { color:#22c55e; }
+    #js-save-status.error { color:#e5484d; border-color:#e5484d; }
+
+    #map-toast {
+      position:absolute; bottom:16px; left:50%; transform:translateX(-50%); z-index:40;
+      background:#1a1e27; border:1px solid #2a2f3a; color:#e5e7eb; font-size:.76rem;
+      border-radius:8px; padding:8px 10px 8px 14px; box-shadow:0 8px 24px rgba(0,0,0,.4);
+      display:none; align-items:center; gap:12px; max-width:min(520px, calc(100% - 400px));
+    }
+    #map-toast.open { display:flex; }
+    #map-toast.error { border-color:#e5484d; }
+    #map-toast .map-btn { font-size:.72rem; padding:5px 10px; }
+
+    #map-edge-detail {
+      position:absolute; z-index:30; width:220px;
+      background:#171b24; border:1px solid #2a2f3a; border-radius:9px;
+      padding:12px; color:#e5e7eb; box-shadow:0 8px 24px rgba(0,0,0,.4);
+      display:none;
+    }
+    #map-edge-detail.open { display:block; }
+    #map-edge-detail label { font-size:.68rem; color:#9aa1ad; text-transform:uppercase; letter-spacing:.03em; }
+    #map-edge-detail .detail-close {
+      position:absolute; top:6px; right:8px; cursor:pointer; color:#9aa1ad; font-size:1rem; background:none; border:none;
+    }
+    .edge-kind-list { display:flex; flex-direction:column; gap:4px; margin-top:6px; }
+    .edge-kind-list .map-btn { justify-content:flex-start; font-size:.74rem; padding:6px 9px; }
+    .edge-kind-list .legend-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+    #map-edge-detail .detail-actions { display:flex; justify-content:space-between; margin-top:12px; gap:8px; }
+    #map-edge-detail .detail-actions .map-btn { font-size:.72rem; padding:6px 10px; }
   </style>
 </head>
 <body>
@@ -198,16 +242,20 @@
 
   <div id="map-stage">
     <div class="map-toolbar">
-      <button type="button" class="map-btn" id="js-mode-add">+ Punkt</button>
+      <button type="button" class="map-btn" id="js-mode-add" title="Danach auf die Karte klicken – oder einfach doppelklicken">+ Punkt</button>
       <button type="button" class="map-btn" id="js-mode-area">+ Rechteck</button>
-      <div class="kind-palette" id="js-kind-palette" title="Typ für neue Verbindungen"></div>
-      <button type="button" class="map-btn" id="js-delete-selected">Löschen</button>
+      <div class="kind-palette" id="js-kind-palette" title="Typ für neu gezogene Verbindungen">
+        <span class="kind-palette-label">Neue Verbindung:</span>
+      </div>
+      <button type="button" class="map-btn" id="js-delete-selected" title="Markierte Elemente löschen (Entf)" disabled>Löschen</button>
+      <button type="button" class="map-btn" id="js-undo" title="Rückgängig (Strg+Z)" disabled>↶ Rückgängig</button>
       <button type="button" class="map-btn" id="js-fullscreen">⛶ Vollbild</button>
       <button type="button" class="map-btn" id="js-export-pdf">⭳ Als PDF</button>
       <input type="text" id="js-search" placeholder="Punkt suchen … (Enter = weiter)" />
       <span class="map-hint" id="js-search-count"></span>
       <span class="map-hint" id="js-mode-hint"></span>
     </div>
+    <span class="map-hint" id="js-save-status"></span>
     <div class="map-zoom">
       <button type="button" id="js-zoom-in" title="Vergrößern">+</button>
       <span class="zoom-pct" id="js-zoom-pct">100%</span>
@@ -234,7 +282,7 @@
       </div>
       <div class="detail-actions">
         <button type="button" class="map-btn" id="js-detail-delete">Punkt löschen</button>
-        <button type="button" class="map-btn active" id="js-detail-save">Speichern</button>
+        <button type="button" class="map-btn active" id="js-detail-done" title="Änderungen werden automatisch gespeichert">Fertig</button>
       </div>
     </div>
     <div id="map-area-detail">
@@ -252,8 +300,21 @@
       </div>
       <div class="detail-actions">
         <button type="button" class="map-btn" id="js-area-delete">Rechteck löschen</button>
-        <button type="button" class="map-btn active" id="js-area-save">Speichern</button>
+        <button type="button" class="map-btn active" id="js-area-done" title="Änderungen werden automatisch gespeichert">Fertig</button>
       </div>
+    </div>
+    <div id="map-edge-detail">
+      <button type="button" class="detail-close" id="js-edge-close">&times;</button>
+      <label>Verbindungstyp</label>
+      <div class="edge-kind-list" id="js-edge-kinds"></div>
+      <div class="detail-actions">
+        <button type="button" class="map-btn" id="js-edge-delete">Verbindung löschen</button>
+        <button type="button" class="map-btn active" id="js-edge-done">Fertig</button>
+      </div>
+    </div>
+    <div id="map-toast">
+      <span id="js-toast-msg"></span>
+      <button type="button" class="map-btn" id="js-toast-action"></button>
     </div>
   </div>
   <div id="map-tooltip"></div>
@@ -267,35 +328,110 @@
   var initialAreas = {{ areas | tojson }};
   var EDGE_KINDS = {{ edge_kinds | tojson }};
   var NODE_COLORS = {{ node_colors | tojson }};
+  var base = '/project/' + pid + '/prozesskarte';
 
+  var stage = document.getElementById('map-stage');
+  var canvasEl = document.getElementById('map-canvas');
+
+  // ── Speicherstatus & Hinweise ─────────────────────────────────────
+  var saveStatusEl = document.getElementById('js-save-status');
+  var pendingSaves = 0;
+  var saveStatusTimer = null;
+
+  function setSaveStatus(state) {
+    clearTimeout(saveStatusTimer);
+    saveStatusEl.className = 'map-hint ' + state;
+    if (state === 'saving') saveStatusEl.textContent = 'Speichert …';
+    else if (state === 'error') saveStatusEl.textContent = '⚠ Nicht gespeichert';
+    else {
+      saveStatusEl.textContent = '✓ Gespeichert';
+      saveStatusTimer = setTimeout(function () { saveStatusEl.textContent = ''; }, 2000);
+    }
+  }
+
+  var toastEl = document.getElementById('map-toast');
+  var toastMsg = document.getElementById('js-toast-msg');
+  var toastAction = document.getElementById('js-toast-action');
+  var toastTimer = null;
+  var toastHandler = null;
+
+  function showToast(msg, opts) {
+    opts = opts || {};
+    clearTimeout(toastTimer);
+    toastMsg.textContent = msg;
+    toastEl.classList.toggle('error', !!opts.error);
+    toastHandler = opts.action || null;
+    toastAction.style.display = opts.action ? '' : 'none';
+    toastAction.textContent = opts.actionLabel || '';
+    toastEl.classList.add('open');
+    toastTimer = setTimeout(hideToast, opts.error ? 8000 : 6000);
+  }
+  function hideToast() {
+    clearTimeout(toastTimer);
+    toastEl.classList.remove('open');
+    toastHandler = null;
+  }
+  toastAction.addEventListener('click', function () {
+    var fn = toastHandler;
+    hideToast();
+    if (fn) fn();
+  });
+
+  // Alle Server-Aufrufe laufen hierüber: Statusanzeige + sichtbare Fehlermeldung,
+  // statt dass ein fehlgeschlagenes Speichern unbemerkt bleibt. Liefert immer ein
+  // Objekt mit "ok", damit Aufrufer nur noch den Erfolgsfall behandeln müssen.
   function api(path, method, body) {
+    pendingSaves++;
+    setSaveStatus('saving');
     return fetch(path, {
       method: method,
       headers: {'Content-Type': 'application/json'},
       body: body ? JSON.stringify(body) : undefined,
-    }).then(function (r) { return r.json(); });
+    }).then(function (r) {
+      return r.json().catch(function () { return {}; }).then(function (d) {
+        if (!r.ok || !d.ok) throw new Error(d.error || ('Serverfehler ' + r.status));
+        return d;
+      });
+    }).then(function (d) {
+      pendingSaves--;
+      if (pendingSaves === 0) setSaveStatus('saved');
+      return d;
+    }, function (err) {
+      pendingSaves--;
+      setSaveStatus('error');
+      var msg = err && err.message && err.message !== 'Failed to fetch' ? err.message : 'keine Verbindung zum Server';
+      showToast('Speichern fehlgeschlagen (' + msg + '). Bitte Seite neu laden, falls das wiederholt auftritt.', { error: true });
+      return { ok: false, error: msg };
+    });
   }
 
-  var cyNodes = initialNodes.map(function (n) {
+  window.addEventListener('beforeunload', function (evt) {
+    if (pendingSaves > 0 || nodeSaveTimer || areaSaveTimer) { evt.preventDefault(); evt.returnValue = ''; }
+  });
+
+  // ── Element-Daten ─────────────────────────────────────────────────
+  function nodeData(n) {
+    return { id: 'n' + n.id, dbId: n.id, label: n.name, description: n.description || '', phase: n.phase_name, phaseId: n.phase_id || null, color: n.color || NODE_COLORS[0], width: n.width || null, height: n.height || null };
+  }
+  function edgeData(e) {
+    return { id: 'e' + e.id, dbId: e.id, source: 'n' + e.from_id, target: 'n' + e.to_id, kind: e.kind || 'default' };
+  }
+  function areaData(a) {
     return {
-      data: { id: 'n' + n.id, dbId: n.id, label: n.name, description: n.description || '', phase: n.phase_name, color: n.color || NODE_COLORS[0], width: n.width || null, height: n.height || null },
-      position: { x: n.x, y: n.y },
+      id: 'r' + a.id, dbId: a.id, label: a.label, color: a.color || NODE_COLORS[0],
+      opacity: a.opacity, width: a.width, height: a.height, layer: a.layer,
+      zIndex: a.layer === 'front' ? 10 : 0,
     };
-  });
-  var cyEdges = initialEdges.map(function (e) {
-    return { data: { id: 'e' + e.id, dbId: e.id, source: 'n' + e.from_id, target: 'n' + e.to_id, kind: e.kind || 'default' } };
-  });
-  var cyAreas = initialAreas.map(function (a) {
-    return {
-      data: {
-        id: 'r' + a.id, dbId: a.id, label: a.label, color: a.color || NODE_COLORS[0],
-        opacity: a.opacity, width: a.width, height: a.height, layer: a.layer,
-        zIndex: a.layer === 'front' ? 10 : 0,
-      },
-      position: { x: a.x, y: a.y },
-      classes: 'area',
-    };
-  });
+  }
+  function elPath(el) {
+    if (el.isEdge()) return base + '/kante/' + el.data('dbId');
+    if (el.hasClass('area')) return base + '/rechteck/' + el.data('dbId');
+    return base + '/knoten/' + el.data('dbId');
+  }
+
+  var cyNodes = initialNodes.map(function (n) { return { data: nodeData(n), position: { x: n.x, y: n.y } }; });
+  var cyEdges = initialEdges.map(function (e) { return { data: edgeData(e) }; });
+  var cyAreas = initialAreas.map(function (a) { return { data: areaData(a), position: { x: a.x, y: a.y }, classes: 'area' }; });
 
   var edgeStyles = Object.keys(EDGE_KINDS).map(function (kind) {
     return { selector: 'edge[kind = "' + kind + '"]', style: {
@@ -304,7 +440,7 @@
   });
 
   var cy = cytoscape({
-    container: document.getElementById('map-canvas'),
+    container: canvasEl,
     elements: cyNodes.concat(cyEdges).concat(cyAreas),
     style: [
       { selector: 'node', style: {
@@ -347,7 +483,7 @@
           },
           'control-point-weights': 0.5,
       }},
-      { selector: 'edge:selected', style: { 'width': 3.5 } },
+      { selector: 'edge:selected', style: { 'width': 4, 'overlay-color': '#451DC7', 'overlay-opacity': 0.25, 'overlay-padding': 3 } },
     ].concat(edgeStyles),
     layout: initialNodes.length ? { name: 'preset' } : { name: 'grid' },
     minZoom: 0.15, maxZoom: 3,
@@ -355,28 +491,74 @@
     backgroundColor: '#0d1016',
   });
 
-  // ── Legende ───────────────────────────────────────────────────────
-  var legendEl = document.getElementById('map-legend');
-  legendEl.innerHTML = Object.keys(EDGE_KINDS).map(function (kind) {
-    var k = EDGE_KINDS[kind];
-    return '<div class="legend-row"><span class="legend-dot" style="background:' + k.color + '"></span>' + k.label + '</div>';
-  }).join('');
+  function pointNodes() {
+    return cy.nodes().filter(function (n) { return !n.hasClass('area'); });
+  }
 
-  // ── Kantentyp-Auswahl ────────────────────────────────────────────
+  // ── Rückgängig ────────────────────────────────────────────────────
+  // Jeder Eintrag ist eine Funktion, die den vorherigen Zustand wiederherstellt.
+  // Beim Wiederherstellen gelöschter Elemente vergibt der Server neue IDs; idAlias
+  // bildet alte auf neue Cytoscape-IDs ab, damit ältere Einträge weiter greifen.
+  var undoStack = [];
+  var idAlias = {};
+  var undoBtn = document.getElementById('js-undo');
+
+  function resolveId(id) { while (idAlias[id]) id = idAlias[id]; return id; }
+  function getEl(id) {
+    var el = cy.getElementById(resolveId(id));
+    return el.nonempty() ? el : null;
+  }
+  function pushUndo(fn) {
+    undoStack.push(fn);
+    if (undoStack.length > 50) undoStack.shift();
+    undoBtn.disabled = false;
+  }
+  function undo() {
+    // Offene Panels zuerst regulär schließen: deren Änderungen werden so gespeichert
+    // und landen als eigener Schritt oben auf dem Stapel, statt verloren zu gehen.
+    closeAllPanels();
+    var fn = undoStack.pop();
+    undoBtn.disabled = undoStack.length === 0;
+    if (!fn) return;
+    hideToast();
+    fn();
+  }
+  undoBtn.addEventListener('click', undo);
+
+  // ── Legende & Kantentyp-Auswahl ───────────────────────────────────
+  var legendEl = document.getElementById('map-legend');
   var paletteEl = document.getElementById('js-kind-palette');
+  var kindNameEl = document.createElement('span');
+  kindNameEl.className = 'kind-palette-name';
   var selectedKind = 'default';
+
+  legendEl.innerHTML = '<div class="legend-title">Verbindungstypen</div>' + Object.keys(EDGE_KINDS).map(function (kind) {
+    var k = EDGE_KINDS[kind];
+    return '<div class="legend-row" data-kind="' + kind + '" title="Für neue Verbindungen verwenden"><span class="legend-dot" style="background:' + k.color + '"></span>' + k.label + '</div>';
+  }).join('') +
+    '<div class="legend-help">Doppelklick: neuer Punkt<br>Punkt-Rand ziehen: verbinden<br>Entf: löschen · Strg+Z: rückgängig<br>Esc: abbrechen</div>';
+
   Object.keys(EDGE_KINDS).forEach(function (kind) {
     var sw = document.createElement('div');
-    sw.className = 'kind-swatch' + (kind === selectedKind ? ' active' : '');
+    sw.className = 'kind-swatch';
     sw.style.background = EDGE_KINDS[kind].color;
     sw.title = EDGE_KINDS[kind].label;
     sw.dataset.kind = kind;
-    sw.addEventListener('click', function () {
-      selectedKind = kind;
-      paletteEl.querySelectorAll('.kind-swatch').forEach(function (s) { s.classList.toggle('active', s === sw); });
-    });
+    sw.addEventListener('click', function () { selectKind(kind); });
     paletteEl.appendChild(sw);
   });
+  paletteEl.appendChild(kindNameEl);
+  legendEl.querySelectorAll('.legend-row').forEach(function (row) {
+    row.addEventListener('click', function () { selectKind(row.dataset.kind); });
+  });
+
+  function selectKind(kind) {
+    selectedKind = kind;
+    paletteEl.querySelectorAll('.kind-swatch').forEach(function (s) { s.classList.toggle('active', s.dataset.kind === kind); });
+    legendEl.querySelectorAll('.legend-row').forEach(function (r) { r.classList.toggle('active', r.dataset.kind === kind); });
+    kindNameEl.textContent = EDGE_KINDS[kind].label;
+  }
+  selectKind(selectedKind);
 
   // ── Modus: Punkt / Rechteck hinzufügen ───────────────────────────────
   var addBtn = document.getElementById('js-mode-add');
@@ -388,40 +570,54 @@
     mode = (mode === next) ? null : next;
     addBtn.classList.toggle('active', mode === 'add');
     areaBtn.classList.toggle('active', mode === 'area');
-    if (mode === 'add') hintEl.textContent = 'Klick auf die Karte setzt einen Punkt.';
-    else if (mode === 'area') hintEl.textContent = 'Rechteck durch Ziehen aufziehen.';
+    if (mode === 'add') hintEl.textContent = 'Klick auf die Karte setzt einen Punkt (Esc = abbrechen).';
+    else if (mode === 'area') hintEl.textContent = 'Rechteck durch Ziehen aufziehen (Esc = abbrechen).';
     else hintEl.textContent = '';
+    hintEl.style.display = mode ? '' : 'none';
     // Während des Rechteck-Ziehens sollen Cytoscapes eigenes Panning/Box-Select nicht dazwischenfunken.
     cy.userPanningEnabled(mode !== 'area');
     cy.boxSelectionEnabled(mode !== 'area');
-    cy.nodes().unselect();
-    closeDetail();
-    closeAreaDetail();
+    cy.elements().unselect();
+    closeAllPanels();
   }
+  hintEl.style.display = 'none';
   addBtn.addEventListener('click', function () { setMode('add'); });
   areaBtn.addEventListener('click', function () { setMode('area'); });
 
+  function createPoint(pos) {
+    return api(base + '/knoten', 'POST', { name: 'Neuer Punkt', x: pos.x, y: pos.y })
+      .then(function (res) {
+        if (!res.ok) return;
+        var node = cy.add({ data: nodeData(res.node), position: pos });
+        var id = node.id();
+        pushUndo(function () { var el = getEl(id); if (el) deleteElements(el, { recordUndo: false }); });
+        openDetail(node, true);
+      });
+  }
+
+  // Doppelklick selbst erkennen statt Cytoscapes 'dbltap': das prüft nur die Zeit,
+  // nicht den Abstand - zwei schnelle Klicks an verschiedenen Stellen (Panel
+  // schließen, woanders klicken) legten so ungewollt einen Punkt an.
+  var lastBgTap = null;
   cy.on('tap', function (evt) {
-    if (mode === 'add' && evt.target === cy) {
-      var pos = evt.position;
-      api('/project/' + pid + '/prozesskarte/knoten', 'POST', { name: 'Neuer Punkt', x: pos.x, y: pos.y })
-        .then(function (res) {
-          if (!res.ok) { alert('Konnte Punkt nicht anlegen.'); return; }
-          var node = cy.add({
-            data: { id: 'n' + res.node.id, dbId: res.node.id, label: res.node.name, description: res.node.description || '', color: res.node.color || NODE_COLORS[0] },
-            position: pos,
-          });
-          setMode(null);
-          openDetail(node, true);
-        });
-    } else if (mode === null && evt.target === cy) {
-      closeDetail();
-      closeAreaDetail();
+    if (evt.target !== cy) { lastBgTap = null; return; }
+    var now = Date.now(), rp = evt.renderedPosition;
+    var isDouble = lastBgTap && now - lastBgTap.t < 400 &&
+      Math.abs(rp.x - lastBgTap.x) < 8 && Math.abs(rp.y - lastBgTap.y) < 8;
+    if (mode === 'add') {
+      setMode(null);
+      createPoint(evt.position);
+      // Zweiter Klick eines Doppelklicks im "+ Punkt"-Modus soll nichts weiter tun.
+      lastBgTap = { t: now, x: rp.x, y: rp.y, consumed: true };
+    } else if (mode === null) {
+      if (isDouble && lastBgTap.consumed) { lastBgTap = null; return; }
+      lastBgTap = isDouble ? null : { t: now, x: rp.x, y: rp.y };
+      if (isDouble) createPoint(evt.position);
+      else closeAllPanels();
     }
   });
 
-  // ── Rechteck durch Ziehen aufziehen (Registrierung des mousedown-Listeners
-  // erfolgt weiter unten, sobald canvasEl/stage zugewiesen sind) ──────────
+  // ── Rechteck durch Ziehen aufziehen ─────────────────────────────────
   var areaGhost = document.getElementById('map-area-ghost');
   var drawingArea = null; // { startX, startY } in Stage-Koordinaten (Bildschirm-Pixel)
 
@@ -437,16 +633,20 @@
     areaGhost.style.height = (y2 - y1) + 'px';
   }
 
-  function onAreaDrawUp(evt) {
+  function cancelAreaDraw() {
     document.removeEventListener('mousemove', onAreaDrawMove);
     document.removeEventListener('mouseup', onAreaDrawUp);
     areaGhost.style.display = 'none';
-    if (!drawingArea) return;
+    drawingArea = null;
+  }
+
+  function onAreaDrawUp(evt) {
+    if (!drawingArea) { cancelAreaDraw(); return; }
     var rect = stage.getBoundingClientRect();
     var curX = evt.clientX - rect.left, curY = evt.clientY - rect.top;
     var x1 = Math.min(drawingArea.startX, curX), x2 = Math.max(drawingArea.startX, curX);
     var y1 = Math.min(drawingArea.startY, curY), y2 = Math.max(drawingArea.startY, curY);
-    drawingArea = null;
+    cancelAreaDraw();
 
     var zoom = cy.zoom();
     var pan = cy.pan();
@@ -464,34 +664,68 @@
     var modelX = (centerScreenX - pan.x) / zoom;
     var modelY = (centerScreenY - pan.y) / zoom;
 
-    api('/project/' + pid + '/prozesskarte/rechteck', 'POST', { label: 'Bereich', x: modelX, y: modelY, width: width, height: height })
+    setMode(null);
+    api(base + '/rechteck', 'POST', { label: 'Bereich', x: modelX, y: modelY, width: width, height: height })
       .then(function (res) {
-        if (!res.ok) { alert('Konnte Rechteck nicht anlegen.'); return; }
-        var area = cy.add({
-          data: {
-            id: 'r' + res.area.id, dbId: res.area.id, label: res.area.label, color: res.area.color || NODE_COLORS[0],
-            opacity: res.area.opacity, width: res.area.width, height: res.area.height, layer: res.area.layer,
-            zIndex: res.area.layer === 'front' ? 10 : 0,
-          },
-          position: { x: modelX, y: modelY },
-          classes: 'area',
-        });
-        setMode(null);
+        if (!res.ok) return;
+        var area = cy.add({ data: areaData(res.area), position: { x: modelX, y: modelY }, classes: 'area' });
+        var id = area.id();
+        pushUndo(function () { var el = getEl(id); if (el) deleteElements(el, { recordUndo: false }); });
         openAreaDetail(area, true);
       });
   }
 
-  // ── Verschieben: Position speichern ─────────────────────────────────
+  canvasEl.addEventListener('mousedown', function (evt) {
+    if (mode !== 'area' || evt.button !== 0) return;
+    evt.preventDefault();
+    var rect = stage.getBoundingClientRect();
+    drawingArea = { startX: evt.clientX - rect.left, startY: evt.clientY - rect.top };
+    areaGhost.style.left = drawingArea.startX + 'px';
+    areaGhost.style.top = drawingArea.startY + 'px';
+    areaGhost.style.width = '0px';
+    areaGhost.style.height = '0px';
+    areaGhost.style.display = 'block';
+    document.addEventListener('mousemove', onAreaDrawMove);
+    document.addEventListener('mouseup', onAreaDrawUp);
+  });
+
+  // ── Verschieben: Position speichern (mit Rückgängig) ────────────────
+  // Beim Ziehen mehrerer markierter Elemente feuert dragfree pro Element; die
+  // Bewegungen werden gesammelt und als ein einziger Rückgängig-Schritt abgelegt.
+  var dragStart = {};
+  var pendingMoves = [];
+  var moveFlushTimer = null;
+
+  cy.on('grab', 'node', function (evt) {
+    var p = evt.target.position();
+    dragStart[evt.target.id()] = { x: p.x, y: p.y };
+  });
   cy.on('dragfree', 'node', function (evt) {
     var node = evt.target;
-    var pos = node.position();
-    if (node.hasClass('area')) {
-      api('/project/' + pid + '/prozesskarte/rechteck/' + node.data('dbId'), 'PATCH', { x: pos.x, y: pos.y });
-      if (areaDetailNode && areaDetailNode.id() === node.id()) positionAreaDetail(node);
-    } else {
-      api('/project/' + pid + '/prozesskarte/knoten/' + node.data('dbId'), 'PATCH', { x: pos.x, y: pos.y });
-      if (detailNode && detailNode.id() === node.id()) positionDetail(node);
-    }
+    var from = dragStart[node.id()];
+    delete dragStart[node.id()];
+    var p = node.position();
+    var to = { x: p.x, y: p.y };
+    if (!from || (from.x === to.x && from.y === to.y)) return;
+    api(elPath(node), 'PATCH', { x: to.x, y: to.y }).then(function (res) {
+      if (!res.ok && node.inside()) node.position(from);
+    });
+    pendingMoves.push({ id: node.id(), from: from });
+    clearTimeout(moveFlushTimer);
+    moveFlushTimer = setTimeout(function () {
+      var moves = pendingMoves;
+      pendingMoves = [];
+      pushUndo(function () {
+        moves.forEach(function (m) {
+          var el = getEl(m.id);
+          if (!el) return;
+          el.position(m.from);
+          api(elPath(el), 'PATCH', { x: m.from.x, y: m.from.y });
+        });
+      });
+    }, 0);
+    if (areaDetailNode && areaDetailNode.id() === node.id()) positionAreaDetail(node);
+    if (detailNode && detailNode.id() === node.id()) positionDetail(node);
   });
 
   // ── Andockpunkte: Hover zeigt sie, Ziehen auf einen anderen Punkt verbindet ──
@@ -523,6 +757,7 @@
     points.forEach(function (p) {
       var dot = document.createElement('div');
       dot.className = 'map-anchor';
+      dot.title = 'Ziehen, um zu verbinden';
       dot.style.left = p.x + 'px';
       dot.style.top = p.y + 'px';
       dot.addEventListener('mouseenter', cancelClearAnchors);
@@ -542,7 +777,6 @@
   // nur den Rand zuverlässig ab. findNodeAtStagePoint prüft die volle Bounding-Box
   // und wird auch beim Erkennen des Zielpunkts beim Verbinden verwendet.
   var hoveredAnchorNode = null;
-  var canvasEl = document.getElementById('map-canvas');
   canvasEl.addEventListener('mousemove', function (evt) {
     if (mode === 'add' || connecting) return;
     var rect = stage.getBoundingClientRect();
@@ -589,6 +823,7 @@
   function startConnecting(fromNode, anchorPos) {
     connecting = { from: fromNode };
     ghostLine.style.display = 'block';
+    ghostLine.setAttribute('stroke', EDGE_KINDS[selectedKind].color);
     ghostLine.setAttribute('x1', anchorPos.x);
     ghostLine.setAttribute('y1', anchorPos.y);
     ghostLine.setAttribute('x2', anchorPos.x);
@@ -604,39 +839,146 @@
     ghostLine.setAttribute('y2', evt.clientY - rect.top);
   }
 
-  function onConnectUp(evt) {
+  function cancelConnecting() {
     document.removeEventListener('mousemove', onConnectMove);
     document.removeEventListener('mouseup', onConnectUp);
     ghostLine.style.display = 'none';
-    if (!connecting) return;
-    var fromNode = connecting.from;
     connecting = null;
+    clearAnchors();
+  }
+
+  function onConnectUp(evt) {
+    if (!connecting) { cancelConnecting(); return; }
+    var fromNode = connecting.from;
+    cancelConnecting();
     var rect = stage.getBoundingClientRect();
     var target = findNodeAtStagePoint(evt.clientX - rect.left, evt.clientY - rect.top);
-    clearAnchors();
     if (!target || target.id() === fromNode.id()) return;
-    api('/project/' + pid + '/prozesskarte/kante', 'POST', { from_id: fromNode.data('dbId'), to_id: target.data('dbId'), kind: selectedKind })
+    api(base + '/kante', 'POST', { from_id: fromNode.data('dbId'), to_id: target.data('dbId'), kind: selectedKind })
       .then(function (res) {
         if (!res.ok) return;
-        cy.add({ data: { id: 'e' + res.edge.id, dbId: res.edge.id, source: fromNode.id(), target: target.id(), kind: res.edge.kind } });
+        var edge = cy.add({ data: edgeData(res.edge) });
+        var id = edge.id();
+        pushUndo(function () { var el = getEl(id); if (el) deleteElements(el, { recordUndo: false }); });
       });
   }
 
-  // ── Löschen (Mehrfachauswahl) ────────────────────────────────────────
-  document.getElementById('js-delete-selected').addEventListener('click', function () {
-    var selected = cy.elements(':selected');
-    if (selected.length === 0) return;
-    selected.forEach(function (el) {
-      var path;
-      if (el.isNode() && el.hasClass('area')) path = '/project/' + pid + '/prozesskarte/rechteck/' + el.data('dbId');
-      else if (el.isNode()) path = '/project/' + pid + '/prozesskarte/knoten/' + el.data('dbId');
-      else path = '/project/' + pid + '/prozesskarte/kante/' + el.data('dbId');
-      api(path, 'DELETE').then(function (res) { if (res.ok) { el.remove(); closeDetail(); closeAreaDetail(); } });
+  // ── Löschen (mit Rückgängig) ─────────────────────────────────────────
+  function snapshotNode(n) {
+    var p = n.position();
+    return { id: n.id(), data: Object.assign({}, n.data()), pos: { x: p.x, y: p.y } };
+  }
+
+  function deleteElements(els, opts) {
+    opts = opts || {};
+    var points = els.filter(function (el) { return el.isNode() && !el.hasClass('area'); });
+    var areas = els.filter(function (el) { return el.isNode() && el.hasClass('area'); });
+    var edges = els.filter(function (el) { return el.isEdge(); }).union(points.connectedEdges());
+    if (points.empty() && areas.empty() && edges.empty()) return;
+
+    // Offene Panels ohne Nachspeichern schließen - ein PATCH auf ein gerade
+    // gelöschtes Element würde sonst als Fehler gemeldet.
+    closeAllPanels(true);
+
+    var edgeSnaps = {};
+    edges.forEach(function (e) {
+      edgeSnaps[e.id()] = { id: e.id(), source: e.source().id(), target: e.target().id(), kind: e.data('kind') };
     });
+    var pointIds = {};
+    points.forEach(function (n) { pointIds[n.id()] = true; });
+    // Der Server entfernt beim Löschen eines Punkts dessen Verbindungen mit; nur
+    // Verbindungen zwischen verbleibenden Punkten werden einzeln gelöscht.
+    var looseEdges = edges.filter(function (e) { return !pointIds[e.source().id()] && !pointIds[e.target().id()]; });
+
+    var targets = points.union(areas).union(looseEdges);
+    var requests = targets.map(function (el) {
+      var snap = el.isEdge() ? edgeSnaps[el.id()] : snapshotNode(el);
+      var connected = el.isNode() && !el.hasClass('area') ? el.connectedEdges().map(function (e) { return edgeSnaps[e.id()]; }) : [];
+      return api(elPath(el), 'DELETE').then(function (res) {
+        return { el: el, ok: res.ok, snap: snap, connected: connected };
+      });
+    });
+
+    return Promise.all(requests).then(function (results) {
+      var snap = { points: [], areas: [], edges: [] };
+      var seenEdges = {};
+      function addEdgeSnap(s) { if (s && !seenEdges[s.id]) { seenEdges[s.id] = true; snap.edges.push(s); } }
+      results.forEach(function (r) {
+        if (!r.ok) return;
+        if (r.el.isEdge()) addEdgeSnap(r.snap);
+        else if (r.el.hasClass('area')) snap.areas.push(r.snap);
+        else { snap.points.push(r.snap); r.connected.forEach(addEdgeSnap); }
+        if (r.el.inside()) r.el.remove();
+      });
+      var count = snap.points.length + snap.areas.length + (snap.points.length ? 0 : snap.edges.length);
+      if (count === 0 || opts.recordUndo === false) return;
+      var restore = function () { restoreSnapshot(snap); };
+      pushUndo(restore);
+      var what = describeDeleted(snap);
+      showToast(what + ' gelöscht.', { actionLabel: 'Rückgängig', action: function () {
+        // Gleicher Eintrag wie oben - aus dem Stapel nehmen, damit er nicht doppelt greift.
+        var i = undoStack.lastIndexOf(restore);
+        if (i !== -1) undoStack.splice(i, 1);
+        undoBtn.disabled = undoStack.length === 0;
+        restore();
+      } });
+    });
+  }
+
+  function describeDeleted(snap) {
+    var parts = [];
+    if (snap.points.length) parts.push(snap.points.length === 1 ? '1 Punkt' : snap.points.length + ' Punkte');
+    if (snap.areas.length) parts.push(snap.areas.length === 1 ? '1 Rechteck' : snap.areas.length + ' Rechtecke');
+    if (snap.edges.length) parts.push(snap.edges.length === 1 ? '1 Verbindung' : snap.edges.length + ' Verbindungen');
+    return parts.join(', ');
+  }
+
+  function restoreSnapshot(snap) {
+    var nodeReqs = snap.points.map(function (p) {
+      var d = p.data;
+      return api(base + '/knoten', 'POST', {
+        name: d.label, description: d.description, color: d.color, phase_id: d.phaseId,
+        width: d.width, height: d.height, x: p.pos.x, y: p.pos.y,
+      }).then(function (res) {
+        if (!res.ok) return;
+        var n = cy.add({ data: nodeData(res.node), position: p.pos });
+        idAlias[p.id] = n.id();
+      });
+    });
+    var areaReqs = snap.areas.map(function (a) {
+      var d = a.data;
+      return api(base + '/rechteck', 'POST', {
+        label: d.label, color: d.color, opacity: d.opacity, layer: d.layer,
+        width: d.width, height: d.height, x: a.pos.x, y: a.pos.y,
+      }).then(function (res) {
+        if (!res.ok) return;
+        var n = cy.add({ data: areaData(res.area), position: a.pos, classes: 'area' });
+        idAlias[a.id] = n.id();
+      });
+    });
+    return Promise.all(nodeReqs.concat(areaReqs)).then(function () {
+      return Promise.all(snap.edges.map(function (e) {
+        var s = getEl(e.source), t = getEl(e.target);
+        if (!s || !t) return null;
+        return api(base + '/kante', 'POST', { from_id: s.data('dbId'), to_id: t.data('dbId'), kind: e.kind })
+          .then(function (res) {
+            if (!res.ok) return;
+            var ne = cy.add({ data: edgeData(res.edge) });
+            idAlias[e.id] = ne.id();
+          });
+      }));
+    });
+  }
+
+  var deleteBtn = document.getElementById('js-delete-selected');
+  deleteBtn.addEventListener('click', function () {
+    var selected = cy.elements(':selected');
+    if (selected.nonempty()) deleteElements(selected);
   });
+  function updateDeleteBtn() { deleteBtn.disabled = cy.elements(':selected').empty(); }
+  cy.on('select unselect add remove', updateDeleteBtn);
 
   // ── Vollbild ──────────────────────────────────────────────────────
-  var stage = document.getElementById('map-stage');
   document.getElementById('js-fullscreen').addEventListener('click', function () {
     if (!document.fullscreenElement) stage.requestFullscreen();
     else document.exitFullscreen();
@@ -645,24 +987,10 @@
     setTimeout(function () { cy.resize(); drawMinimap(); }, 50);
   });
 
-  canvasEl.addEventListener('mousedown', function (evt) {
-    if (mode !== 'area' || evt.button !== 0) return;
-    evt.preventDefault();
-    var rect = stage.getBoundingClientRect();
-    drawingArea = { startX: evt.clientX - rect.left, startY: evt.clientY - rect.top };
-    areaGhost.style.left = drawingArea.startX + 'px';
-    areaGhost.style.top = drawingArea.startY + 'px';
-    areaGhost.style.width = '0px';
-    areaGhost.style.height = '0px';
-    areaGhost.style.display = 'block';
-    document.addEventListener('mousemove', onAreaDrawMove);
-    document.addEventListener('mouseup', onAreaDrawUp);
-  });
-
   // ── PDF-Export ────────────────────────────────────────────────────
   var exportBtn = document.getElementById('js-export-pdf');
   exportBtn.addEventListener('click', function () {
-    if (cy.nodes().length === 0) { alert('Keine Punkte zum Exportieren vorhanden.'); return; }
+    if (cy.nodes().length === 0) { showToast('Keine Punkte zum Exportieren vorhanden.'); return; }
     exportBtn.disabled = true;
     var origLabel = exportBtn.textContent;
     exportBtn.textContent = '⏳ Export läuft …';
@@ -687,7 +1015,7 @@
     });
     var img = new Image();
     img.onload = function () {
-      fetch('/project/' + pid + '/prozesskarte/export', {
+      fetch(base + '/export', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ image: dataUrl, width: img.naturalWidth, height: img.naturalHeight }),
@@ -705,7 +1033,7 @@
         document.body.appendChild(a); a.click(); a.remove();
         URL.revokeObjectURL(url);
       }).catch(function (err) {
-        alert('PDF-Export fehlgeschlagen: ' + err.message);
+        showToast('PDF-Export fehlgeschlagen: ' + err.message, { error: true });
       }).finally(function () {
         exportBtn.disabled = false;
         exportBtn.textContent = origLabel;
@@ -775,10 +1103,6 @@
   var searchCount = document.getElementById('js-search-count');
   var searchMatches = []; var searchIndex = -1;
 
-  function pointNodes() {
-    return cy.nodes().filter(function (n) { return !n.hasClass('area'); });
-  }
-
   function applySearch(query) {
     pointNodes().removeClass('search-match search-dim');
     cy.edges().removeClass('search-dim');
@@ -804,6 +1128,7 @@
 
   searchInput.addEventListener('input', function () { applySearch(searchInput.value); });
   searchInput.addEventListener('keydown', function (evt) {
+    if (evt.key === 'Escape') { searchInput.value = ''; applySearch(''); return; }
     if (evt.key !== 'Enter') return;
     evt.preventDefault();
     gotoMatch(evt.shiftKey ? -1 : 1);
@@ -848,7 +1173,11 @@
     tooltip.style.display = 'none';
   });
 
-  // ── Ausklappbare Beschreibung (Klick auf Punkt) ─────────────────────
+  // Verbindungen sind anklickbar - Zeiger zeigt das an.
+  cy.on('mouseover', 'edge', function () { canvasEl.style.cursor = 'pointer'; });
+  cy.on('mouseout', 'edge', function () { canvasEl.style.cursor = ''; });
+
+  // ── Punkt-Panel (Klick auf Punkt) - speichert automatisch ───────────
   var detailEl = document.getElementById('map-detail');
   var nameInput = document.getElementById('js-detail-name');
   var bulletsWrap = document.getElementById('js-detail-bullets-wrap');
@@ -856,6 +1185,9 @@
   var bulletsToggle = document.getElementById('js-detail-bullets-toggle');
   var bulletsCount = document.getElementById('js-bullets-count');
   var detailNode = null;
+  var detailOpenState = null;  // Stand beim Öffnen, für einen Rückgängig-Schritt pro Bearbeitung
+  var detailSaved = null;      // zuletzt an den Server geschickter Stand
+  var nodeSaveTimer = null;
 
   function positionDetail(node) {
     var rp = node.renderedPosition();
@@ -875,9 +1207,11 @@
     row.querySelector('.bullet-remove').addEventListener('click', function () {
       row.remove();
       updateBulletsCount();
+      scheduleNodeSave();
     });
+    input.addEventListener('input', scheduleNodeSave);
     input.addEventListener('keydown', function (evt) {
-      if (evt.key === 'Enter') { evt.preventDefault(); addBulletRow(''); bulletsListEl.lastElementChild.querySelector('input').focus(); }
+      if (evt.key === 'Enter') { evt.preventDefault(); addBulletRow(''); bulletsListEl.lastElementChild.querySelector('input').focus(); updateBulletsCount(); }
     });
     bulletsListEl.appendChild(row);
     return row;
@@ -909,6 +1243,30 @@
     updateBulletsCount();
   });
 
+  function scheduleNodeSave() {
+    clearTimeout(nodeSaveTimer);
+    nodeSaveTimer = setTimeout(flushNodeSave, 600);
+  }
+  function flushNodeSave() {
+    clearTimeout(nodeSaveTimer);
+    nodeSaveTimer = null;
+    if (!detailNode) return;
+    var node = detailNode;
+    var name = nameInput.value.trim() || detailSaved.name; // leerer Name wird nicht gespeichert
+    var desc = getBulletValues().join('\n');
+    if (name === detailSaved.name && desc === detailSaved.description) return;
+    detailSaved = { name: name, description: desc };
+    node.data('label', name);
+    node.data('description', desc);
+    api(elPath(node), 'PATCH', { name: name, description: desc });
+  }
+
+  nameInput.addEventListener('input', function () {
+    var name = nameInput.value.trim();
+    if (detailNode && name) detailNode.data('label', name); // Live-Vorschau auf der Karte
+    scheduleNodeSave();
+  });
+
   var colorPaletteEl = document.getElementById('js-node-color-palette');
   NODE_COLORS.forEach(function (color) {
     var sw = document.createElement('div');
@@ -919,13 +1277,16 @@
       if (!detailNode) return;
       colorPaletteEl.querySelectorAll('.kind-swatch').forEach(function (s) { s.classList.toggle('active', s === sw); });
       detailNode.data('color', color);
-      api('/project/' + pid + '/prozesskarte/knoten/' + detailNode.data('dbId'), 'PATCH', { color: color });
+      api(elPath(detailNode), 'PATCH', { color: color });
     });
     colorPaletteEl.appendChild(sw);
   });
 
   function openDetail(node, focusName) {
+    closeAllPanels();
     detailNode = node;
+    detailOpenState = { name: node.data('label'), description: node.data('description') || '', color: node.data('color') };
+    detailSaved = { name: detailOpenState.name, description: detailOpenState.description };
     nameInput.value = node.data('label');
     var currentColor = node.data('color') || NODE_COLORS[0];
     colorPaletteEl.querySelectorAll('.kind-swatch').forEach(function (s) {
@@ -944,7 +1305,23 @@
     }
   }
 
-  function closeDetail() {
+  // discard = true: ausstehende Änderungen nicht mehr senden (z.B. weil der Punkt gerade gelöscht wird).
+  function closeDetail(discard) {
+    if (!detailNode) return;
+    var node = detailNode;
+    if (discard) { clearTimeout(nodeSaveTimer); nodeSaveTimer = null; }
+    else flushNodeSave();
+    var before = detailOpenState;
+    var after = { name: node.data('label'), description: node.data('description') || '', color: node.data('color') };
+    if (!discard && (before.name !== after.name || before.description !== after.description || before.color !== after.color)) {
+      var id = node.id();
+      pushUndo(function () {
+        var el = getEl(id);
+        if (!el) return;
+        el.data({ label: before.name, description: before.description, color: before.color });
+        api(elPath(el), 'PATCH', { name: before.name, description: before.description, color: before.color });
+      });
+    }
     detailNode = null;
     detailEl.classList.remove('open');
   }
@@ -952,39 +1329,22 @@
   cy.on('tap', 'node', function (evt) {
     if (mode !== null || evt.target.hasClass('area')) return;
     var node = evt.target;
-    closeAreaDetail();
     if (detailNode && detailNode.id() === node.id()) { closeDetail(); return; }
     openDetail(node);
   });
-  cy.on('pan zoom', function () { if (detailNode) positionDetail(detailNode); if (areaDetailNode) positionAreaDetail(areaDetailNode); });
+  cy.on('pan zoom', function () {
+    if (detailNode) positionDetail(detailNode);
+    if (areaDetailNode) positionAreaDetail(areaDetailNode);
+    if (edgeDetailEdge) positionEdgeDetail(edgeDetailEdge);
+  });
 
-  document.getElementById('js-detail-close').addEventListener('click', closeDetail);
+  document.getElementById('js-detail-close').addEventListener('click', function () { closeDetail(); });
+  document.getElementById('js-detail-done').addEventListener('click', function () { closeDetail(); });
   nameInput.addEventListener('keydown', function (evt) {
-    if (evt.key === 'Enter') { evt.preventDefault(); document.getElementById('js-detail-save').click(); }
+    if (evt.key === 'Enter') { evt.preventDefault(); closeDetail(); }
   });
-
-  document.getElementById('js-detail-save').addEventListener('click', function () {
-    if (!detailNode) return;
-    var name = nameInput.value.trim();
-    var desc = getBulletValues().join('\n');
-    if (!name) { alert('Name darf nicht leer sein.'); return; }
-    api('/project/' + pid + '/prozesskarte/knoten/' + detailNode.data('dbId'), 'PATCH', { name: name, description: desc })
-      .then(function (res) {
-        if (!res.ok) { alert('Konnte nicht gespeichert werden.'); return; }
-        detailNode.data('label', res.node.name);
-        detailNode.data('description', res.node.description || '');
-        closeDetail();
-      });
-  });
-
   document.getElementById('js-detail-delete').addEventListener('click', function () {
-    if (!detailNode) return;
-    api('/project/' + pid + '/prozesskarte/knoten/' + detailNode.data('dbId'), 'DELETE')
-      .then(function (res) {
-        if (!res.ok) return;
-        detailNode.remove();
-        closeDetail();
-      });
+    if (detailNode) deleteElements(detailNode);
   });
 
   // ── Punkte & Rechtecke: Resize-Griff beim Hovern (gleiches Prinzip für beide) ──
@@ -1008,6 +1368,7 @@
     var bb = node.renderedBoundingBox();
     var handle = document.createElement('div');
     handle.className = 'map-resize-handle';
+    handle.title = 'Ziehen, um die Größe zu ändern';
     handle.style.left = bb.x2 + 'px';
     handle.style.top = bb.y2 + 'px';
     handle.addEventListener('mouseenter', cancelClearResizeHandle);
@@ -1044,6 +1405,8 @@
     resizing = {
       node: node, startWidth: node.width(), startHeight: node.height(),
       startPosX: pos.x, startPosY: pos.y, startX: null, startY: null,
+      // Gespeicherte Größe vor dem Ziehen (null = automatisch), für Rückgängig.
+      before: { width: node.data('width'), height: node.data('height'), x: pos.x, y: pos.y },
       minWidth: node.hasClass('area') ? 40 : 50, minHeight: node.hasClass('area') ? 30 : 24,
     };
     document.addEventListener('mousemove', onResizeMove);
@@ -1066,20 +1429,36 @@
     resizing.node.position({ x: resizing.startPosX + appliedDw / 2, y: resizing.startPosY + appliedDh / 2 });
     showResizeHandleFor(resizing.node);
   }
+  function applySize(el, size) {
+    el.data('width', size.width);
+    el.data('height', size.height);
+    el.position({ x: size.x, y: size.y });
+  }
   function onResizeUp() {
     document.removeEventListener('mousemove', onResizeMove);
     document.removeEventListener('mouseup', onResizeUp);
     if (!resizing) return;
     var node = resizing.node;
+    var before = resizing.before;
+    var moved = resizing.startX !== null;
     resizing = null;
+    if (!moved) return;
     var pos = node.position();
-    var endpoint = node.hasClass('area') ? 'rechteck' : 'knoten';
-    api('/project/' + pid + '/prozesskarte/' + endpoint + '/' + node.data('dbId'), 'PATCH', {
+    api(elPath(node), 'PATCH', {
       width: node.data('width'), height: node.data('height'), x: pos.x, y: pos.y,
+    }).then(function (res) {
+      if (!res.ok) { if (node.inside()) applySize(node, before); return; }
+      var id = node.id();
+      pushUndo(function () {
+        var el = getEl(id);
+        if (!el) return;
+        applySize(el, before);
+        api(elPath(el), 'PATCH', before);
+      });
     });
   }
 
-  // ── Rechteck-Detail-Panel ────────────────────────────────────────────
+  // ── Rechteck-Panel - speichert automatisch ───────────────────────────
   var areaDetailEl = document.getElementById('map-area-detail');
   var areaLabelInput = document.getElementById('js-area-label');
   var areaColorPaletteEl = document.getElementById('js-area-color-palette');
@@ -1088,7 +1467,19 @@
   var areaLayerBackBtn = document.getElementById('js-area-layer-back');
   var areaLayerFrontBtn = document.getElementById('js-area-layer-front');
   var areaDetailNode = null;
-  var areaSelectedLayer = 'back';
+  var areaOpenState = null;
+  var areaSaveTimer = null;
+
+  function areaState(area) {
+    return { label: area.data('label'), color: area.data('color'), opacity: area.data('opacity'), layer: area.data('layer') || 'back' };
+  }
+  function applyAreaState(area, s) {
+    area.data({ label: s.label, color: s.color, opacity: s.opacity, layer: s.layer, zIndex: s.layer === 'front' ? 10 : 0 });
+  }
+  function saveArea(fields) {
+    if (!areaDetailNode) return;
+    api(elPath(areaDetailNode), 'PATCH', fields);
+  }
 
   NODE_COLORS.forEach(function (color) {
     var sw = document.createElement('div');
@@ -1099,27 +1490,43 @@
       if (!areaDetailNode) return;
       areaColorPaletteEl.querySelectorAll('.kind-swatch').forEach(function (s) { s.classList.toggle('active', s === sw); });
       areaDetailNode.data('color', color);
+      saveArea({ color: color });
     });
     areaColorPaletteEl.appendChild(sw);
   });
 
-  function setAreaLayerUi(layer) {
-    areaSelectedLayer = layer;
+  function setAreaLayer(layer, save) {
     areaLayerBackBtn.classList.toggle('active', layer === 'back');
     areaLayerFrontBtn.classList.toggle('active', layer === 'front');
+    if (!areaDetailNode || !save) return;
+    areaDetailNode.data({ layer: layer, zIndex: layer === 'front' ? 10 : 0 });
+    saveArea({ layer: layer });
   }
-  areaLayerBackBtn.addEventListener('click', function () {
-    setAreaLayerUi('back');
-    if (areaDetailNode) { areaDetailNode.data('zIndex', 0); areaDetailNode.data('layer', 'back'); }
-  });
-  areaLayerFrontBtn.addEventListener('click', function () {
-    setAreaLayerUi('front');
-    if (areaDetailNode) { areaDetailNode.data('zIndex', 10); areaDetailNode.data('layer', 'front'); }
-  });
+  areaLayerBackBtn.addEventListener('click', function () { setAreaLayer('back', true); });
+  areaLayerFrontBtn.addEventListener('click', function () { setAreaLayer('front', true); });
   areaOpacityInput.addEventListener('input', function () {
     var v = parseFloat(areaOpacityInput.value);
     areaOpacityVal.textContent = Math.round(v * 100) + '%';
     if (areaDetailNode) areaDetailNode.data('opacity', v);
+  });
+  areaOpacityInput.addEventListener('change', function () {
+    saveArea({ opacity: parseFloat(areaOpacityInput.value) });
+  });
+
+  function flushAreaLabelSave() {
+    clearTimeout(areaSaveTimer);
+    areaSaveTimer = null;
+    if (!areaDetailNode) return;
+    var label = areaLabelInput.value.trim();
+    if (!label || label === areaDetailNode.data('savedLabel')) return;
+    areaDetailNode.data('savedLabel', label);
+    saveArea({ label: label });
+  }
+  areaLabelInput.addEventListener('input', function () {
+    var label = areaLabelInput.value.trim();
+    if (areaDetailNode && label) areaDetailNode.data('label', label);
+    clearTimeout(areaSaveTimer);
+    areaSaveTimer = setTimeout(flushAreaLabelSave, 600);
   });
 
   function positionAreaDetail(area) {
@@ -1132,8 +1539,10 @@
   }
 
   function openAreaDetail(area, focusLabel) {
-    closeDetail();
+    closeAllPanels();
     areaDetailNode = area;
+    areaOpenState = areaState(area);
+    area.data('savedLabel', areaOpenState.label);
     areaLabelInput.value = area.data('label');
     var currentColor = area.data('color') || NODE_COLORS[0];
     areaColorPaletteEl.querySelectorAll('.kind-swatch').forEach(function (s) {
@@ -1141,7 +1550,7 @@
     });
     areaOpacityInput.value = area.data('opacity');
     areaOpacityVal.textContent = Math.round(area.data('opacity') * 100) + '%';
-    setAreaLayerUi(area.data('layer') || 'back');
+    setAreaLayer(areaOpenState.layer, false);
     positionAreaDetail(area);
     areaDetailEl.classList.add('open');
     if (focusLabel) {
@@ -1149,7 +1558,22 @@
     }
   }
 
-  function closeAreaDetail() {
+  function closeAreaDetail(discard) {
+    if (!areaDetailNode) return;
+    var area = areaDetailNode;
+    if (discard) { clearTimeout(areaSaveTimer); areaSaveTimer = null; }
+    else flushAreaLabelSave();
+    var before = areaOpenState;
+    var after = areaState(area);
+    if (!discard && (before.label !== after.label || before.color !== after.color || before.opacity !== after.opacity || before.layer !== after.layer)) {
+      var id = area.id();
+      pushUndo(function () {
+        var el = getEl(id);
+        if (!el) return;
+        applyAreaState(el, before);
+        api(elPath(el), 'PATCH', before);
+      });
+    }
     areaDetailNode = null;
     areaDetailEl.classList.remove('open');
   }
@@ -1157,37 +1581,126 @@
   cy.on('tap', 'node.area', function (evt) {
     if (mode !== null) return;
     var area = evt.target;
-    closeDetail();
     if (areaDetailNode && areaDetailNode.id() === area.id()) { closeAreaDetail(); return; }
     openAreaDetail(area);
   });
 
-  document.getElementById('js-area-close').addEventListener('click', closeAreaDetail);
+  document.getElementById('js-area-close').addEventListener('click', function () { closeAreaDetail(); });
+  document.getElementById('js-area-done').addEventListener('click', function () { closeAreaDetail(); });
   areaLabelInput.addEventListener('keydown', function (evt) {
-    if (evt.key === 'Enter') { evt.preventDefault(); document.getElementById('js-area-save').click(); }
+    if (evt.key === 'Enter') { evt.preventDefault(); closeAreaDetail(); }
   });
-
-  document.getElementById('js-area-save').addEventListener('click', function () {
-    if (!areaDetailNode) return;
-    var label = areaLabelInput.value.trim();
-    if (!label) { alert('Beschriftung darf nicht leer sein.'); return; }
-    api('/project/' + pid + '/prozesskarte/rechteck/' + areaDetailNode.data('dbId'), 'PATCH', {
-      label: label, color: areaDetailNode.data('color'), opacity: areaDetailNode.data('opacity'), layer: areaSelectedLayer,
-    }).then(function (res) {
-      if (!res.ok) { alert('Konnte nicht gespeichert werden.'); return; }
-      areaDetailNode.data('label', res.area.label);
-      closeAreaDetail();
-    });
-  });
-
   document.getElementById('js-area-delete').addEventListener('click', function () {
-    if (!areaDetailNode) return;
-    api('/project/' + pid + '/prozesskarte/rechteck/' + areaDetailNode.data('dbId'), 'DELETE')
-      .then(function (res) {
-        if (!res.ok) return;
-        areaDetailNode.remove();
-        closeAreaDetail();
+    if (areaDetailNode) deleteElements(areaDetailNode);
+  });
+
+  // ── Verbindungs-Panel (Klick auf Verbindung) ─────────────────────────
+  var edgeDetailEl = document.getElementById('map-edge-detail');
+  var edgeKindsEl = document.getElementById('js-edge-kinds');
+  var edgeDetailEdge = null;
+
+  Object.keys(EDGE_KINDS).forEach(function (kind) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'map-btn';
+    btn.dataset.kind = kind;
+    btn.innerHTML = '<span class="legend-dot" style="background:' + EDGE_KINDS[kind].color + '"></span>' + escapeHtml(EDGE_KINDS[kind].label);
+    btn.addEventListener('click', function () {
+      if (!edgeDetailEdge) return;
+      var edge = edgeDetailEdge;
+      var before = edge.data('kind');
+      if (before === kind) return;
+      edge.data('kind', kind);
+      markEdgeKind(kind);
+      api(elPath(edge), 'PATCH', { kind: kind }).then(function (res) {
+        if (!res.ok) {
+          if (edge.inside()) edge.data('kind', before);
+          if (edgeDetailEdge === edge) markEdgeKind(before);
+          return;
+        }
+        var id = edge.id();
+        pushUndo(function () {
+          var el = getEl(id);
+          if (!el) return;
+          el.data('kind', before);
+          api(elPath(el), 'PATCH', { kind: before });
+        });
       });
+    });
+    edgeKindsEl.appendChild(btn);
+  });
+
+  function markEdgeKind(kind) {
+    edgeKindsEl.querySelectorAll('.map-btn').forEach(function (b) { b.classList.toggle('active', b.dataset.kind === kind); });
+  }
+  function positionEdgeDetail(edge) {
+    var mp = edge.renderedMidpoint();
+    var stageRect = stage.getBoundingClientRect();
+    var left = Math.min(mp.x + 16, stageRect.width - 240);
+    var top = Math.min(mp.y + 10, stageRect.height - 260);
+    edgeDetailEl.style.left = Math.max(10, left) + 'px';
+    edgeDetailEl.style.top = Math.max(10, top) + 'px';
+  }
+  function openEdgeDetail(edge) {
+    closeAllPanels();
+    edgeDetailEdge = edge;
+    markEdgeKind(edge.data('kind'));
+    positionEdgeDetail(edge);
+    edgeDetailEl.classList.add('open');
+  }
+  function closeEdgeDetail() {
+    edgeDetailEdge = null;
+    edgeDetailEl.classList.remove('open');
+  }
+
+  cy.on('tap', 'edge', function (evt) {
+    if (mode !== null) return;
+    var edge = evt.target;
+    if (edgeDetailEdge && edgeDetailEdge.id() === edge.id()) { closeEdgeDetail(); return; }
+    openEdgeDetail(edge);
+  });
+  document.getElementById('js-edge-close').addEventListener('click', closeEdgeDetail);
+  document.getElementById('js-edge-done').addEventListener('click', closeEdgeDetail);
+  document.getElementById('js-edge-delete').addEventListener('click', function () {
+    if (edgeDetailEdge) deleteElements(edgeDetailEdge);
+  });
+
+  function closeAllPanels(discard) {
+    closeDetail(discard);
+    closeAreaDetail(discard);
+    closeEdgeDetail();
+  }
+
+  // ── Tastenkürzel ──────────────────────────────────────────────────
+  document.addEventListener('keydown', function (evt) {
+    var tag = (evt.target.tagName || '').toLowerCase();
+    var typing = tag === 'input' || tag === 'textarea' || evt.target.isContentEditable;
+
+    if (evt.key === 'Escape') {
+      if (connecting) { cancelConnecting(); return; }
+      if (drawingArea) { cancelAreaDraw(); return; }
+      if (typing && evt.target === searchInput) return;
+      if (typing) evt.target.blur();
+      if (mode !== null) { setMode(null); return; }
+      closeAllPanels();
+      cy.elements().unselect();
+      return;
+    }
+    if (typing) return; // Strg+Z / Entf in Textfeldern bleiben beim Browser
+
+    if ((evt.ctrlKey || evt.metaKey) && !evt.shiftKey && evt.key.toLowerCase() === 'z') {
+      evt.preventDefault();
+      undo();
+      return;
+    }
+    if (evt.key === 'Delete' || evt.key === 'Backspace') {
+      var sel = cy.elements(':selected');
+      if (sel.empty()) {
+        var open = detailNode || areaDetailNode || edgeDetailEdge;
+        if (open) sel = open;
+      }
+      if (sel.nonempty()) { evt.preventDefault(); deleteElements(sel); }
+    }
   });
 })();
 </script>

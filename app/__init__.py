@@ -1769,6 +1769,13 @@ def create_app() -> Flask:
             width=max(40.0, float(data.get("width", 220))),
             height=max(30.0, float(data.get("height", 140))),
         )
+        # Optionale Stil-Felder, z.B. beim Wiederherstellen per Rückgängig.
+        if data.get("color") in NODE_COLORS:
+            area.color = data["color"]
+        if "opacity" in data:
+            area.opacity = max(0.05, min(1.0, float(data["opacity"])))
+        if data.get("layer") in ("back", "front"):
+            area.layer = data["layer"]
         db.session.add(area)
         db.session.commit()
         return jsonify({"ok": True, "area": _area_to_dict(area)})
@@ -1839,6 +1846,16 @@ def create_app() -> Flask:
             x=float(data.get("x", 0)),
             y=float(data.get("y", 0)),
         )
+        # Optionale Felder, z.B. beim Wiederherstellen per Rückgängig.
+        step.description = (data.get("description") or "").strip() or None
+        if data.get("color") in NODE_COLORS:
+            step.color = data["color"]
+        if data.get("width"):
+            step.width = max(50.0, float(data["width"]))
+        if data.get("height"):
+            step.height = max(24.0, float(data["height"]))
+        if data.get("phase_id") and any(p.id == data["phase_id"] for p in model.phases):
+            step.phase_id = data["phase_id"]
         db.session.add(step)
         db.session.commit()
         return jsonify({"ok": True, "node": _step_to_dict(step)})
@@ -1868,10 +1885,11 @@ def create_app() -> Flask:
         if "color" in data:
             color = data.get("color")
             step.color = color if color in NODE_COLORS else None
+        # null = Größe wieder automatisch an die Beschriftung anpassen (z.B. Rückgängig).
         if "width" in data:
-            step.width = max(50.0, float(data["width"]))
+            step.width = max(50.0, float(data["width"])) if data["width"] is not None else None
         if "height" in data:
-            step.height = max(24.0, float(data["height"]))
+            step.height = max(24.0, float(data["height"])) if data["height"] is not None else None
         db.session.commit()
         return jsonify({"ok": True, "node": _step_to_dict(step)})
 
@@ -1888,6 +1906,14 @@ def create_app() -> Flask:
         ).scalar_one_or_none()
         if step is None:
             abort(404)
+        # Verbindungen von/zu diesem Punkt zuerst entfernen - ProcessDependency hat
+        # keine Kaskade, auf Postgres scheiterte das Löschen sonst am Fremdschlüssel.
+        db.session.execute(
+            db.delete(ProcessDependency).where(db.or_(
+                ProcessDependency.step_id == step.id,
+                ProcessDependency.depends_on_step_id == step.id,
+            ))
+        )
         db.session.delete(step)
         db.session.commit()
         return jsonify({"ok": True})
@@ -1915,12 +1941,7 @@ def create_app() -> Flask:
         db.session.commit()
         return jsonify({"ok": True, "edge": _dependency_to_dict(dep)})
 
-    @app.route("/project/<int:pid>/prozesskarte/kante/<int:edge_id>", methods=["DELETE"])
-    @login_required
-    def process_map_delete_edge(pid: int, edge_id: int):
-        project = _get_project_or_403(pid)
-        if project.catalog_type != 'process':
-            abort(404)
+    def _get_edge_or_404(pid: int, edge_id: int) -> "ProcessDependency":
         dep = db.session.execute(
             db.select(ProcessDependency).where(ProcessDependency.id == edge_id, ProcessDependency.model_id.in_(
                 db.select(ProcessModel.id).where(ProcessModel.project_id == pid)
@@ -1928,6 +1949,30 @@ def create_app() -> Flask:
         ).scalar_one_or_none()
         if dep is None:
             abort(404)
+        return dep
+
+    @app.route("/project/<int:pid>/prozesskarte/kante/<int:edge_id>", methods=["PATCH"])
+    @login_required
+    def process_map_update_edge(pid: int, edge_id: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        dep = _get_edge_or_404(pid, edge_id)
+        data = request.get_json(silent=True) or {}
+        if "kind" in data:
+            if data["kind"] not in EDGE_KINDS:
+                return jsonify({"ok": False, "error": "unbekannter Verbindungstyp"}), 400
+            dep.kind = data["kind"]
+        db.session.commit()
+        return jsonify({"ok": True, "edge": _dependency_to_dict(dep)})
+
+    @app.route("/project/<int:pid>/prozesskarte/kante/<int:edge_id>", methods=["DELETE"])
+    @login_required
+    def process_map_delete_edge(pid: int, edge_id: int):
+        project = _get_project_or_403(pid)
+        if project.catalog_type != 'process':
+            abort(404)
+        dep = _get_edge_or_404(pid, edge_id)
         db.session.delete(dep)
         db.session.commit()
         return jsonify({"ok": True})

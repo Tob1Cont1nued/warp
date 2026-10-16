@@ -20,6 +20,10 @@ TC-PP-15  Rechteck löschen
 TC-PP-16  Rechteck eines anderen Projekts ist nicht über die eigene Projekt-ID erreichbar
 TC-PP-17  Punktgröße setzen (manuell), Mindestgröße wird erzwungen, Standard ist "automatisch" (null)
 TC-PP-18  PDF-Export mit überdimensioniertem Bild liefert 400 statt Server-Absturz
+TC-PP-19  Kantentyp nachträglich ändern, unbekannter Typ liefert 400
+TC-PP-20  Punkt mit Verbindungen löschen entfernt dessen Verbindungen, andere bleiben
+TC-PP-21  Punkt mit Beschreibung/Farbe/Größe anlegen (Rückgängig), Größe per null zurücksetzen
+TC-PP-22  Rechteck mit Farbe/Transparenz/Ebene anlegen (Rückgängig)
 """
 
 import pytest
@@ -278,3 +282,65 @@ class TestDeploymentProzessProjekt:
             json={"image": f"data:image/png;base64,{tiny_png}", "width": 10000, "height": 10000},
         )
         assert r.status_code == 400
+
+    def test_tc_pp_19_kantentyp_nachtraeglich_aendern(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        n1 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "A", "x": 0, "y": 0}).get_json()["node"]["id"]
+        n2 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "B", "x": 100, "y": 0}).get_json()["node"]["id"]
+        edge_id = user_client.post(f"/project/{pid}/prozesskarte/kante", json={"from_id": n1, "to_id": n2}).get_json()["edge"]["id"]
+
+        r = user_client.patch(f"/project/{pid}/prozesskarte/kante/{edge_id}", json={"kind": "risiko"})
+        assert r.status_code == 200
+        assert r.get_json()["edge"]["kind"] == "risiko"
+
+        r2 = user_client.patch(f"/project/{pid}/prozesskarte/kante/{edge_id}", json={"kind": "nicht-existent"})
+        assert r2.status_code == 400
+
+    def test_tc_pp_20_punkt_mit_verbindungen_loeschen(self, user_client, app):
+        from app.models import ProcessDependency, ProcessStep
+        pid = _create_process_project(user_client, app)
+        n1 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "A", "x": 0, "y": 0}).get_json()["node"]["id"]
+        n2 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "B", "x": 100, "y": 0}).get_json()["node"]["id"]
+        n3 = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={"name": "C", "x": 200, "y": 0}).get_json()["node"]["id"]
+        user_client.post(f"/project/{pid}/prozesskarte/kante", json={"from_id": n1, "to_id": n2})
+        user_client.post(f"/project/{pid}/prozesskarte/kante", json={"from_id": n2, "to_id": n3})
+        keep = user_client.post(f"/project/{pid}/prozesskarte/kante", json={"from_id": n1, "to_id": n3}).get_json()["edge"]["id"]
+
+        r = user_client.delete(f"/project/{pid}/prozesskarte/knoten/{n2}")
+        assert r.status_code == 200
+        with app.app_context():
+            assert db.session.get(ProcessStep, n2) is None
+            remaining = db.session.execute(
+                db.select(ProcessDependency.id).where(db.or_(
+                    ProcessDependency.step_id.in_([n1, n2, n3]),
+                    ProcessDependency.depends_on_step_id.in_([n1, n2, n3]),
+                ))
+            ).scalars().all()
+            assert remaining == [keep]
+
+    def test_tc_pp_21_punkt_mit_allen_feldern_wiederherstellen(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        r = user_client.post(f"/project/{pid}/prozesskarte/knoten", json={
+            "name": "Wiederhergestellt", "x": 5, "y": 6, "description": "Zeile 1\nZeile 2",
+            "color": "#e5484d", "width": 200, "height": 60,
+        })
+        node = r.get_json()["node"]
+        assert node["description"] == "Zeile 1\nZeile 2"
+        assert node["color"] == "#e5484d"
+        assert node["width"] == 200 and node["height"] == 60
+
+        # Größe per null wieder auf "automatisch" zurücksetzen
+        r2 = user_client.patch(f"/project/{pid}/prozesskarte/knoten/{node['id']}", json={"width": None, "height": None})
+        reset = r2.get_json()["node"]
+        assert reset["width"] is None and reset["height"] is None
+
+    def test_tc_pp_22_rechteck_mit_stil_wiederherstellen(self, user_client, app):
+        pid = _create_process_project(user_client, app)
+        r = user_client.post(f"/project/{pid}/prozesskarte/rechteck", json={
+            "label": "Zone", "x": 0, "y": 0, "width": 300, "height": 200,
+            "color": "#22c55e", "opacity": 0.5, "layer": "front",
+        })
+        area = r.get_json()["area"]
+        assert area["color"] == "#22c55e"
+        assert area["opacity"] == 0.5
+        assert area["layer"] == "front"
