@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kinderveranstaltungen Deutschland – Überall & Jederzeit</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    :root {
+      --primary: #185FA5;
+      --success: #3B6D11;
+      --warning: #BA7517;
+      --danger: #A32D2D;
+      --surface-0: #F1EFE8;
+      --surface-1: #E6F1FB;
+      --surface-2: #FFFFFF;
+      --text-primary: #2C2C2A;
+      --text-secondary: #5F5E5A;
+      --text-muted: #888780;
+      --border: rgba(0,0,0,0.1);
+      --border-strong: rgba(0,0,0,0.2);
+    }
+    
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --surface-0: #2C2C2A;
+        --surface-1: #042C53;
+        --surface-2: #1a1a18;
+        --text-primary: #F1EFE8;
+        --text-secondary: #B4B2A9;
+        --text-muted: #888780;
+        --border: rgba(255,255,255,0.1);
+        --border-strong: rgba(255,255,255,0.2);
+      }
+    }
+    
+    html { background: var(--surface-0); }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text-primary);
+      background: var(--surface-0);
+      line-height: 1.6;
+    }
+    
+    .container { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    
+    .header { margin-bottom: 2rem; }
+    h1 { font-size: 28px; font-weight: 600; margin-bottom: 0.5rem; }
+    .tagline { font-size: 14px; color: var(--text-secondary); }
+    
+    .search-card {
+      background: linear-gradient(135deg, rgba(24, 95, 165, 0.08), rgba(24, 95, 165, 0.03));
+      border: 1px solid var(--border-strong);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      border-left: 4px solid var(--primary);
+    }
+    
+    .search-grid {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr 1fr auto;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 800px) {
+      .search-grid { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 600px) {
+      .search-grid { grid-template-columns: 1fr; }
+    }
+    
+    .control-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-size:
