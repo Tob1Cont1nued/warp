@@ -1,0 +1,436 @@
+{# Kinderveranstaltungen-Finder - eigenständige Seite, fachlich unabhängig vom WARP-Assessment.
+   Backend: app/veranstaltungen.py #}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <title>Kinderveranstaltungen finden</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      color-scheme: light dark;
+      --primary: #185FA5; --primary-hover: #144a7a;
+      --success: #3B6D11; --warning: #BA7517; --danger: #A32D2D;
+      --surface-0: #F1EFE8; --surface-1: #E6F1FB; --surface-2: #FFFFFF;
+      --text-primary: #2C2C2A; --text-secondary: #5F5E5A; --text-muted: #888780;
+      --border: rgba(0,0,0,0.1); --border-strong: rgba(0,0,0,0.2);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary: #4B8FD6; --primary-hover: #3a7cc2;
+        --success: #6FA83A; --warning: #D9973A; --danger: #E06565;
+        --surface-0: #1f1f1d; --surface-1: #0c2a47; --surface-2: #2a2a27;
+        --text-primary: #F1EFE8; --text-secondary: #B4B2A9; --text-muted: #8f8d85;
+        --border: rgba(255,255,255,0.1); --border-strong: rgba(255,255,255,0.2);
+      }
+    }
+    html, body { background: var(--surface-0); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--text-primary); line-height: 1.55;
+    }
+    .container { max-width: 900px; margin: 0 auto; padding: 1.5rem 16px 3rem; }
+    h1 { font-size: 1.6rem; font-weight: 650; margin-bottom: .25rem; line-height: 1.25; }
+    .tagline { font-size: .9rem; color: var(--text-secondary); margin-bottom: 1.5rem; }
+
+    .search-card {
+      background: var(--surface-2); border: 1px solid var(--border-strong);
+      border-left: 4px solid var(--primary); border-radius: 12px; padding: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+    .field { display: flex; flex-direction: column; gap: .35rem; min-width: 0; }
+    label, .label {
+      font-size: .75rem; color: var(--text-secondary); font-weight: 650;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .place-row { display: flex; gap: .5rem; }
+    .place-row input { flex: 1; min-width: 0; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1rem; }
+    @media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+
+    input, select {
+      width: 100%; padding: 11px 12px; border: 1px solid var(--border-strong); border-radius: 8px;
+      font-size: 1rem; background: var(--surface-2); color: var(--text-primary); font-family: inherit;
+    }
+    input:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(24,95,165,.15); }
+    input[type="range"] { padding: 0; height: 28px; accent-color: var(--primary); border: none; box-shadow: none; }
+    .radius-value { font-weight: 700; color: var(--primary); }
+
+    button {
+      padding: 11px 18px; background: var(--primary); color: #fff; border: none; border-radius: 8px;
+      font-size: 1rem; font-weight: 650; cursor: pointer; font-family: inherit;
+    }
+    button:hover { background: var(--primary-hover); }
+    button:disabled { opacity: .55; cursor: default; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+    .geo-button { background: var(--success); padding: 11px 14px; flex-shrink: 0; }
+    .geo-button:hover { background: #2d5a0d; }
+    .search-button { width: 100%; margin-top: 1.1rem; padding: 13px; font-size: 1.05rem; }
+
+    .location-line { font-size: .85rem; color: var(--text-secondary); margin-top: .75rem; min-height: 1.3em; }
+
+    .status {
+      font-size: .9rem; color: var(--text-secondary); text-align: center; margin: 1.25rem 0;
+      padding: .9rem 1rem; background: var(--surface-1); border-radius: 8px;
+    }
+    .status:empty { display: none; }
+    .status.error { color: var(--danger); }
+    .spinner {
+      display: inline-block; width: 14px; height: 14px; margin-right: .5rem; vertical-align: -2px;
+      border: 2px solid var(--border-strong); border-top-color: var(--primary); border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem; }
+    @media (max-width: 560px) { .filter-row { grid-template-columns: 1fr; } }
+
+    .event-card {
+      background: var(--surface-2); border: 1px solid var(--border); border-radius: 12px;
+      padding: 1.1rem 1.2rem; margin-bottom: .9rem;
+      display: grid; grid-template-columns: 1fr auto; gap: 1rem; align-items: start;
+    }
+    .event-card:hover { border-color: var(--primary); }
+    .event-name { font-size: 1.05rem; font-weight: 650; margin-bottom: .4rem; overflow-wrap: anywhere; }
+    .event-details { font-size: .88rem; color: var(--text-secondary); }
+    .detail-line { display: flex; gap: .5rem; margin-bottom: .2rem; overflow-wrap: anywhere; }
+    .detail-line .icon { flex-shrink: 0; width: 1.3em; }
+    .event-desc { margin-top: .5rem; color: var(--text-primary); font-size: .92rem; }
+    .event-tip { margin-top: .5rem; font-size: .85rem; }
+    .event-note { margin-top: .4rem; font-size: .8rem; color: var(--warning); }
+    .badges { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .75rem; }
+    .badge {
+      font-size: .72rem; padding: 3px 9px; border-radius: 20px; font-weight: 650;
+      background: rgba(24,95,165,.12); color: var(--primary);
+    }
+    .badge.free { background: rgba(59,109,17,.15); color: var(--success); }
+    .badge.paid { background: rgba(186,117,23,.15); color: var(--warning); }
+    .links { display: flex; flex-wrap: wrap; gap: .9rem; margin-top: .7rem; font-size: .85rem; }
+    .links a { color: var(--primary); font-weight: 600; text-decoration: none; }
+    .links a:hover { text-decoration: underline; }
+    .distance { text-align: center; min-width: 72px; }
+    .distance-big { font-size: 1.6rem; font-weight: 700; color: var(--primary); line-height: 1.1; }
+    .distance-unit { font-size: .72rem; color: var(--text-secondary); }
+    @media (max-width: 560px) {
+      .event-card { grid-template-columns: 1fr; }
+      .distance { display: none; }
+    }
+
+    .empty { text-align: center; padding: 2.5rem 1rem; color: var(--text-secondary); }
+    .empty .big { font-size: 2.5rem; margin-bottom: .5rem; }
+    .footer {
+      margin-top: 2.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border);
+      text-align: center; font-size: .78rem; color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🗺️ Kinderveranstaltungen finden</h1>
+    <p class="tagline">Ort, Datum und Umkreis wählen – Claude sucht aktuelle Veranstaltungen und Ausflugsziele für Kinder.</p>
+
+    <form class="search-card" id="searchForm" autocomplete="off">
+      <div class="field">
+        <label for="placeInput">Ort, Stadtteil oder PLZ</label>
+        <div class="place-row">
+          <input id="placeInput" type="text" enterkeyhint="search" placeholder="z.B. Münster-Hiltrup oder 48291" required>
+          <button type="button" id="geoButton" class="geo-button" title="Meinen Standort verwenden" aria-label="Meinen Standort verwenden">📍</button>
+        </div>
+      </div>
+      <div class="grid">
+        <div class="field">
+          <label for="dateInput">Datum</label>
+          <input id="dateInput" type="date">
+        </div>
+        <div class="field">
+          <label for="radiusSlider">Umkreis: <span class="radius-value" id="radiusValue">15 km</span></label>
+          <input type="range" id="radiusSlider" min="5" max="50" value="15" step="5">
+        </div>
+      </div>
+      <button type="submit" class="search-button" id="searchButton">🔍 Veranstaltungen suchen</button>
+      <div class="location-line" id="locationLine"></div>
+    </form>
+
+    <div class="filter-row">
+      <div class="field">
+        <label for="weatherFilter">Wetter</label>
+        <select id="weatherFilter">
+          <option value="">Egal</option>
+          <option value="indoor">🌧️ Drinnen (bei Regen)</option>
+          <option value="outdoor">☀️ Draußen</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="categoryFilter">Kategorie</label>
+        <select id="categoryFilter">
+          <option value="">Alle Kategorien</option>
+          {% for key, label in categories.items() %}
+          <option value="{{ key }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div id="results"></div>
+
+    <div class="footer">
+      Die Angebote werden per Websuche recherchiert. Termine, Öffnungszeiten und Preise bitte vor dem Besuch
+      über die verlinkte Quelle prüfen.<br>
+      Ortsdaten © OpenStreetMap-Mitwirkende.
+    </div>
+  </div>
+
+<script>
+(function () {
+  var CATEGORY_LABELS = {{ categories | tojson }};
+  var csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+  var placeInput = document.getElementById('placeInput');
+  var geoButton = document.getElementById('geoButton');
+  var dateInput = document.getElementById('dateInput');
+  var radiusSlider = document.getElementById('radiusSlider');
+  var radiusValue = document.getElementById('radiusValue');
+  var weatherFilter = document.getElementById('weatherFilter');
+  var categoryFilter = document.getElementById('categoryFilter');
+  var searchButton = document.getElementById('searchButton');
+  var locationLine = document.getElementById('locationLine');
+  var statusEl = document.getElementById('status');
+  var resultsEl = document.getElementById('results');
+
+  var STORE_KEY = 'kinderEvents.lastSearch';
+  // Gewählter Mittelpunkt mit Koordinaten (GPS oder bestätigter Ort). null = nur Text,
+  // dann löst der Server den Ortsnamen auf.
+  var place = null;
+  var lastEvents = null;
+  var lastSearch = null;   // Filter, mit denen die angezeigten Ergebnisse gesucht wurden
+  var pollToken = 0;
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+  function setStatus(html, isError) {
+    statusEl.innerHTML = html;
+    statusEl.classList.toggle('error', !!isError);
+  }
+
+  // Alle Aufrufe gehen an den eigenen Server (CSP connect-src 'self').
+  function getJson(url, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken }, opts.headers || {});
+    opts.credentials = 'same-origin';
+    return fetch(url, opts).then(function (r) {
+      if (r.redirected || (r.headers.get('content-type') || '').indexOf('application/json') === -1) {
+        throw new Error('Sitzung abgelaufen – bitte Seite neu laden und anmelden.');
+      }
+      return r.json().then(function (d) {
+        if (!r.ok || !d.ok) {
+          var msg = d.error || ('Serverfehler ' + r.status);
+          if (r.status === 429) msg = 'Zu viele Suchen in kurzer Zeit – bitte etwas später erneut versuchen.';
+          throw new Error(msg);
+        }
+        return d;
+      });
+    });
+  }
+
+  function remember() {
+    try {
+      localStorage.setItem(STORE_KEY, JSON.stringify({
+        text: placeInput.value, place: place, radius: radiusSlider.value,
+      }));
+    } catch (e) { /* privater Modus o.ä. - nur Komfort */ }
+  }
+  function restore() {
+    try {
+      var s = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      if (!s) return;
+      placeInput.value = s.text || '';
+      if (s.place && typeof s.place.lat === 'number') place = s.place;
+      if (s.radius) radiusSlider.value = s.radius;
+    } catch (e) { /* ignorieren */ }
+  }
+
+  function updateLocationLine() {
+    var r = radiusSlider.value + ' km';
+    if (place && place.accuracy) locationLine.textContent = '📍 ' + place.name + ' (GPS, ±' + place.accuracy + ' m) · Umkreis ' + r;
+    else if (place) locationLine.textContent = '📍 ' + place.name + ' · Umkreis ' + r;
+    else locationLine.textContent = '';
+  }
+
+  radiusSlider.addEventListener('input', function () {
+    radiusValue.textContent = radiusSlider.value + ' km';
+    updateLocationLine();
+  });
+  placeInput.addEventListener('input', function () {
+    // Eigener Text ersetzt den vorher gewählten Standort.
+    place = null;
+    updateLocationLine();
+  });
+
+  // ── Standort per GPS ─────────────────────────────────────────────
+  geoButton.addEventListener('click', function () {
+    if (!navigator.geolocation || !window.isSecureContext) {
+      setStatus('❌ Standort ist nur über https:// verfügbar. Bitte Ort eintippen.', true);
+      return;
+    }
+    geoButton.disabled = true;
+    geoButton.textContent = '⏳';
+    setStatus('<span class="spinner"></span>Bestimme deinen Standort …');
+    navigator.geolocation.getCurrentPosition(function (pos) {
+      var lat = pos.coords.latitude, lon = pos.coords.longitude;
+      place = { name: 'Mein Standort', lat: lat, lon: lon, accuracy: Math.round(pos.coords.accuracy) };
+      placeInput.value = 'Mein Standort';
+      updateLocationLine();
+      geoButton.textContent = '✅';
+      setStatus('');
+      getJson('/veranstaltungen/ort?lat=' + lat + '&lon=' + lon).then(function (d) {
+        if (place && place.lat === lat && place.lon === lon && d.name) {
+          place.name = d.name;
+          placeInput.value = d.name;
+          updateLocationLine();
+          remember();
+        }
+      }).catch(function () { /* Name ist Komfort, Koordinaten reichen */ });
+      remember();
+      setTimeout(function () { geoButton.textContent = '📍'; geoButton.disabled = false; }, 1500);
+    }, function (err) {
+      geoButton.textContent = '📍';
+      geoButton.disabled = false;
+      var msg = {
+        1: 'Standortzugriff verweigert. Bitte im Browser erlauben oder den Ort eintippen.',
+        2: 'Standort nicht ermittelbar. Sind die Ortungsdienste am Gerät an?',
+        3: 'Die Standortbestimmung hat zu lange gedauert. Bitte nochmal tippen.',
+      }[err && err.code] || 'Standort konnte nicht ermittelt werden.';
+      setStatus('❌ ' + msg, true);
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+  });
+
+  // ── Suche ────────────────────────────────────────────────────────
+  document.getElementById('searchForm').addEventListener('submit', function (evt) {
+    evt.preventDefault();
+    var text = placeInput.value.trim();
+    if (!place && !text) { placeInput.focus(); return; }
+    var body = {
+      name: place ? place.name : text,
+      lat: place ? place.lat : null,
+      lon: place ? place.lon : null,
+      date: dateInput.value,
+      radius: parseInt(radiusSlider.value, 10),
+      category: categoryFilter.value,
+      weather: weatherFilter.value,
+    };
+    var token = ++pollToken;
+    searchButton.disabled = true;
+    resultsEl.innerHTML = '';
+    setStatus('<span class="spinner"></span>Starte Recherche …');
+    remember();
+    getJson('/veranstaltungen/suche', { method: 'POST', body: JSON.stringify(body) })
+      .then(function (d) {
+        if (!place) {
+          // Vom Server aufgelöster Ort - Koordinaten für die nächste Suche merken.
+          place = { name: d.place.name, lat: d.place.lat, lon: d.place.lon };
+          placeInput.value = d.place.name;
+          updateLocationLine();
+          remember();
+        }
+        lastSearch = { category: body.category, weather: body.weather };
+        poll(d.job, token);
+      })
+      .catch(function (err) {
+        if (token !== pollToken) return;
+        searchButton.disabled = false;
+        setStatus('❌ ' + esc(err.message), true);
+      });
+  });
+
+  function poll(job, token) {
+    getJson('/veranstaltungen/suche/' + job).then(function (d) {
+      if (token !== pollToken) return;
+      if (d.status === 'running') {
+        setStatus('<span class="spinner"></span>Claude recherchiert Veranstaltungen um ' + esc(d.place.name) +
+          ' … <strong>' + d.elapsed + ' s</strong><br><small>Das dauert meist 30–90 Sekunden.</small>');
+        setTimeout(function () { poll(job, token); }, 2500);
+        return;
+      }
+      searchButton.disabled = false;
+      if (d.status === 'error') { setStatus('❌ ' + esc(d.error), true); return; }
+      lastEvents = d.events;
+      render();
+    }).catch(function (err) {
+      if (token !== pollToken) return;
+      searchButton.disabled = false;
+      setStatus('❌ ' + esc(err.message), true);
+    });
+  }
+
+  // Filter wirken sofort auf vorhandene Ergebnisse; für gezieltere Treffer neu suchen.
+  weatherFilter.addEventListener('change', function () { if (lastEvents) render(); });
+  categoryFilter.addEventListener('change', function () { if (lastEvents) render(); });
+
+  function matchesFilters(e) {
+    var w = weatherFilter.value, c = categoryFilter.value;
+    if (c && e.kategorie !== c) return false;
+    if (w && e.wetter !== w && e.wetter !== 'beides') return false;
+    return true;
+  }
+
+  function mapsUrl(e) {
+    return 'https://www.openstreetmap.org/search?query=' + encodeURIComponent(e.adresse || e.name);
+  }
+
+  function render() {
+    var shown = lastEvents.filter(matchesFilters);
+    var filtersChanged = lastSearch && (lastSearch.category !== categoryFilter.value || lastSearch.weather !== weatherFilter.value);
+    var info = '✅ ' + shown.length + (shown.length === 1 ? ' Angebot' : ' Angebote') +
+      (shown.length !== lastEvents.length ? ' (von ' + lastEvents.length + ')' : '') +
+      ' im Umkreis von ' + radiusSlider.value + ' km';
+    if (filtersChanged) info += '<br><small>Filter geändert – für gezieltere Treffer erneut suchen.</small>';
+    setStatus(info);
+
+    if (!shown.length) {
+      resultsEl.innerHTML = '<div class="empty"><div class="big">🤔</div><p>Nichts gefunden.</p>' +
+        '<p><small>Größeren Umkreis, anderes Datum oder andere Filter versuchen.</small></p></div>';
+      return;
+    }
+    resultsEl.innerHTML = shown.map(function (e) {
+      var lines = [];
+      if (e.wann) lines.push(['🕐', e.wann]);
+      if (e.adresse) lines.push(['📍', e.adresse]);
+      if (e.kosten) lines.push(['💰', e.kosten]);
+      if (e.alter) lines.push(['👧', e.alter]);
+      var badges = [];
+      if (e.entfernung != null) badges.push('<span class="badge">' + e.entfernung + ' km</span>');
+      badges.push(e.kostenlos ? '<span class="badge free">Kostenlos</span>' : '<span class="badge paid">Kostenpflichtig</span>');
+      badges.push('<span class="badge">' + esc(CATEGORY_LABELS[e.kategorie] || e.kategorie) + '</span>');
+      if (e.wetter === 'indoor') badges.push('<span class="badge">🌧️ Drinnen</span>');
+      if (e.wetter === 'outdoor') badges.push('<span class="badge">☀️ Draußen</span>');
+      var links = ['<a href="' + esc(mapsUrl(e)) + '" target="_blank" rel="noopener">🗺️ Karte</a>'];
+      if (e.quelle) links.push('<a href="' + esc(e.quelle) + '" target="_blank" rel="noopener nofollow">🔗 Quelle</a>');
+      return '<article class="event-card"><div>' +
+        '<div class="event-name">' + esc(e.name) + '</div>' +
+        '<div class="event-details">' + lines.map(function (l) {
+          return '<div class="detail-line"><span class="icon">' + l[0] + '</span><span>' + esc(l[1]) + '</span></div>';
+        }).join('') + '</div>' +
+        (e.beschreibung ? '<div class="event-desc">' + esc(e.beschreibung) + '</div>' : '') +
+        (e.tipp ? '<div class="event-tip">💡 ' + esc(e.tipp) + '</div>' : '') +
+        (e.hinweis ? '<div class="event-note">⚠️ ' + esc(e.hinweis) + '</div>' : '') +
+        '<div class="badges">' + badges.join('') + '</div>' +
+        '<div class="links">' + links.join('') + '</div>' +
+        '</div>' +
+        (e.entfernung != null ? '<div class="distance"><div class="distance-big">' + e.entfernung + '</div><div class="distance-unit">km entfernt</div></div>' : '') +
+        '</article>';
+    }).join('');
+  }
+
+  restore();
+  radiusValue.textContent = radiusSlider.value + ' km';
+  updateLocationLine();
+  if (!placeInput.value) placeInput.focus();
+})();
+</script>
+</body>
+</html>

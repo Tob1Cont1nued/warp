@@ -529,6 +529,10 @@ def create_app() -> Flask:
     login_manager.login_view = "login"
     login_manager.login_message = "Bitte melden Sie sich an."
 
+    # Kinderveranstaltungen-Finder: eigenständige Seite, fachlich unabhängig vom Assessment.
+    from .veranstaltungen import bp as veranstaltungen_bp
+    app.register_blueprint(veranstaltungen_bp)
+
     @login_manager.user_loader
     def load_user(user_id: str):
         return db.session.get(User, int(user_id))
@@ -1043,7 +1047,8 @@ def create_app() -> Flask:
                 else:
                     login_user(user)
                     next_page = request.args.get("next", "")
-                    if not next_page.startswith("/"):
+                    # Nur lokale Pfade: "//host" oder "/\host" würden Browser auf fremde Seiten leiten.
+                    if not next_page.startswith("/") or next_page.startswith("//") or "\\" in next_page:
                         next_page = url_for("index")
                     return redirect(next_page)
             elif not error:

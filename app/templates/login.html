@@ -28,7 +28,7 @@
     <div class="login-error">{{ error }}</div>
     {% endif %}
 
-    <form method="POST" action="{{ url_for('login') }}">
+    <form method="POST" action="{{ url_for('login', next=request.args.get('next')) if request.args.get('next') else url_for('login') }}">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
       <div class="field">
         <label for="username">Benutzername</label>
